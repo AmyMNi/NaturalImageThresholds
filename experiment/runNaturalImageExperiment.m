@@ -1,11 +1,11 @@
-function acquisitionStatus = runLightnessExperiment(varargin)
-%%runExperiment : run lightness estimation experiment and record data
+function acquisitionStatus = runNaturalImageExperiment(varargin)
+%%runExperiment : run experiment and record data
 %
 % Usage:
-%   runLightnessExperiment();
+%   runNaturalImageExperiment();
 %
 % Description:
-%   Run the lightness estimation psychophysics experiment given the
+%   Run the natural image psychophysics experiment given the
 %   calibration file, trial struct and LMS stimulus struct. Record the
 %   responses and save the responses in the specified directory.
 %
@@ -17,8 +17,8 @@ function acquisitionStatus = runLightnessExperiment(varargin)
 %
 % Optional key/value pairs:
 %    'directoryName' : (string) Directory name of the case which will be studied (default 'ExampleDirectory')
-%    'nameOfTrialStruct' : (string) Name of trail stuct to be used in experiment (defalult 'exampleTrial')
-%    'nameOfCalibrationFile : (string) Name of calibration file (default 'VirtualWorldCalibration.mat')
+%    'nameOfTrialStruct' : (string) Name of trial stuct to be used in experiment (defalult 'exampleTrial')
+%    'nameOfCalibrationFile' : (string) Name of calibration file (default 'VirtualWorldCalibration.mat')
 %    'whichCalibration' : (scalar) Which calibration in file to use (default Inf -> most recent)
 %    'controlSignal' : (string) How to collect user response (options: 'gamePad', 'keyboard', default 'keyboard')
 %    'subjectName' : (string) Name of subject (default 'testSubject')
@@ -50,8 +50,17 @@ interval2Key = parser.Results.interval2Key;
 subjectName = parser.Results.subjectName;
 theoreticalPsychophysicsMode = parser.Results.theoreticalPsychophysicsMode;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%NOTE: testing with VirtualWorldPsychophysics materials
+
+%projectName = 'NaturalImageThresholds';
+%ExperimentType = 'Thresholds';
+
 projectName = 'VirtualWorldPsychophysics';
 ExperimentType = 'Lightness';
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % May want to change this to name the experiment cases differently
 caseName = directoryName;
 
@@ -317,7 +326,7 @@ while keepLooping
         fprintf('The character typed was %d\n',keyPress(iterTrials));
         % Give feedback if option is on
         if parser.Results.feedback
-            if (actualResponse(iterTrials) == correctResponse(iterTrials));
+            if (actualResponse(iterTrials) == correctResponse(iterTrials))
                 sound(rightSound);
             else
                 sound(wrongSound);

@@ -68,13 +68,13 @@
 		"flavor": "",
 		"hook": "",
 		"importance": "",
-		"localHookTemplate": "configuration/VirtualWorldPsychophysicsLocalHookTemplate.m",
-		"name": "VirtualWorldPsychophysics",
+		"localHookTemplate": "configuration/NaturalImageThresholdsLocalHookTemplate.m",
+		"name": "NaturalImageThresholds",
 		"pathPlacement": "append",
 		"subfolder": "",
 		"toolboxRoot": "",
 		"type": "git",
 		"update": "",
-		"url": "https://github.com/brainardlab/VirtualWorldPsychophysics.git"
+		"url": "https://github.com/AmyMNi/NaturalImageThresholds.git"
 	}
 ]
