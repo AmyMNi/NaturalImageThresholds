@@ -4,8 +4,8 @@ function VirtualWorldPsychophysicsLocalHook
 % Configure things for working on the VirtualWorldPsychophysics project.
 %
 % For use with the ToolboxToolbox.  If you copy this into your
-% ToolboxToolbox localToolboxHooks directory (by defalut,
-% ~/localToolboxHooks) and delete "LocalHooksTemplate" from the filename,
+% ToolboxToolbox localToolboxHooks directory (by default,
+% ~/localHookFolder) and delete "Template" from the filename,
 % this will get run when you execute tbUseProject('VirtualWorldPsychophysics') to set up for
 % this project.  You then edit your local copy to match your configuration.
 %
