@@ -1,303 +1,300 @@
 function acquisitionStatus = runNaturalImageExperiment(varargin)
-%%runExperiment : run experiment and record data
+%runNaturalImageExperiment
 %
 % Usage:
 %   runNaturalImageExperiment();
 %
 % Description:
-%   Run the natural image psychophysics experiment given the
-%   calibration file, trial struct and LMS stimulus struct. Record the
-%   responses and save the responses in the specified directory.
+%   Run the natural image psychophysics experiment given the specified
+%   experiment folder. Save the experimental parameters and psychophysical 
+%   responses (struct 'data') in the specified output folder.
 %
-% Input:
-%   None
+% Optional parameters/values:
+%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
+%   'nPresentations' : (scalar)  Number of presentations per image comparison (default: 5)
+%   'controlSignal'  : (string)  Input method for user response (options: 'keyboard', 'gamePad') (default: 'keyboard')
+%   'option1Key'     : (string)  For keyboard -> '1', for gamePad either 'GP:UpperLeftTrigger'  or 'GP:X' (default: '1')
+%   'option2Key'     : (string)  For keyboard -> '2', For gamePad either 'GP:UpperRightTrigger' or 'GP:A' (default: '2')
+%   'giveFeedback'   : (logical) Give feedback if option is on (default: true)
+%   'isDemo'         : (logical) Data won't be saved if on (default: false)
+%   'subjectName'    : (string)  Name of subject (default: 'testSubject')
 %
-% Output:
-%   None
-%
-% Optional key/value pairs:
-%    'directoryName' : (string) Directory name of the case which will be studied (default 'ExampleDirectory')
-%    'nameOfTrialStruct' : (string) Name of trial stuct to be used in experiment (defalult 'exampleTrial')
-%    'nameOfCalibrationFile' : (string) Name of calibration file (default 'VirtualWorldCalibration.mat')
-%    'whichCalibration' : (scalar) Which calibration in file to use (default Inf -> most recent)
-%    'controlSignal' : (string) How to collect user response (options: 'gamePad', 'keyboard', default 'keyboard')
-%    'subjectName' : (string) Name of subject (default 'testSubject')
+% History:
+%   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
 
-%% Get inputs and defaults.
+%% Parse the inputs
 parser = inputParser();
-parser.addParameter('directoryName', 'ExampleCase', @ischar);
-parser.addParameter('nameOfTrialStruct', 'exampleTrial', @ischar);
-parser.addParameter('nameOfCalibrationFile', 'VirtualWorldCalibration', @ischar);
-parser.addParameter('scaleFactor', 0, @isscalar);
-parser.addParameter('whichCalibration', Inf, @isscalar);
+parser.addParameter('experimentName', 'Experiment000', @ischar);
+parser.addParameter('nPresentations', 5, @isscalar);
 parser.addParameter('controlSignal', 'keyboard', @ischar);
-parser.addParameter('interval1Key', '1', @ischar);
-parser.addParameter('interval2Key', '2', @ischar);
-parser.addParameter('feedback', 0, @isscalar);
-parser.addParameter('isDemo', 0, @isscalar);
+parser.addParameter('option1Key', '1', @ischar);
+parser.addParameter('option2Key', '2', @ischar);
+parser.addParameter('giveFeedback', true, @islogical);
+parser.addParameter('isDemo', false, @islogical);
 parser.addParameter('subjectName', 'testSubject', @ischar);
-parser.addParameter('theoreticalPsychophysicsMode', 0, @isscalar);
 parser.parse(varargin{:});
 
-directoryName = parser.Results.directoryName;
-nameOfTrialStruct = parser.Results.nameOfTrialStruct;
-nameOfCalibrationFile = parser.Results.nameOfCalibrationFile;
-whichCalibration = parser.Results.whichCalibration;
-scaleFactor = parser.Results.scaleFactor;
-controlSignal = parser.Results.controlSignal;
-interval1Key = parser.Results.interval1Key;
-interval2Key = parser.Results.interval2Key;
-subjectName = parser.Results.subjectName;
-theoreticalPsychophysicsMode = parser.Results.theoreticalPsychophysicsMode;
+experimentName = parser.Results.experimentName;
+nPresentations = parser.Results.nPresentations;
+controlSignal  = parser.Results.controlSignal;
+option1Key     = parser.Results.option1Key;
+option2Key     = parser.Results.option2Key;
+giveFeedback   = parser.Results.giveFeedback;
+isDemo         = parser.Results.isDemo;
+subjectName    = parser.Results.subjectName;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%NOTE: testing with VirtualWorldPsychophysics materials
-
-%projectName = 'NaturalImageThresholds';
-%ExperimentType = 'Thresholds';
-
-projectName = 'VirtualWorldPsychophysics';
-ExperimentType = 'Lightness';
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% May want to change this to name the experiment cases differently
-caseName = directoryName;
-
-rightSound = sin(2*pi*[1:1000]/10)/10;
-wrongSound = rand(1,1000).*ceil(sin(2*pi*[1:1000]/10))/10;
-
-acquisitionStatus = 0;
-%% Some experimental parameters.
+%% Set paths to folders
 %
-% May want to read these from a file at
-% some point.
+% Specify project name.
+projectName = 'NaturalImageThresholds';
+
+% Set path to image folder.
+pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
+
+% Set path to output folder.
+pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'PsychophysicalData');
+if ~exist(pathToOutput, 'dir')
+    mkdir(pathToOutput);
+end
+
+%% Set up experiment parameters
+%
+% Specify feedback sounds.
+rightSound = sin(2*pi*(1:1000)/10)/10;
+wrongSound = rand(1,1000).*ceil(sin(2*pi*(1:1000)/10))/10;
+
+% Set acquisition status.
+acquisitionStatus = 0;
+
+% Set task parameters.
 params.screenDimsCm = [59.67 33.57];
-params.fpSize = [0.1 0.1]; % fixation point size
-params.fpColor = [34 70 34]/255; % fixation point color
-params.fpColorRed = [0.6 0.2 0.2]; % fixation point color red
-params.bgColor = [0 0 0];
-params.textColor = [0.6 0.2 0.2];
-params.firstImageLoc = [0 0];
-params.secondImageLoc = [0 0];
-params.firstImageSize = [2.62 2.62];
-params.secondImageSize = [2.62 2.62];
-params.ISI = 0.25;
-params.ITI = 0.25;
+params.fpSize       = [0.1 0.1]; % fixation point size
+params.fpColor      = [34 70 34]/255; % fixation point color
+params.fpColorRed   = [0.6 0.2 0.2]; % fixation point color red
+params.bgColor      = [128 128 128]/255; % to match electrophys task
+params.textColor    = [0.6 0.2 0.2];
+params.image1Loc   = [0 0];
+params.image2Loc  = [0 0];
+params.image1Size  = [30 30];
+params.image2Size = [30 30];
+params.ISI = 0.3;
+params.ITI = 0.4;
 params.stimDuration = 0.25;
-params.interval1Key = interval1Key;
-params.interval2Key = interval2Key;
+params.option1Key = option1Key;
+params.option2Key = option2Key;
 
-% If the game pad has symbol 1 2 3 4, instead of X A B Y
-if strcmp(interval1Key,'GP:1') params.interval1Key = 'GP:UpperLeftTrigger'; end
-if strcmp(interval2Key,'GP:2') params.interval2Key = 'GP:UpperRightTrigger'; end
+%% Get image info
+%
+% Get info about the images in the image folder.
+fileInfo = dir([pathToFolder '/*.mat']);
 
-%% Load the trial struct
-pathToTrialStruct = fullfile(getpref(projectName,'stimulusInputBaseDir'),...
-    directoryName,[nameOfTrialStruct '.mat']);
-temp = load(pathToTrialStruct); trialStruct = temp.trialStruct; clear temp;
+% Get the image file names. Images will be called by their index here.
+imageNames = {fileInfo(:).name}';
 
-%% Load the LMS struct
-LMSstructName = trialStruct.LMSstructName;
-pathToLMSStruct = fullfile(getpref(projectName,'stimulusInputBaseDir'),...
-    directoryName,[LMSstructName '.mat']);
-temp = load(pathToLMSStruct); LMSStruct = temp.LMSStruct; clear temp;
+% Get the number of images in the folder.
+nImages = numel(imageNames);
 
-%% Load calibration file
-cal = LoadCalFile(nameOfCalibrationFile,whichCalibration,fullfile(getpref('VirtualWorldPsychophysics','calibrationDir')));
-if (isempty(cal))
-    error('Could not find specified calibration file');
+%% Create a random trial order for this experiment
+%
+% Make a list of all image comparison pairs.
+% Each image is compared to each other image.
+%   col 1: image index shown in 1st interval
+%   col 2: image index shown in 2nd interval
+comparisons = nchoosek(1:nImages,2);
+
+% Also include images shown in the opposite order to the above.
+comparisonsFlip = flip(comparisons,2);
+
+% Finally, each image is also compared to itself.
+comparisonI = (1:nImages)';
+comparisonI = [comparisonI comparisonI];
+
+% Combine all image comparison pairs into one list.
+comparisons = [comparisons; comparisonsFlip; comparisonI];
+
+% For the specified number of presentations per image comparison (blocks),
+% create a random trial order for the above image comparison pairs.
+numcomp = size(comparisons,1);
+trialOrder = nan(numcomp*nPresentations,2);
+for ii = 1:nPresentations
+    indexorder = randperm(numcomp);
+    trialOrderthis = comparisons(indexorder,:);
+    trialOrder((ii-1)*numcomp+1:ii*numcomp,:) = trialOrderthis;
 end
 
-%% Initialize calibration structure for the cones
-cal = SetSensorColorSpace(cal, LMSStruct.T_cones, LMSStruct.S); % Fix the last option
+% As is, one full set of image comparison pairs (a block) will be presented
+% before a next block is presented. This evenly distributes the tested 
+% pairs across time. However, this may also allow the subject to keep track 
+% of the remaining comparisons in a block.
+% To avoid this, randomly shuffle the trial order within the full
+% experiment trial list (all blocks).
+numTrials = size(trialOrder,1);
+indexorder = randperm(numTrials);
+trialOrder = trialOrder(indexorder,:);
 
-%% Find the scale factor
-if (scaleFactor == 0)
-    scaleFactor = findScaleFactor(cal, LMSStruct);
-end
+%% Calculate the correct response for each trial
+%
+% The correct response is 1 if the 2nd target is to the left of the 1st target.
+% The correct response is 2 if the 2nd target is to the right of the 1st target.
+% The images are indexed in left-right order, with image index 1 the most left.
+trialDiff = diff(trialOrder,1,2);
+correctResponse = nan(numTrials,1);
+correctResponse(trialDiff <0) = 1; % 2nd target is to the left
+correctResponse(trialDiff >0) = 2; % 2nd target is to the right
+correctResponse(trialDiff==0) = randi(2); % no difference: random assignment
 
-%% Set Gamma Method
-cal = SetGammaMethod(cal,0);
+%% Set up vector to keep track of subject response for each trial
+selectedResponse = nan(numTrials,1);
 
-%% Start Time of Experiment
+%% Begin task
+
+% Note start time of experiment now.
 startTime = datestr(now);
 
-%% Now loop over the images for presentation on screen
-% Before that figure out how long it takes to convert two LMS to RGB and
-% present on screen. Shouldn't be very long
-response = struct('subjectName',subjectName, ...
-    'correctResponse',[],...
-    'actualResponse',[]);
-
-%% Initiale display
+% Initialize task display.
 [win, params] = initDisplay(params);
 
-%% Start key capture and clear keyboard queue before we draw the stimuli.
+%% Start key capture and clear keyboard queue
 ListenChar(2);
 mglGetKeyEvent;
 
-% Instantiate a gamePad object
-if (strcmp(controlSignal, 'gamePad'))
+% Clear out any previous key presses.
+FlushEvents;
+
+%% Instantiate a gamePad object
+if strcmp(controlSignal, 'gamePad')
     gamePad = GamePad();
 else
     gamePad = [];
 end
 
-% Clear out any previous keypresses.
-FlushEvents;
-
 %% Enable fixation and start text
 win.enableObject('fp');
-win.enableObject('startText');
+win.enableObject('instructions');
 win.enableObject('keyOptions');
+win.enableObject('startText');
 win.draw;
 
-%% Wait for key
-% keyPress = GetChar;
+%% Wait for key press (any) to begin task
 key = [];
-while (isempty(key))
-    if (strcmp(controlSignal, 'keyboard'))
+while isempty(key)
+    if strcmp(controlSignal, 'keyboard')
         key = mglGetKeyEvent;
     else
         key = gamePad.getKeyEvent();
     end
 end
 
-
-%% Turn off start text, add images and wait for another key
-win.disableObject('startText');
+%% Turn off start text
+win.disableObject('instructions');
 win.disableObject('keyOptions');
+win.disableObject('startText');
 
-% Run easy trials
-nEasyTrials = 5;
-runEasyTrials(nEasyTrials, trialStruct, cal, scaleFactor, LMSStruct, params, controlSignal, win, gamePad, parser);
-
+%% Per trial, present images and wait for key press response
+%
 % Reset the keyboard queue.
 mglGetKeyEvent;
 
-saveData = 1;
+saveData    = 1;
 keepLooping = 1;
-iterTrials = 0;
+iiTrial     = 0;
 
 while keepLooping
-    iterTrials = iterTrials + 1;
-    stdIndex = trialStruct.trialStdIndex(iterTrials);
-    cmpIndex =  trialStruct.trialCmpIndex(iterTrials);
-    stdRGBImage = CalFormatToImage(SensorToSettings(cal, scaleFactor*LMSStruct.LMSImageInCalFormat(:,:,stdIndex)),LMSStruct.cropImageSizeX,LMSStruct.cropImageSizeY);
-    cmpRGBImage = CalFormatToImage(SensorToSettings(cal, scaleFactor*LMSStruct.LMSImageInCalFormat(:,:,cmpIndex)),LMSStruct.cropImageSizeX,LMSStruct.cropImageSizeY);
-    stdRGBImage(stdRGBImage < 0 ) = 0;
-    cmpRGBImage(cmpRGBImage < 0 ) = 0;
-    standardYLarger = (trialStruct.stdYInTrial(iterTrials) >= trialStruct.cmpYInTrial(iterTrials));
-    if trialStruct.cmpInterval(iterTrials) % comparison on the second interval
-        firstImage = stdRGBImage(end:-1:1,:,:);
-        secondImage = cmpRGBImage(end:-1:1,:,:);
-        if standardYLarger
-            correctResponse(iterTrials) = 1;
-        else
-            correctResponse(iterTrials) = 2;
-        end
-    else                                   % comparison on the first
-        firstImage = cmpRGBImage(end:-1:1,:,:);
-        secondImage = stdRGBImage(end:-1:1,:,:);
-        if standardYLarger
-            correctResponse(iterTrials) = 2;
-        else
-            correctResponse(iterTrials) = 1;
-        end
-    end
+    iiTrial = iiTrial + 1; %trial iteration
     
-    if theoreticalPsychophysicsMode
-        meanRGBFirstImage = mean(mean(mean(firstImage(floor(LMSStruct.cropImageSizeX/2)-4:floor(LMSStruct.cropImageSizeX/2)+5, ...
-                                                        floor(LMSStruct.cropImageSizeX/2)-4:floor(LMSStruct.cropImageSizeX/2)+5,:))));
-        meanRGBSecondImage = mean(mean(mean(secondImage(floor(LMSStruct.cropImageSizeX/2)-4:floor(LMSStruct.cropImageSizeX/2)+5, ...
-                                                        floor(LMSStruct.cropImageSizeX/2)-4:floor(LMSStruct.cropImageSizeX/2)+5,:))));
-        keyPress(iterTrials) = (meanRGBSecondImage > meanRGBFirstImage) + 1;
-        actualResponse(iterTrials) = keyPress(iterTrials);
-    else
-    % For testing, extract average RGB values from center of first and
-    % second image, and figure out which is bigger
+    % Get image index for 1st interval and for 2nd interval.
+    idx1 = trialOrder(iiTrial,1);
+    idx2 = trialOrder(iiTrial,2);
     
-    % Write the images into the window and disable
-    win.addImage(params.firstImageLoc, params.firstImageSize, firstImage, 'Name', 'firstImage');
-    win.addImage(params.secondImageLoc, params.secondImageSize, secondImage, 'Name', 'secondImage');
-    win.disableObject('firstImage');
-    win.disableObject('secondImage');
+    % Get RGB image for 1st interval and for 2nd interval.
+    file1 = fullfile(pathToFolder,imageNames{idx1});
+    file2 = fullfile(pathToFolder,imageNames{idx2});
+    temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+    temp = load(file2,'RGBImage'); image2 = temp.RGBImage; clear temp;
     
-    % Enable "left" image and draw
-    win.enableObject('firstImage');
+    % Flip images.
+    image1 = image1(end:-1:1,:,:);
+    image2 = image2(end:-1:1,:,:);
+    
+    % Write the images into the window and disable.
+    win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+    win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+    win.disableObject('image1');
+    win.disableObject('image2');
+    
+    % Enable 1st image and draw.
+    win.enableObject('image1');
     win.draw;
     
-    % Wait for duration
+    % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
-    win.disableObject('firstImage');
+    win.disableObject('image1');
     win.draw;
     
-    % Wait for ISI and show "second" image
+    % Wait for ISI and show 2nd image.
     mglWaitSecs(params.ISI);
-    win.enableObject('secondImage');
+    win.enableObject('image2');
     win.draw;
     
-    % Wait for duration
+    % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
-    win.disableObject('secondImage');
+    win.disableObject('image2');
     win.draw;
     
-    %% Wait for key
+    % Wait for key press response.
     FlushEvents;
-    
     key =[];
-    while (isempty(key))
-        % Get user response from keyboard
-        if (strcmp(controlSignal, 'keyboard'))
+    while isempty(key)
+        % Get user response from keyboard.
+        if strcmp(controlSignal, 'keyboard')
             key = mglGetKeyEvent;
-            if (~isempty(key))
+            if ~isempty(key)
                 switch key.charCode
-                    case {params.interval1Key,params.interval2Key}
-                        keyPress(iterTrials) = getUserResponse(params,key);
+                    case {option1Key,option2Key}
+                        selectedResponse(iiTrial) = getUserResponse(params,key);
                     case {'q'}
-                        fprintf('Do you want to quit? Press Y for Yes, otherwise give your response \n');
+                        fprintf('Do you want to quit? Type Y for Yes, otherwise give your response \n');
                         key2 = [];
-                        while (isempty(key2))
+                        while isempty(key2)
                             key2 = mglGetKeyEvent;
-                            if (~isempty(key2))
+                            if ~isempty(key2)
                                 switch key2.charCode
-                                    case {params.interval1Key,params.interval2Key}
-                                        keyPress(iterTrials) = getUserResponse(params,key2);
+                                    case {option1Key,option2Key}
+                                        selectedResponse(iiTrial) = getUserResponse(params,key2);
                                     case {'y'}
                                         keepLooping = false;
                                     otherwise
                                         key2 = [];
                                 end
-                            end                            
+                            end
                         end
                     otherwise
                         key = [];
                 end
             end
-            % Get user response from gamePad
+        % Get user response from gamePad.
         else
             key = gamePad.getKeyEvent();
-            if (~isempty(key))
+            if ~isempty(key)
                 switch key.charCode
-                    case {params.interval1Key,params.interval2Key}
-                        keyPress(iterTrials) = getUserResponse(params,key);
+                    case {option1Key,option2Key}
+                        selectedResponse(iiTrial) = getUserResponse(params,key);
                     otherwise
                         key = [];
                 end
             end
             pressedKeyboard = mglGetKeyEvent;
-            if (~isempty(pressedKeyboard))
+            if ~isempty(pressedKeyboard)
                 switch pressedKeyboard.charCode
                     case {'q'}
-                        fprintf('Do you want to quit? Press Y for Yes, otherwise give your response using gamepad \n');
+                        fprintf('Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
                         key2 = [];
                         keyG = [];
                         FlushEvents;
-                        while (isempty(key2) && isempty(keyG))
+                        while isempty(key2) && isempty(keyG)
                             key2 = mglGetKeyEvent;
                             keyG = gamePad.getKeyEvent();
-                            if (~isempty(key2))
+                            if ~isempty(key2)
                                 switch key2.charCode
                                     case {'y'}
                                         keepLooping = false;
@@ -305,11 +302,11 @@ while keepLooping
                                     otherwise
                                         key2 = [];
                                 end
-                            elseif (~isempty(keyG))
+                            elseif ~isempty(keyG)
                                 switch keyG.charCode
-                                    case {params.interval1Key,params.interval2Key}
+                                    case {option1Key,option2Key}
                                         key = keyG;
-                                        keyPress(iterTrials) = getUserResponse(params,key);
+                                        selectedResponse(iiTrial) = getUserResponse(params,key);
                                     otherwise
                                         keyG = [];
                                 end
@@ -320,13 +317,12 @@ while keepLooping
         end
     end
     
-% Check if the experiment continues, otherwise quit without saving data    
+    % Check if the experiment continues, otherwise quit without saving data.    
     if keepLooping
-        actualResponse(iterTrials) = keyPress(iterTrials);
-        fprintf('The character typed was %d\n',keyPress(iterTrials));
-        % Give feedback if option is on
-        if parser.Results.feedback
-            if (actualResponse(iterTrials) == correctResponse(iterTrials))
+        fprintf('Selected interval: %d\n',selectedResponse(iiTrial));
+        % Give feedback if option is on.
+        if giveFeedback
+            if selectedResponse(iiTrial) == correctResponse(iiTrial)
                 sound(rightSound);
             else
                 sound(wrongSound);
@@ -338,8 +334,8 @@ while keepLooping
         saveData = 0;
     end
     
-    %% Check if one third of experiment is reached
-    if (iterTrials == ceil(length(trialStruct.trialStdIndex)/3))
+    % Check if one third of experiment is reached.
+    if iiTrial == ceil(numTrials/3)
         win.enableObject('oneThirdText');
         win.disableObject('fp');        
         win.enableObject('fpRed');
@@ -351,26 +347,26 @@ while keepLooping
         win.enableObject('fp');
         win.draw;
         FlushEvents;
-        %% Wait for key
-        if (strcmp(controlSignal, 'keyboard'))
+        % Wait for key press.
+        if strcmp(controlSignal, 'keyboard')
             key = [];
-            while (isempty(key))
+            while isempty(key)
                 key = mglGetKeyEvent;
             end
         else
             key = [];
-            while (isempty(key))
+            while isempty(key)
                 key = gamePad.getKeyEvent();
             end
         end
-        % Turn off text
+        % Turn off text.
         win.disableObject('restOver');
         % Reset the keyboard queue.
         mglGetKeyEvent;
     end
     
-    %% Check if two third of experiment is reached
-    if (iterTrials == ceil(2*length(trialStruct.trialStdIndex)/3))
+    % Check if two thirds of experiment is reached.
+    if iiTrial == ceil(2*numTrials/3)
         win.enableObject('twoThirdText');
         win.disableObject('fp');        
         win.enableObject('fpRed');
@@ -382,105 +378,127 @@ while keepLooping
         win.enableObject('fp');
         win.draw;        
         FlushEvents;
-        %% Wait for key
-        if (strcmp(controlSignal, 'keyboard'))
+        % Wait for key press.
+        if strcmp(controlSignal, 'keyboard')
             key = [];
-            while (isempty(key))
+            while isempty(key)
                 key = mglGetKeyEvent;
             end
         else
             key = [];
-            while (isempty(key))
+            while isempty(key)
                 key = gamePad.getKeyEvent();
             end
         end
-        %% Turn off start text, add images and wait for another key
+        % Turn off text.
         win.disableObject('restOver');
         % Reset the keyboard queue.
         mglGetKeyEvent;
     end
         
-% Check if end of experiment is reached
-    end
-    if (iterTrials == length(trialStruct.trialStdIndex))
+    % Check if end of experiment is reached.
+    if iiTrial == numTrials
         keepLooping = false;
     end
 end
-%% Done with experiment, close up
+
+%% Close up experiment
 %
-% Show end of experimetn text
+% Show end of experiment text.
 win.enableObject('finishText');
 win.draw;
 pause(10);
 win.disableObject('finishText');
 
-% Close our display.
+% Close task display.
 win.close;
 
 % Make sure key capture is off.
 ListenChar(0);
 
-if parser.Results.isDemo
+% Note end time of experiment now.
+endTime = datestr(now);
+
+%% Save experimental parameters and psychophysical responses
+%
+% Data won't be saved if this option is on.
+if isDemo
    saveData = 0;
 end
     
 if saveData
-    %% correct response can be found as
-    response.correctResponse = correctResponse;
-    response.actualResponse = actualResponse;
-    response.keyPress = keyPress;
-    
-    %% End Time of Experiment
-    endTime = datestr(now);
-    
-    %% Make data struct
+    % Save data in 'data' struct.
     data = struct;
-    data.response = response;
-    data.trialStruct = trialStruct;
-    data.startTime = startTime;
-    data.endTime = endTime;
-    data.cal = cal;
-    data.LMSStruct = LMSStruct;
-    data.subjectName = subjectName;
+
+    % Save inputted experimental parameters.
+    data.experimentName = experimentName;
+    data.subjectName    = subjectName;
+    data.nPresentations = nPresentations;
+    data.controlSignal  = controlSignal;
+    data.option1Key     = option1Key;
+    data.option2Key     = option2Key;
+    data.giveFeedback   = giveFeedback;
     
-    %% Save data here
-    % Figure out some data saving parameters.
-    dataFolder = fullfile(getpref(projectName,'dataDir'), ExperimentType, caseName, subjectName, datestr(now,1));
-    if ~exist(dataFolder, 'dir')
-        mkdir(dataFolder);
+    % Save task parameters.
+    data.screenDimsCm = params.screenDimsCm;
+    data.fpSize       = params.fpSize;
+    data.fpColor      = params.fpColor;
+    data.fpColorRed   = params.fpColorRed;
+    data.bgColor      = params.bgColor;
+    data.textColor    = params.textColor;
+    data.image1Loc    = params.image1Loc;
+    data.image2Loc    = params.image2Loc;
+    data.image1Size   = params.image1Size;
+    data.image2Size   = params.image2Size;
+    data.ISI          = params.ISI;
+    data.ITI          = params.ITI;
+    data.stimDuration = params.stimDuration;
+    
+    % Save task start time and end time.
+    data.startTime = startTime;
+    data.endTime   = endTime;
+    
+    % Save image information.
+    data.imageNames = imageNames;
+    
+    % Save image indices for each trial.
+    data.trialOrder = trialOrder;
+
+    % Save correct response for each trial.
+    data.correctResponse = correctResponse;
+    
+    % Save selected response for each trial.
+    data.selectedResponse = selectedResponse;
+    
+    % Set path to output folder where data will be saved.
+    pathToOutputFolder = fullfile(pathToOutput,append('subject',subjectName));
+    if ~exist(pathToOutputFolder, 'dir')
+        mkdir(pathToOutputFolder);
     end
     
-    dataFile = sprintf('%s/%s-%d.mat', dataFolder,subjectName, GetNextDataFileNumber(dataFolder, '.mat'));
-    fprintf('\nData will be saved in:\n%s\n', dataFile);
+    % Specify path to the file to save.
+    fileNum = GetNextDataFileNumber(pathToOutputFolder,'.mat');
+    fileNum = num2str(fileNum);
+    fileName = append('data',subjectName,'_',fileNum);
+    pathToOutputFile = fullfile(pathToOutputFolder,fileName);
     
-    save(dataFile,'data','-v7.3');
-    
-    fprintf('Data was saved.\n');
-    
-    drawPsychometricFunction('ExperimentType', ExperimentType,...
-        'directoryName', caseName, ...
-        'subjectName', subjectName, ...
-        'date', datestr(now,1), ...
-        'fileNumber', (GetNextDataFileNumber(dataFolder, '.mat')-1),...
-        'thresholdU', 0.75, ...
-        'thresholdL', 0.25);
+    % Save data file.
+    save(pathToOutputFile,'data');
+    fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
+
+    % Set acquisition status.
     acquisitionStatus = 1;
 end
 
 end
-%
-% %% Save the response struct
-% path2RGBOutputDirectory = fullfile(getpref(projectName,'stimulusInputBaseDir'),...
-%                                 parser.Results.directoryName);
-% outputfileName = fullfile(path2RGBOutputDirectory,[outputFileName,'.mat']);
-% save(outputfileName,'S','-v7.3');
 
+%% Helper functions
 
+%% Initialize display
 function [win, params] = initDisplay(params)
 
-% Create the GLWindow object and linearize the clut.
-win = GLWindow('SceneDimensions', params.screenDimsCm, ...
-    'BackgroundColor', params.bgColor);
+% Create the GLWindow object.
+win = GLWindow('SceneDimensions',params.screenDimsCm,'BackgroundColor',params.bgColor);
 
 try
     % Open the display.
@@ -492,47 +510,60 @@ try
     % Add the fixation point in red color.
     win.addOval([0 0], params.fpSize, params.fpColorRed, 'Name', 'fpRed');
     
-    % Add text
-    win.addText('Hit any button to start', ...        % Text to display
-        'Center', [0 8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'startText');     % Identifier for the object.
+    % Add instructions text.
+    win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'instructions'); % Identifier for the object
     
-    % Add text
-    win.addText(['Key :', 'Interval 1 -> ', params.interval1Key,' Interval 2 -> ',params.interval2Key ], ...        % Text to display
-        'Center', [0 -8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
+    % Add key option text.
+    key1 = params.option1Key;
+    key2 = params.option2Key;
+    if strcmp(key1,'GP:UpperLeftTrigger');  key1 = 'Upper Left Trigger';  end
+    if strcmp(key2,'GP:UpperRightTrigger'); key2 = 'Upper Right Trigger'; end   
+    if strcmp(key1,'GP:X'); key1 = 'gamepad X'; end    
+    if strcmp(key2,'GP:A'); key2 = 'gamepad A'; end      
+    win.addText(['If to left -> ', key1, '     If to right -> ', key2], ... % Text to display
+        'Center', [0 5], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
         'Color', params.textColor, ...  % RGB color
-        'Name', 'keyOptions');     % Identifier for the object.
+        'Name', 'keyOptions'); % Identifier for the object
     
-    % Add text
-    win.addText('One third of trials over. Take 1 minute rest.', ...        % Text to display
-        'Center', [0 8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'oneThirdText');     % Identifier for the object.
+    % Add start text.
+    win.addText('Hit any button to start', ... % Text to display
+        'Center', [0 -8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'startText'); % Identifier for the object
+    
+    % Add text for when experiment is one third over.
+    win.addText('One third of trials complete. Take a 1 minute break.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'oneThirdText'); % Identifier for the object
 
-    % Add text
-    win.addText('Rest over. Hit any button to continue', ...        % Text to display
-        'Center', [0 8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'restOver');     % Identifier for the object.
+    % Add text for when rest period is over.
+    win.addText('Rest time complete. Hit any button to continue', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'restOver'); % Identifier for the object
 
-    % Add text
-    win.addText('Two third of trials over. Take 1 minute rest.', ...        % Text to display
-        'Center', [0 8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'twoThirdText');     % Identifier for the object.
+    % Add text for when experiment is two thirds over.
+    win.addText('Two thirds of trials complete. Take a 1 minute break.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'twoThirdText'); % Identifier for the object
 
-    % Add text
-    win.addText('Experiment finished.', ...        % Text to display
-        'Center', [0 8], ...% Where to center the text. (x,y)
-        'FontSize', 75, ...   % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'finishText');     % Identifier for the object.
+    % Add text for when experiment is complete.
+    win.addText('Experiment is complete', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'finishText'); % Identifier for the object
 
     % Turn all objects off for now.
     win.disableAllObjects;
@@ -543,17 +574,18 @@ catch e
 end
 end
 
-
+%% Get user response
 function response = getUserResponse(params,key)
 response = [];
 switch key.charCode
-    % Left/Down
-    case params.interval1Key
+    % Option 1 key response.
+    case params.option1Key
         response = 1;
         
-        % Right/Up
-    case params.interval2Key
+    % Option 2 key response.
+    case params.option2Key
         response = 2;
-end % switch
+end
 end
 
+%% End
