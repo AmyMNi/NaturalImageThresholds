@@ -471,7 +471,8 @@ if saveData
     data.selectedResponse = selectedResponse;
     
     % Set path to output folder where data will be saved.
-    pathToOutputFolder = fullfile(pathToOutput,append('subject',subjectName));
+    pathToOutputFolder = fullfile(pathToOutput,sprintf('%s%s','subject',subjectName));
+    
     if ~exist(pathToOutputFolder, 'dir')
         mkdir(pathToOutputFolder);
     end
@@ -479,7 +480,7 @@ if saveData
     % Specify path to the file to save.
     fileNum = GetNextDataFileNumber(pathToOutputFolder,'.mat');
     fileNum = num2str(fileNum);
-    fileName = append('data',subjectName,'_',fileNum);
+    fileName = sprintf('%s%s_%s','data',subjectName,fileNum);
     pathToOutputFile = fullfile(pathToOutputFolder,fileName);
     
     % Save data file.
