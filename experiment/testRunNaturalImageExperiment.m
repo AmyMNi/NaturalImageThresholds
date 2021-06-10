@@ -1,5 +1,11 @@
 % Test script for runNaturalImageExperiment function
 % 
+% Notes:
+%   1) Run experiment on calibrated 27-in NEC MultiSync PA271 monitor.
+%   2) Center observer's eyes horizontal and vertically using chin and forehead rest.
+%   3) Set monitor distance to 75 cm.
+%   4) Have observer dark adapt in the dark room for 5 min.
+%
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
 %   'nPresentations' : (scalar)  Number of presentations per image comparison (default: 5)
