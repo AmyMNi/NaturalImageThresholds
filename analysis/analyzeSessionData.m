@@ -74,14 +74,15 @@ targetChangeUnits = cell(length(data.imageNames),1);
 % Break down image file names to get image info.
 for ii = 1:length(data.imageNames)
     name = data.imageNames{ii};
-    p1 = strfind(name,'banana');
-    p2 = strfind(name,'_');
+    p1   = strfind(name,'banana');
+    p2   = strfind(name,'_');
+    p2b  = p2(2);
     
     % Store banana offset amount.
-    targetChange(ii) = sscanf(name(p1+6:p2-1),'%f');
+    targetChange(ii) = sscanf(name(p1+6:p2b-1),'%f');
     
     % Store banana offset amount units.
-    targetChangeUnits{ii} = sscanf(name(p2+1:end-4),'%s');
+    targetChangeUnits{ii} = sscanf(name(p2b+1:end-4),'%s');
 end
 
 %% Create vector of target difference between the two images per trial
@@ -125,10 +126,10 @@ end
 %% Plot performance of observer per target difference
 if plotFigures
     figure; box off;
-    semilogx(targetDiffs,performancePerTargetDiff,'.k');
+    plot(targetDiffs,performancePerTargetDiff,'ok');
     hold on;
     title(sprintf('%s:%s%s%d',experimentName,subjectName,'\_',sessionNumber));
-    xlabel('Comparison offset rightward');
+    xlabel(sprintf('Comparison offset rightward'));
     ylabel('Proportion selected rightward');
     axis([-Inf Inf 0 1]);
     hold off;
