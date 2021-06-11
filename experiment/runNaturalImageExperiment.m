@@ -67,19 +67,19 @@ wrongSound = rand(1,1000).*ceil(sin(2*pi*(1:1000)/10))/10;
 acquisitionStatus = 0;
 
 % Set task parameters.
-params.screenDimsCm = [59.67 33.57];
+params.screenDimsCm = [59.67 33.57]; %cm
 params.fpSize       = [0.1 0.1]; % fixation point size
 params.fpColor      = [34 70 34]/255; % fixation point color
 params.fpColorRed   = [0.6 0.2 0.2]; % fixation point color red
 params.bgColor      = [128 128 128]/255; % to match electrophys task
 params.textColor    = [0.6 0.2 0.2];
-params.image1Loc   = [0 0];
+params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
-params.image1Size  = [2.62 2.62];
-params.image2Size = [2.62 2.62];
-params.ISI = 0.5;
-params.ITI = 0.25;
-params.stimDuration = 0.25;
+params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
+params.image2Size = [10.54 10.54];
+params.ISI = 1; % seconds
+params.ITI = 0.25; % seconds
+params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
 params.option2Key = option2Key;
 
@@ -470,17 +470,15 @@ if saveData
     % Save selected response for each trial.
     data.selectedResponse = selectedResponse;
     
-    % Set path to output folder where data will be saved.
+    % Set path to specific output folder where data will be saved.
     pathToOutputFolder = fullfile(pathToOutput,sprintf('%s%s','subject',subjectName));
-    
     if ~exist(pathToOutputFolder, 'dir')
         mkdir(pathToOutputFolder);
     end
     
-    % Specify path to the file to save.
+    % Set path to the file to save.
     fileNum = GetNextDataFileNumber(pathToOutputFolder,'.mat');
-    fileNum = num2str(fileNum);
-    fileName = sprintf('%s%s_%s','data',subjectName,fileNum);
+    fileName = sprintf('%s%s_%d.mat','data',subjectName,fileNum);
     pathToOutputFile = fullfile(pathToOutputFolder,fileName);
     
     % Save data file.
@@ -532,7 +530,7 @@ try
         'Name', 'keyOptions'); % Identifier for the object
     
     % Add start text.
-    win.addText('Hit any button to start', ... % Text to display
+    win.addText('Hit any button to start.', ... % Text to display
         'Center', [0 -8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
@@ -546,7 +544,7 @@ try
         'Name', 'oneThirdText'); % Identifier for the object
 
     % Add text for when rest period is over.
-    win.addText('Rest time complete. Hit any button to continue', ... % Text to display
+    win.addText('Rest time complete. Hit any button to continue.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
@@ -560,7 +558,7 @@ try
         'Name', 'twoThirdText'); % Identifier for the object
 
     % Add text for when experiment is complete.
-    win.addText('Experiment is complete', ... % Text to display
+    win.addText('Experiment is complete.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
