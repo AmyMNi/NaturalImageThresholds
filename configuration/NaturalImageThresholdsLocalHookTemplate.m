@@ -24,11 +24,13 @@ end
 sysInfo = GetComputerInfo();
 switch (sysInfo.localHostName)
     case 'eagleray'
-        % DHB's desktop
+        % DHB's office desktop
         baseDir = fullfile(filesep,'Volumes','Users1','Dropbox (Aguirre-Brainard Lab)');
+        calFile = 'NaturalImageThresholdsCal_Philly';
     case 'Amys-iMac-Pro'
         % Amy's desktop
         baseDir = fullfile('/Users','amyni','Dropbox (Aguirre-Brainard Lab)');
+        calFile = 'NaturalImageThresholdsCal_Amy';
     otherwise
         % Some unspecified machine, try user specific customization
         switch(sysInfo.userShortName)
@@ -37,10 +39,15 @@ switch (sysInfo.localHostName)
             otherwise
                 baseDir = fullfile('/Users',sysInfo.userShortName,'Dropbox (Aguirre-Brainard Lab)');
         end
+        calFile = 'NaturalImageThresholdsCal_Philly';
 end
 
 %% Set base directory for project materials
 BaseDir = fullfile(baseDir,'CNST_materials',theProject);
 setpref(theProject,'BaseDir',BaseDir);
+
+%% Calibration folder
+setpref(toolboxName,'CalDataFolder',fullfile(BaseDir,'CalibrationData'));
+setpref(theProject,'CalDataFile',calFile);
 
 %% End
