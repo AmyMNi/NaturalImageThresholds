@@ -46,8 +46,8 @@ end
 BaseDir = fullfile(baseDir,'CNST_materials',theProject);
 setpref(theProject,'BaseDir',BaseDir);
 
-%% Calibration folder
-setpref(toolboxName,'CalDataFolder',fullfile(BaseDir,'CalibrationData'));
+%% Calibration folder/file
+setpref(theProject,'CalDataFolder',fullfile(BaseDir,'CalibrationData'));
 setpref(theProject,'CalDataFile',calFile);
 
 %% End
