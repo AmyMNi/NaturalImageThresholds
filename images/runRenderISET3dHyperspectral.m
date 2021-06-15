@@ -14,6 +14,8 @@ function runRenderISET3dHyperspectral(varargin)
 % 
 % History:
 %   06/07/21  amn  Wrote it.
+%   06/14/21  amn  Updated to use calibration file for this experimental
+%                  machine, based on t_readUseCalFile.m (written by dhb).
 
 %% Parse the input
 parser = inputParser();
@@ -22,7 +24,7 @@ parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
 
-%% Set paths to folders
+%% Set paths to folders and calibration file
 %
 % Specify project name.
 projectName = 'NaturalImageThresholds';
@@ -35,6 +37,21 @@ pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs
 if ~exist(pathToOutput, 'dir')
     mkdir(pathToOutput);
 end
+
+% Set path to calibration folder.
+calDir = getpref(projectName,'CalDataFolder');
+
+% Set path to calibration file
+% (set for the local experiment machine by the project local hook file).
+calFile = getpref(projectName,'CalDataFile');
+
+%% Load calibration file
+cal = LoadCalFile(calFile,[],calDir);
+if (isempty(cal))
+    error('Could not find specified calibration file');
+end
+fprintf('Using calibration done by %s on %s\n', ...
+    cal.describe.who,cal.describe.date);
 
 %% Get names of all scene files in the input folder
 %
@@ -54,7 +71,7 @@ for ii = 1:length(fileInfo)
     
     % Convert this ISET3d scene to a metameric RGB image.
     % Input whether to display the RGBImage and/or the sRGBImage.
-    RGBImage = renderISET3dHyperspectral(scene,'showRGB',true,'showSRGB',false);
+    RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',true,'showSRGB',false);
 
     % Save the RGB image in the output folder.
     savedFile = fullfile(pathToOutput,fileInfo(ii).name);

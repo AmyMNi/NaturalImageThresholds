@@ -1,4 +1,4 @@
-function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,varargin)
+function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,cal,varargin)
 % renderISET3dHyperspectral
 %
 % Usage:
@@ -13,6 +13,7 @@ function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,varargin)
 %
 % Required input:
 %   scene : (struct) ISET3d scene info
+%   cal   : (struct) Calibration file for this experimental machine
 %
 % Optional parameters/values:
 %   'showRGB'  : (logical) Whether to display the RGBImage  (default: false)
@@ -20,14 +21,16 @@ function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,varargin)
 %
 % History:
 %   06/05/21  dhb  Wrote it.
-%   06/07/21  amn  Minor edits to t_renderISET3dHyperspectral
+%   06/07/21  amn  Minor edits to t_renderISET3dHyperspectral.
+%   06/14/21  amn  Updated to require a calibration file input.
 
 %% Parse the inputs
 parser = inputParser();
 parser.addRequired('scene',@(x)(isstruct(x)));
+parser.addRequired('cal',@(x)(isstruct(x)));
 parser.addParameter('showRGB',false,@islogical);
 parser.addParameter('showSRGB',false,@islogical);
-parser.parse(scene,varargin{:});
+parser.parse(scene,cal,varargin{:});
 
 showRGB  = parser.Results.showRGB;
 showSRGB = parser.Results.showSRGB;
@@ -73,14 +76,11 @@ if (max(abs(LMSExcitationsCalFormatChk(:) - LMSExcitationsCalFormat(:))) > 1e-12
     error('Energy/quanta conversion glitch somewhere');
 end
 
-%% Read in a calibration file for a monitor
-%
-% We'll replace the test calibration file here with one for our device,
-% sooner or later.
-noWarningOnDuplicate = true;
-cal = LoadCalFile('PTB3TestCal',[],[],noWarningOnDuplicate);
+%% Initialize the sensor color space for use in calibration
 cal = SetSensorColorSpace(cal,T_energy,S);
-cal = SetGammaMethod(cal,1);
+
+%% Set gamma method
+cal = SetGammaMethod(cal,0);
 
 %% Go from LMS to device primary space
 rgbCalFormat = SensorToPrimary(cal,LMSExcitationsCalFormat);
