@@ -2,22 +2,29 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %runNaturalImageExperiment
 %
 % Usage:
-%   runNaturalImageExperiment();
+%   runNaturalImageExperiment('experimentName', 'Experiment000', ...
+%                             'subjectName', 'AN');
 %
 % Description:
 %   Run the natural image psychophysics experiment given the specified
 %   experiment folder. Save the experimental parameters and psychophysical 
 %   responses (struct 'data') in the specified output folder.
 %
+% Notes:
+%   1) Run experiment on calibrated 27-in NEC MultiSync PA271 monitor
+%   2) Center observer's eyes horizontal and vertically using chin and forehead rest
+%   3) Set monitor distance to 75 cm
+%   4) Have observer dark adapt in the dark room for 5 min
+%
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
 %   'nPresentations' : (scalar)  Number of presentations per image comparison (default: 5)
-%   'controlSignal'  : (string)  Input method for user response (options: 'keyboard', 'gamePad') (default: 'keyboard')
-%   'option1Key'     : (string)  For keyboard -> '1', for gamePad either 'GP:UpperLeftTrigger'  or 'GP:X' (default: '1')
-%   'option2Key'     : (string)  For keyboard -> '2', For gamePad either 'GP:UpperRightTrigger' or 'GP:A' (default: '2')
+%   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
+%   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
+%   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
 %   'giveFeedback'   : (logical) Give feedback if option is on (default: true)
 %   'isDemo'         : (logical) Data won't be saved if on (default: false)
-%   'subjectName'    : (string)  Name of subject (default: 'testSubject')
+%   'subjectName'    : (string)  Name of subject (default: 'AN')
 %
 % History:
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
@@ -26,12 +33,12 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
 parser.addParameter('nPresentations', 5, @isscalar);
-parser.addParameter('controlSignal', 'keyboard', @ischar);
-parser.addParameter('option1Key', '1', @ischar);
-parser.addParameter('option2Key', '2', @ischar);
+parser.addParameter('controlSignal', 'gamePad', @ischar);
+parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
+parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
 parser.addParameter('giveFeedback', true, @islogical);
 parser.addParameter('isDemo', false, @islogical);
-parser.addParameter('subjectName', 'testSubject', @ischar);
+parser.addParameter('subjectName', 'AN', @ischar);
 parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
@@ -42,6 +49,26 @@ option2Key     = parser.Results.option2Key;
 giveFeedback   = parser.Results.giveFeedback;
 isDemo         = parser.Results.isDemo;
 subjectName    = parser.Results.subjectName;
+
+%% Get user input to verify/change inputs
+%
+% Ask user if the value of 'experimentName' is correct.
+fprintf(2,'The experiment name is: %s\n', experimentName);
+str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
+if strcmpi(str1,'N')
+    fprintf(2,'Enter the correct experiment name below\n');
+    experimentName = input('Enter here (without quotes): ','s');
+    fprintf(2,'The experiment name has been updated to: %s\n', experimentName);
+end
+
+% Ask user if the value of 'subjectName' is correct.
+fprintf(2,'The subject name is: %s\n', subjectName);
+str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
+if strcmpi(str1,'N')
+    fprintf(2,'Enter the correct subject name below\n');
+    subjectName = input('Enter here (without quotes): ','s');
+    fprintf(2,'The subject name has been updated to: %s\n', subjectName);
+end
 
 %% Set paths to folders
 %

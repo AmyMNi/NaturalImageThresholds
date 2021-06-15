@@ -2,7 +2,9 @@ function sessionAnalysis = analyzeSessionData(varargin)
 %analyzeSessionData
 %
 % Usage:
-%   analyzeSessionData();
+%   sessionAnalysis = analyzeSessionData('experimentName', 'Experiment000', ...
+%                                        'subjectName', 'AN', ...
+%                                        'sessionNumber', 1);
 %
 % Description:
 %   Analyze psychophysical data from a single data collection session. Save
@@ -10,7 +12,7 @@ function sessionAnalysis = analyzeSessionData(varargin)
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'subjectName'    : (string)  Name of subject (default: 'AN000')
+%   'subjectName'    : (string)  Name of subject (default: 'AN')
 %   'sessionNumber'  : (scalar)  Number of session (default: 1)
 %   'plotFigures'    : (logical) Plot figures if option is on (default: true)
 %   'saveData'       : (logical) Save data if option is on (default: true)
@@ -21,7 +23,7 @@ function sessionAnalysis = analyzeSessionData(varargin)
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('subjectName', 'AN000', @ischar);
+parser.addParameter('subjectName', 'AN', @ischar);
 parser.addParameter('sessionNumber', 1, @isscalar);
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
