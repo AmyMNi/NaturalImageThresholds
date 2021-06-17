@@ -1,14 +1,14 @@
-function sessionAnalysis = analyzeSessionData(varargin)
+function data = analyzeSessionData(varargin)
 %analyzeSessionData
 %
 % Usage:
-%   sessionAnalysis = analyzeSessionData('experimentName', 'Experiment000', ...
-%                                        'subjectName', 'AN', ...
-%                                        'sessionNumber', 1);
+%   data = analyzeSessionData('experimentName', 'Experiment000', ...
+%                             'subjectName', 'AN', ...
+%                             'sessionNumber', 1);
 %
 % Description:
 %   Analyze psychophysical data from a single data collection session. Save
-%   the results (struct 'sessionAnalysis') in the specified output folder.
+%   the results (struct 'data') in the specified output folder.
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
@@ -67,100 +67,97 @@ pathToOutputFile = fullfile(pathToOutputFolder,fileName);
 %
 % Load specified data file.
 temp = load(pathToFile,'data'); data = temp.data; clear temp;
+
+% Save session number in 'data' struct.
+data.sessionNumber = sessionNumber;
     
-%% Create vectors with image info
+%% Analyze performance on each condition separately
 %
-% Preallocate vector of target offset amount per image.
-targetChange = nan(length(data.imageNames),1);
+% Get the identifies and number of conditions, and save.
+conditions      = unique(data.imageCondition);
+nConditions     = numel(conditions);
+data.conditions = conditions;
 
-% Preallocate cell array of target offset units per image.
-targetChangeUnits = cell(length(data.imageNames),1);
+% Get the identities and number of comparisons (same per condition).
+comparisons      = unique(data.imageComparison);
+nComparisons     = numel(comparisons);
+data.comparisons = comparisons;
 
-% Break down image file names to get image info.
-for ii = 1:length(data.imageNames)
-    name = data.imageNames{ii};
-    p1   = strfind(name,'banana');
-    p2   = strfind(name,'_');
-    p2b  = p2(2);
+for ii = 1:nConditions
+    % Find image index for the image with the center position for this condition.
+    centerpos = conditions(ii);
+    centerIdx = intersect(find(data.imageCondition==centerpos),find(data.imageComparison==0));
     
-    % Store banana offset amount.
-    targetChange(ii) = sscanf(name(p1+6:p2b-1),'%f');
+    % Get trials in this condition.
+    trials = any(data.trialOrder==centerIdx,2);
     
-    % Store banana offset amount units.
-    targetChangeUnits{ii} = sscanf(name(p2b+1:end-4),'%s');
+    % Get the comparison amount and observer response per trial.
+    offsetsC = data.trialOrderComparison(trials,:);
+    comparisonsC = sum(offsetsC,2);
+    responsesC = data.selectedResponse(trials);
+    
+    % Calculate performance per comparison amount.
+    performanceC = nan(nComparisons,1);
+    for jj = 1:nComparisons
+        comparisonThis = comparisons(jj);
+        offsetsThis    = offsetsC(comparisonsC==comparisonThis,:);
+        responsesThis  = responsesC(comparisonsC==comparisonThis);
+        
+        % Calculate proportion observer chose the comparison as rightward.
+        if comparisonThis==0
+            choseRight = find(responsesThis==2);
+        else
+            choseRight = [intersect(find(offsetsThis(:,1)==0), find(responsesThis==2)); ...
+                          intersect(find(offsetsThis(:,2)==0), find(responsesThis==1))];
+        end
+        performanceC(jj) = numel(choseRight)/numel(responsesThis);
+    end
+    
+    % Save performance for this condition.
+    data.performancePerCondition{ii,1} = performanceC;
 end
 
-%% Create vector of target difference between the two images per trial
-%
-% Get image indices used per trial (col 1: 1st interval; col 2: 2nd interval).
-imageIndicesPerTrial = data.trialOrder;
-
-% Convert each image index to the image's target offset amount.
-targetOffsetsPerTrial = targetChange(imageIndicesPerTrial);
-
-% Calculate difference in target offset amount between the two images per trial.
-targetDiffPerTrial = diff(targetOffsetsPerTrial,1,2);
-
-%% Calculate performance of observer per target difference
-%
-% Get observer response per trial.
-% Key:
-%   1: 2nd target was to the left
-%   2: 2nd target was to the right
-responsePerTrial = data.selectedResponse;
-
-% Get unique target difference amounts.
-targetDiffs = unique(targetDiffPerTrial);
-
-% Calculate performance per target difference.
-performancePerTargetDiff = nan(numel(targetDiffs),1);
-for ii = 1:numel(targetDiffs)
-    
-    % Target difference to analyze.
-    thisD = targetDiffs(ii);
-    
-    % Get observer responses for this target difference.
-    thisO = responsePerTrial(targetDiffPerTrial==thisD);
-    
-    % Calculate performance for this target difference.
-    % For Key above: calculate proportion trials observer reported that 
-    %                the 2nd target was to the right.
-    performancePerTargetDiff(ii,1) = sum(thisO==2)/numel(thisO);
-end
-
-%% Plot performance of observer per target difference
+%% Plot performance on each condition separately
 if plotFigures
+    for ii = 1:nConditions
+        figure;
+        plot(comparisons,data.performancePerCondition{ii},'ok','MarkerFace','k');
+        hold on;
+        title({sprintf('%s%s%s%d: %s %d',experimentName,subjectName,'\_',sessionNumber,'condition',ii),''});
+        xlabel(sprintf('Comparison offset rightward'));
+        ylabel('Proportion chose comparison as rightward');
+        axis([-Inf Inf 0 1]);
+        set(gca,'tickdir','out');
+        box off; hold off;
+    end
+end
+
+%% Plot performance for all conditions combined
+if plotFigures
+    % Average performance across all conditions.
+    performanceAll = nan(nComparisons,nConditions);
+    for ii = 1:nConditions
+        performanceAll(:,ii) = data.performancePerCondition{ii};
+    end
+    performanceAll = mean(performanceAll,2);
+    
+    % Plot average across conditions.
     figure;
-    plot(targetDiffs,performancePerTargetDiff,'ok','MarkerFace','k');
+    plot(comparisons,performanceAll,'ok','MarkerFace','k');
     hold on;
-    title({sprintf('%s:%s%s%d',experimentName,subjectName,'\_',sessionNumber),''});
+    title({sprintf('%s%s%s%d: %s',experimentName,subjectName,'\_',sessionNumber,'all conditions'),''});
     xlabel(sprintf('Comparison offset rightward'));
-    ylabel('Proportion selected rightward');
+    ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
     set(gca,'tickdir','out');
     box off; hold off;
 end
 
 %% Save data analysis results
-%
-% Save data in 'sessionAnalysis' struct.
-sessionAnalysis = struct;
-sessionAnalysis.experimentName           = experimentName;
-sessionAnalysis.subjectName              = subjectName;
-sessionAnalysis.sessionNumber            = sessionNumber;
-sessionAnalysis.fileNamePerImage         = data.imageNames;
-sessionAnalysis.targetOffsetPerImage     = targetChange;
-sessionAnalysis.targetUnitsPerImage      = targetChangeUnits;
-sessionAnalysis.imageIndicesPerTrial     = imageIndicesPerTrial;
-sessionAnalysis.targetOffsetsPerTrial    = targetOffsetsPerTrial;
-sessionAnalysis.targetDiffPerTrial       = targetDiffPerTrial;
-sessionAnalysis.responsePerTrial         = responsePerTrial;
-sessionAnalysis.uniqueTargetDiffs        = targetDiffs;
-sessionAnalysis.performancePerTargetDiff = performancePerTargetDiff;
-    
+
 if saveData 
-    % Save data analysis results file.
-    save(pathToOutputFile,'sessionAnalysis');
+    % Save data struct (with analysis result additions).
+    save(pathToOutputFile,'data');
     fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
 end
 
