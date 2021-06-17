@@ -141,37 +141,6 @@ if plotFigures
     box off; hold off;
 end
 
-% Will plot x-axis values on log scale:
-%{
-if plotFigures
-
-    % Need to plot negative x-axis values on a log scale, so adjust all
-    % values such that all values are shifted up, and adjust x-axis tick
-    % mark labels below.
-    mostneg = min(targetDiffs);
-    targetDiffsShifted = targetDiffs + abs(mostneg) + 1;
-    
-    % Plot shifted x-axis values (then correct x-axis tick mark labels below).
-    figure;
-    semilogx(targetDiffsShifted,performancePerTargetDiff,'ok','MarkerFace','k');
-    hold on;
-    title({sprintf('%s:%s%s%d',experimentName,subjectName,'\_',sessionNumber),''});
-    xlabel(sprintf('Comparison offset rightward'));
-    ylabel('Proportion selected rightward');
-    axis([-Inf Inf 0 1]);
-    set(gca,'tickdir','out');
-    
-    % Set x-axis tick mark locations.
-    xinc = round((max(targetDiffsShifted)-min(targetDiffsShifted))/5);
-    xtick = min(targetDiffsShifted):xinc:max(targetDiffsShifted);
-    set(gca,'XTick',xtick);
-    % Correct the shift performed up to account for negative x-axis values.
-    xticklab = xtick - abs(mostneg) - 1;
-    set(gca,'XTickLabel',xticklab);
-    box off; hold off;
-end
-%}
-
 %% Save data analysis results
 %
 % Save data in 'sessionAnalysis' struct.

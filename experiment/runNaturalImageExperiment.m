@@ -18,7 +18,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'nPresentations' : (scalar)  Number of presentations per image comparison (default: 5)
+%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 20)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
@@ -32,7 +32,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('nPresentations', 5, @isscalar);
+parser.addParameter('nIterations', 20, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
 parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
@@ -42,7 +42,7 @@ parser.addParameter('subjectName', 'AN', @ischar);
 parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
-nPresentations = parser.Results.nPresentations;
+nIterations    = parser.Results.nIterations;
 controlSignal  = parser.Results.controlSignal;
 option1Key     = parser.Results.option1Key;
 option2Key     = parser.Results.option2Key;
@@ -115,68 +115,140 @@ params.option2Key = option2Key;
 % Get info about the images in the image folder.
 fileInfo = dir([pathToFolder '/*.mat']);
 
+% Get the number of images in the folder.
+nImages = numel(fileInfo);
+
 % Get the image file names. Images will be called by their index here.
 imageNames = {fileInfo(:).name}';
 
-% Get the number of images in the folder.
-nImages = numel(imageNames);
-
-%% Create a random trial order for this experiment
+%% Create a random trial order for this session: OVERVIEW
 %
-% Make a list of all image comparison pairs.
-% Each image is compared to each other image.
-%   col 1: image index shown in 1st interval
-%   col 2: image index shown in 2nd interval
-comparisons = nchoosek(1:nImages,2);
+% CONDITION   : Per condition, 1 center position.
+%               Per trial, a pseudorandom change position is compared to the center position.
+%               5 (change left) + 5 (change right) + 1 (no change) = 11 comparisons per condition.
+%
+% COMPARISON  : Per comparison, center position presented randomly in either 1st/2nd interval.
+%               11 comparisons per condition * 2 conditions = 22 total comparisons per block.
+%
+% BLOCK       : Per block, trials will be interspersed from 2 conditions. 
+%
+% ITERATION   : 'nIterations' (default 20) of each block.
+%               Run a complete block (22 total comparisons, pseudorandom order) 
+%               before moving on to next block.
+%               22 total comparisons per block * 20 iterations of each block = 440 trials.
+%
+% NOISE LEVEL : 440 trials make up 1 noise level.
+%               Noise is in task-irrelevant feature/object.
+%               Each noise level is a pool with a Gaussian distribution,
+%               mean of 0, and a set standard deviation.
+%               Per trial, take a random draw from the pool.
+%               20 iterations of a comparison will be made up of 20 random draws.
+%
+% RUN         : Each noise level will be divided into 4 runs.
+%               15+ second break between runs.
+%
+% SESSION     : Per session, 3 noise levels (0, 1, and 2).
+%               Order of noise levels will be randomly assigned per session.
+%               1+ minute break between noise levels.
+%
+% SUBJECT     : 6 sessions per subject.
 
-% Also include images shown in the opposite order to the above.
-comparisonsFlip = flip(comparisons,2);
+%% Create vectors with image info
+%
+% Preallocate vector of condition per image.
+imageCondition = nan(nImages,1);
 
-% Finally, each image is also compared to itself.
-comparisonI = (1:nImages)';
-comparisonI = [comparisonI comparisonI];
+% Preallocate vector of comparison amount per image.
+imageComparison = nan(nImages,1);
 
-% Combine all image comparison pairs into one list.
-comparisons = [comparisons; comparisonsFlip; comparisonI];
-
-% For the specified number of presentations per image comparison (blocks),
-% create a random trial order for the above image comparison pairs.
-numcomp = size(comparisons,1);
-trialOrder = nan(numcomp*nPresentations,2);
-for ii = 1:nPresentations
-    indexorder = randperm(numcomp);
-    trialOrderthis = comparisons(indexorder,:);
-    trialOrder((ii-1)*numcomp+1:ii*numcomp,:) = trialOrderthis;
+% Break down image file names to get image info.
+for ii = 1:nImages
+    name = imageNames{ii};
+    p1   = strfind(name,'center');
+    p2   = strfind(name,'_');
+    p2a  = p2(1);
+    p3   = strfind(name,'comp');
+    p2b  = p2(2);
+    
+    % Label the 'imageNames' indices by their condition.
+    imageCondition(ii) = sscanf(name(p1+6:p2a-3),'%f');
+    
+    % Label the 'imageNames' indices by their comparison amount.
+    imageComparison(ii) = sscanf(name(p3+4:p2b-3),'%f');
 end
 
-% As is, one full set of image comparison pairs (a block) will be presented
-% before a next block is presented. This evenly distributes the tested 
-% pairs across time. However, this may also allow the subject to keep track 
-% of the remaining comparisons in a block.
-% To avoid this, randomly shuffle the trial order within the full
-% experiment trial list (all blocks).
-numTrials = size(trialOrder,1);
-indexorder = randperm(numTrials);
-trialOrder = trialOrder(indexorder,:);
+% Get the identifies and number of conditions.
+conditions  = unique(imageCondition);
+nConditions = numel(conditions);
+
+% Get the identities and number of comparisons (same per condition).
+comparisons  = unique(imageComparison);
+nComparisons = numel(comparisons); 
+
+%% Create a random trial order for this session
+%
+% Create trial list of image index comparisons for a single block.
+trialsPerBlock = nan(nImages,2);
+nrow = 1;
+for jj = 1:nConditions
+    % Find 'imageNames' index for the image with the center position for this condition.
+    centerpos = conditions(jj);
+    centerIdx = intersect(find(imageCondition==centerpos),find(imageComparison==0));
+    
+    % Create trial list of image index comparisons for this condition.
+    thiscondition(:,1) = repmat(centerIdx,nComparisons,1);
+    thiscondition(:,2) = find(imageCondition==centerpos);
+    
+    % Combine all conditions for a single block.
+    trialsPerBlock(nrow:nrow+nComparisons-1,:) = thiscondition;
+    nrow = nrow+nComparisons;
+end
+
+% Per iteration of the block, create a randomized trial order of the block trials.
+nTrials = nImages*nIterations;
+trialOrderPre = nan(nTrials,2);
+nrow = 1;
+for ii = 1:nIterations
+    trialOrderPre(nrow:nrow+nImages-1,:) = trialsPerBlock(randperm(nImages),:);
+    nrow = nrow+nImages;
+end
+
+% Randomize whether the center position is shown in the 1st/2nd interval.
+trialOrder = nan(size(trialOrderPre));
+for ii = 1:nTrials
+    trialOrder(ii,:) = trialOrderPre(ii,randperm(2));
+end
 
 %% Calculate the correct response for each trial
 %
+% Get comparison amount per image index.
+trialOrderComparison = imageComparison(trialOrder);
+
 % The correct response is 1 if the 2nd target is to the left of the 1st target.
 % The correct response is 2 if the 2nd target is to the right of the 1st target.
-% The images are indexed in left-right order, with image index 1 the most left.
-trialDiff = diff(trialOrder,1,2);
-correctResponse = nan(numTrials,1);
+trialDiff = diff(trialOrderComparison,1,2);
+correctResponse = nan(nTrials,1);
 correctResponse(trialDiff <0) = 1; % 2nd target is to the left
 correctResponse(trialDiff >0) = 2; % 2nd target is to the right
 correctResponse(trialDiff==0) = randi(2); % no difference: random assignment
 
-%% Set up vector to keep track of subject response for each trial
-selectedResponse = nan(numTrials,1);
+%% Set up vectors to keep track of trial info
+%
+% Set up vector for subject response per trial.
+selectedResponse = nan(nTrials,1);
+
+% Set up cell array for second stimulus start time per trial
+% (to calculate observer reaction time per trial).
+reactionTimeStart = cell(nTrials,1);
+
+% Set up cell array for observer response time per trial
+% (to calculate observer reaction time per trial).
+reactionTimeEnd = cell(nTrials,1);
 
 %% Begin task
 
 % Note start time of experiment now.
-startTime = datestr(now);
+startTime = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
 
 % Initialize task display.
 [win, params] = initDisplay(params);
@@ -263,6 +335,9 @@ while keepLooping
     win.enableObject('image2');
     win.draw;
     
+    % Store 2nd image start time.
+    reactionTimeStart{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+    
     % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
     win.disableObject('image2');
@@ -279,8 +354,10 @@ while keepLooping
                 switch key.charCode
                     case {option1Key,option2Key}
                         selectedResponse(iiTrial) = getUserResponse(params,key);
+                        % Store observer response time.
+                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
                     case {'q'}
-                        fprintf('Do you want to quit? Type Y for Yes, otherwise give your response \n');
+                        fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response \n');
                         key2 = [];
                         while isempty(key2)
                             key2 = mglGetKeyEvent;
@@ -288,6 +365,8 @@ while keepLooping
                                 switch key2.charCode
                                     case {option1Key,option2Key}
                                         selectedResponse(iiTrial) = getUserResponse(params,key2);
+                                        % Store observer response time.
+                                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
                                     case {'y'}
                                         keepLooping = false;
                                     otherwise
@@ -306,6 +385,8 @@ while keepLooping
                 switch key.charCode
                     case {option1Key,option2Key}
                         selectedResponse(iiTrial) = getUserResponse(params,key);
+                        % Store observer response time.
+                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
                     otherwise
                         key = [];
                 end
@@ -314,7 +395,7 @@ while keepLooping
             if ~isempty(pressedKeyboard)
                 switch pressedKeyboard.charCode
                     case {'q'}
-                        fprintf('Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
+                        fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
                         key2 = [];
                         keyG = [];
                         FlushEvents;
@@ -334,6 +415,8 @@ while keepLooping
                                     case {option1Key,option2Key}
                                         key = keyG;
                                         selectedResponse(iiTrial) = getUserResponse(params,key);
+                                        % Store observer response time.
+                                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
                                     otherwise
                                         keyG = [];
                                 end
@@ -357,18 +440,18 @@ while keepLooping
         end
         mglWaitSecs(params.ITI);        
     else
-        fprintf('Quitting without saving any data.\n');
+        fprintf(2,'Quitting without saving any data.\n');
         saveData = 0;
     end
     
-    % Check if one third of experiment is reached.
-    if iiTrial == ceil(numTrials/3)
-        win.enableObject('oneThirdText');
+    % Check if one quarter of experiment is reached.
+    if iiTrial == ceil(nTrials/4)
+        win.enableObject('oneQuarterText');
         win.disableObject('fp');        
         win.enableObject('fpRed');
         win.draw;
         pause(60);
-        win.disableObject('oneThirdText');
+        win.disableObject('oneQuarterText');
         win.enableObject('restOver');
         win.disableObject('fpRed');
         win.enableObject('fp');
@@ -392,14 +475,45 @@ while keepLooping
         mglGetKeyEvent;
     end
     
-    % Check if two thirds of experiment is reached.
-    if iiTrial == ceil(2*numTrials/3)
-        win.enableObject('twoThirdText');
+    % Check if two quarters of experiment is reached.
+    if iiTrial == ceil(2*nTrials/4)
+        win.enableObject('twoQuartersText');
         win.disableObject('fp');        
         win.enableObject('fpRed');
         win.draw;
         pause(60);
-        win.disableObject('twoThirdText');
+        win.disableObject('twoQuartersText');
+        win.enableObject('restOver');
+        win.disableObject('fpRed');
+        win.enableObject('fp');
+        win.draw;        
+        FlushEvents;
+        % Wait for key press.
+        if strcmp(controlSignal, 'keyboard')
+            key = [];
+            while isempty(key)
+                key = mglGetKeyEvent;
+            end
+        else
+            key = [];
+            while isempty(key)
+                key = gamePad.getKeyEvent();
+            end
+        end
+        % Turn off text.
+        win.disableObject('restOver');
+        % Reset the keyboard queue.
+        mglGetKeyEvent;
+    end
+    
+    % Check if three quarters of experiment is reached.
+    if iiTrial == ceil(3*nTrials/4)
+        win.enableObject('threeQuartersText');
+        win.disableObject('fp');        
+        win.enableObject('fpRed');
+        win.draw;
+        pause(60);
+        win.disableObject('threeQuartersText');
         win.enableObject('restOver');
         win.disableObject('fpRed');
         win.enableObject('fp');
@@ -424,7 +538,7 @@ while keepLooping
     end
         
     % Check if end of experiment is reached.
-    if iiTrial == numTrials
+    if iiTrial == nTrials
         keepLooping = false;
     end
 end
@@ -444,7 +558,7 @@ win.close;
 ListenChar(0);
 
 % Note end time of experiment now.
-endTime = datestr(now);
+endTime = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
 
 %% Save experimental parameters and psychophysical responses
 %
@@ -460,7 +574,7 @@ if saveData
     % Save inputted experimental parameters.
     data.experimentName = experimentName;
     data.subjectName    = subjectName;
-    data.nPresentations = nPresentations;
+    data.nIterations    = nIterations;
     data.controlSignal  = controlSignal;
     data.option1Key     = option1Key;
     data.option2Key     = option2Key;
@@ -486,17 +600,18 @@ if saveData
     data.endTime   = endTime;
     
     % Save image information.
-    data.imageNames = imageNames;
+    data.imageNames      = imageNames;
+    data.imageCondition  = imageCondition;
+    data.imageComparison = imageComparison;
     
-    % Save image indices for each trial.
-    data.trialOrder = trialOrder;
+    % Save trial information.
+    data.trialOrder           = trialOrder;
+    data.trialOrderComparison = trialOrderComparison;
+    data.correctResponse      = correctResponse;
+    data.selectedResponse     = selectedResponse;
+    data.reactionTimeStart    = reactionTimeStart;
+    data.reactionTimeEnd      = reactionTimeEnd;
 
-    % Save correct response for each trial.
-    data.correctResponse = correctResponse;
-    
-    % Save selected response for each trial.
-    data.selectedResponse = selectedResponse;
-    
     % Set path to specific output folder where data will be saved.
     pathToOutputFolder = fullfile(pathToOutput,sprintf('%s%s','subject',subjectName));
     if ~exist(pathToOutputFolder, 'dir')
@@ -563,12 +678,12 @@ try
         'Color', params.textColor, ... % RGB color
         'Name', 'startText'); % Identifier for the object
     
-    % Add text for when experiment is one third over.
-    win.addText('One third of trials complete. Take a 1 minute break.', ... % Text to display
+    % Add text for when experiment is one quarter over.
+    win.addText('One quarter of trials complete. Take a 1 minute break.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
-        'Name', 'oneThirdText'); % Identifier for the object
+        'Name', 'oneQuarterText'); % Identifier for the object
 
     % Add text for when rest period is over.
     win.addText('Rest time complete. Hit any button to continue.', ... % Text to display
@@ -577,12 +692,19 @@ try
         'Color', params.textColor, ... % RGB color
         'Name', 'restOver'); % Identifier for the object
 
-    % Add text for when experiment is two thirds over.
-    win.addText('Two thirds of trials complete. Take a 1 minute break.', ... % Text to display
+    % Add text for when experiment is two quarters over.
+    win.addText('Half of trials complete. Take a 1 minute break.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
-        'Name', 'twoThirdText'); % Identifier for the object
+        'Name', 'twoQuartersText'); % Identifier for the object
+    
+    % Add text for when experiment is three quarters over.
+    win.addText('Three quarters of trials complete. Take a 1 minute break.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'threeQuartersText'); % Identifier for the object
 
     % Add text for when experiment is complete.
     win.addText('Experiment is complete.', ... % Text to display
