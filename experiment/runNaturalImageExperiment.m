@@ -138,7 +138,7 @@ imageNames = {fileInfo(:).name}';
 %               22 total comparisons per block * 20 iterations of each block = 440 trials.
 %
 % NOISE LEVEL : 440 trials make up 1 noise level.
-%               Noise is in task-irrelevant feature/object.
+%               Noise is in a task-irrelevant feature/object.
 %               Each noise level is a pool with a Gaussian distribution,
 %               mean of 0, and a set standard deviation.
 %               Per trial, take a random draw from the pool.
@@ -155,11 +155,12 @@ imageNames = {fileInfo(:).name}';
 
 %% Create vectors with image info
 %
-% Preallocate vector of condition per image.
-imageCondition = nan(nImages,1);
-
-% Preallocate vector of comparison amount per image.
-imageComparison = nan(nImages,1);
+% Preallocate vectors of noise level, noise amount, condition, and 
+% comparison amount per image.
+imageNoiseLevel  = nan(nImages,1);
+imageNoiseAmount = nan(nImages,1);
+imageCondition   = nan(nImages,1);
+imageComparison  = nan(nImages,1);
 
 % Break down image file names to get image info.
 for ii = 1:nImages
@@ -169,54 +170,86 @@ for ii = 1:nImages
     p2a  = p2(1);
     p3   = strfind(name,'comp');
     p2b  = p2(2);
+    p4   = strfind(name,'noise');
+    p2c  = p2(3);
+    p5   = strfind(name,'.mat');
     
-    % Label the 'imageNames' indices by their condition.
-    imageCondition(ii) = sscanf(name(p1+6:p2a-3),'%f');
-    
-    % Label the 'imageNames' indices by their comparison amount.
-    imageComparison(ii) = sscanf(name(p3+4:p2b-3),'%f');
+    % Label the 'imageNames' indices by their condition, comparison amount,
+    % noise level, and noise amount.
+    imageCondition(ii)   = sscanf(name(p1+6:p2a-3),'%f');
+    imageComparison(ii)  = sscanf(name(p3+4:p2b-3),'%f');
+    imageNoiseLevel(ii)  = sscanf(name(p4+5:p2c-1),'%f');
+    imageNoiseAmount(ii) = sscanf(name(p2c+1:p5-4),'%f');
 end
 
-% Get the identifies and number of conditions.
-conditions  = unique(imageCondition);
-nConditions = numel(conditions);
+% Get the identities and number of noise levels, noise amounts, conditions,
+% and comparison amount (same amounts for each condition) per image.
+noiseLevels   = unique(imageNoiseLevel);
+nNoiseLevels  = numel(noiseLevels);
+noiseAmounts  = unique(imageNoiseAmount);
+nNoiseAmounts = numel(noiseAmounts);
+conditions    = unique(imageCondition);
+nConditions   = numel(conditions);
+comparisons   = unique(imageComparison);
+nComparisons  = numel(comparisons); 
 
-% Get the identities and number of comparisons (same per condition).
-comparisons  = unique(imageComparison);
-nComparisons = numel(comparisons); 
-
-%% Create a random trial order for this session
+%% Create a trial order for this session
 %
-% Create trial list of image index comparisons for a single block.
-trialsPerBlock = nan(nImages,2);
-nrow = 1;
-for jj = 1:nConditions
-    % Find 'imageNames' index for the image with the center position for this condition.
-    centerpos = conditions(jj);
-    centerIdx = intersect(find(imageCondition==centerpos),find(imageComparison==0));
-    
-    % Create trial list of image index comparisons for this condition.
-    thiscondition(:,1) = repmat(centerIdx,nComparisons,1);
-    thiscondition(:,2) = find(imageCondition==centerpos);
-    
-    % Combine all conditions for a single block.
-    trialsPerBlock(nrow:nrow+nComparisons-1,:) = thiscondition;
-    nrow = nrow+nComparisons;
-end
+% Preallocate matrix of trial order:
+%   col 1: image index for 1st interval
+%   col 2: image index for 2nd interval
+nTrials    = nImages*nIterations;
+trialOrder = nan(nTrials,2);
+noiserow   = 1;
 
-% Per iteration of the block, create a randomized trial order of the block trials.
-nTrials = nImages*nIterations;
-trialOrderPre = nan(nTrials,2);
-nrow = 1;
-for ii = 1:nIterations
-    trialOrderPre(nrow:nrow+nImages-1,:) = trialsPerBlock(randperm(nImages),:);
-    nrow = nrow+nImages;
-end
+% Preallocate vector of noise level and noise amount (within the level) per trial.
+trialNoiseLevel  = nan(nTrials,1);
+trialNoiseAmount = nan(nTrials,1); 
 
-% Randomize whether the center position is shown in the 1st/2nd interval.
-trialOrder = nan(size(trialOrderPre));
-for ii = 1:nTrials
-    trialOrder(ii,:) = trialOrderPre(ii,randperm(2));
+% Create a trial order per noise level, then combine across noise levels.
+for jj = 1:nNoiseLevels
+
+    % Create trial list of image index comparisons for a single block.
+    noiseL         = noiseLevels(jj);
+    nImagesthis    = sum(imageNoiseLevel==noiseL);
+    trialsPerBlock = nan(nImagesthis,2);
+    nrow           = 1;
+    for ii = 1:nConditions
+        % Find 'imageNames' index for the image with the center position for this condition.
+        centerpos = conditions(ii);
+        centerIdx = intersect(find(imageNoiseLevel==noiseL), ...
+                    intersect(find(imageCondition==centerpos),find(imageComparison==0)));
+        
+        % Create trial list of image index comparisons for this condition.
+        clear thiscondition
+        thiscondition(:,1) = repmat(centerIdx,nComparisons,1);
+        thiscondition(:,2) = intersect(find(imageNoiseLevel==noiseL),find(imageCondition==centerpos));
+        
+        % Combine all conditions for a single block.
+        trialsPerBlock(nrow:nrow+nComparisons-1,:) = thiscondition;
+        nrow = nrow+nComparisons;
+    end
+    
+    % Per iteration of the block, create a randomized trial order of the block trials.
+    nTrialsNoise  = nImagesthis*nIterations;
+    trialOrderPre = nan(nTrialsNoise,2);
+    nrow = 1;
+    for ii = 1:nIterations
+        trialOrderPre(nrow:nrow+nImagesthis-1,:) = trialsPerBlock(randperm(nImagesthis),:);
+        nrow = nrow+nImagesthis;
+    end
+    
+    % Randomize whether the center position is shown in the 1st/2nd interval.
+    trialOrderRand = nan(size(trialOrderPre));
+    for ii = 1:nTrialsNoise
+        trialOrderRand(ii,:) = trialOrderPre(ii,randperm(2));
+    end
+    
+    % Combine trials across noise levels.
+    trialOrder(noiserow:noiserow+nTrialsNoise-1,:) = trialOrderRand;
+    trialNoiseLevel(noiserow:noiserow+nTrialsNoise-1) = noiseL;
+    %trialNoiseAmount(noiserow:noiserow+nTrialsNoise-1) = NEED TO FILL IN!!!
+    noiserow = noiserow+nTrialsNoise;
 end
 
 %% Calculate the correct response for each trial
@@ -600,13 +633,17 @@ if saveData
     data.endTime   = endTime;
     
     % Save image information.
-    data.imageNames      = imageNames;
-    data.imageCondition  = imageCondition;
-    data.imageComparison = imageComparison;
+    data.imageNames       = imageNames;
+    data.imageNoiseLevel  = imageNoiseLevel;
+    data.imageNoiseAmount = imageNoiseAmount;
+    data.imageCondition   = imageCondition;
+    data.imageComparison  = imageComparison;
     
     % Save trial information.
     data.trialOrder           = trialOrder;
     data.trialOrderComparison = trialOrderComparison;
+    data.trialNoiseLevel      = trialNoiseLevel;
+    data.trialNoiseAmount     = trialNoiseAmount;
     data.correctResponse      = correctResponse;
     data.selectedResponse     = selectedResponse;
     data.reactionTimeStart    = reactionTimeStart;
