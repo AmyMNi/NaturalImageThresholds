@@ -15,6 +15,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   2) Center observer's eyes horizontal and vertically using chin and forehead rest
 %   3) Set monitor distance to 75 cm
 %   4) Have observer dark adapt in the dark room for 5 min
+%   5) Instruct observers to press firmly on the gamepad buttons
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
