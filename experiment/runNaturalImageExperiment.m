@@ -18,7 +18,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 15)
+%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
@@ -32,7 +32,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('nIterations', 15, @isscalar);
+parser.addParameter('nIterations', 14, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
 parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
@@ -128,27 +128,29 @@ imageNames = {fileInfo(:).name}';
 %               5 (change left) + 5 (change right) + 1 (no change) = 11 comparisons per condition.
 %
 % COMPARISON  : Per comparison, center position presented randomly in either 1st/2nd interval.
-%               11 comparisons per condition * 2 conditions = 22 total comparisons per block.
 %
 % BLOCK       : Per block, trials will be interspersed from 2 conditions. 
+%               11 comparisons per condition * 2 conditions = 22 total comparisons per block.
 %
-% ITERATION   : 'nIterations' (default 15) of each block.
+% ITERATION   : nIterations (default 14) of each block.
 %               Run a complete block (22 total comparisons, pseudorandom order) 
-%               before moving on to next block.
-%               22 total comparisons per block * 15 iterations of each block = 330 trials.
+%               before moving on to next block iteration.
+%               22 total comparisons per block * 14 iterations of each block = 308 trials.
 %
-% NOISE LEVEL : 330 trials make up 1 noise level.
+% NOISE LEVEL : 308 trials make up 1 noise level.
 %               Noise is in a task-irrelevant feature/object.
 %               Each noise level is a pool with a Gaussian distribution,
 %               mean of 0, and a set standard deviation.
 %               Per trial, take a random draw from the pool.
-%               15 iterations of a comparison will be made up of 15 random draws.
+%               14 iterations of a comparison will be made up of 14 random draws.
 %
 % SESSION     : Per session, 3 noise levels (0, 1, and 2).
-%               Order of noise levels will be randomly assigned per session.
-%               330 trials per noise level * 3 noise levels = 990 trials.
+%               308 trials per noise level * 3 noise levels = 924 trials per session.
 %
-% RUN         : Each session will be divided into 4 runs.
+% RUN         : Each noise level will be divided into 2 runs.
+%               Each run is made up of nIterations/2 blocks.
+%               3 noise levels * 2 runs = 6 runs per session.
+%               The order of runs will be randomly assigned per session.
 %               1 minute break between runs.
 %
 % SUBJECT     : 6 sessions per subject.
@@ -197,8 +199,8 @@ nComparisons  = numel(comparisons);
 %   col 1: image index for 1st interval
 %   col 2: image index for 2nd interval
 nTrialsBlock = nComparisons*nConditions;
-nTrialsNoise = nTrialsBlock*nIterations;
-nTrials      = nTrialsNoise*nNoiseLevels;
+nTrialsRun   = nTrialsBlock*nIterations/2;
+nTrials      = nTrialsRun*2*nNoiseLevels;
 trialOrder   = nan(nTrials,2);
 srow         = 1;
 
@@ -206,14 +208,21 @@ srow         = 1;
 trialNoiseLevel  = nan(nTrials,1);
 trialNoiseAmount = nan(nTrials,1);
 
-% Create a trial order per noise level, then combine across noise levels.
-for jj = 1:nNoiseLevels
-    trialOrderNoise       = nan(nTrialsNoise,2);
-    trialNoiseAmountNoise = nan(nTrialsNoise,1);
-    nrow = 1;
+% Create random order of runs (each noise level divided into two runs).
+allRunsOrdered = [noiseLevels; noiseLevels];
+allRuns        = allRunsOrdered(randperm(numel(allRunsOrdered)));
+
+% Create a trial order per run, then combine across runs.
+for jj = 1:numel(allRuns)
+    noiseLevelthis      = allRuns(jj);
+    trialOrderRun       = nan(nTrialsRun,2);
+    trialNoiseAmountRun = nan(nTrialsRun,1);
+    rrow = 1;
     
-    % Per iteration of a block, create a randomized order of trials within the block.
-    for ii = 1:nIterations
+    % Include nIterations/2 blocks per run.
+    % Complete a block before moving on to the next block.
+    % Within each block, create a randomized order of trials.
+    for ii = 1:nIterations/2
         trialsPerBlock       = nan(nTrialsBlock,2);
         noiseAmountsPerBlock = nan(nTrialsBlock,1);
         brow = 1;
@@ -235,7 +244,7 @@ for jj = 1:nNoiseLevels
                 % noise amounts for this noise level, including the noise amount of
                 % 0 from Noise Level 0) for this condition.
                 imagePool = find(imageComparison==comparisons(iii) & ...
-                    (imageNoiseLevel==noiseLevels(jj) | imageNoiseLevel==0) & ...
+                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0) & ...
                     imageCondition==centerpos);
                 
                 % Randomly draw the comparison image index from the above pool.
@@ -258,17 +267,17 @@ for jj = 1:nNoiseLevels
         trialsPerBlockRand       = trialsPerBlock      (trialsrand,:);
         noiseAmountsPerBlockRand = noiseAmountsPerBlock(trialsrand,1);
         
-        % Combine iterations of blocks for this noise level.
-        trialOrderNoise      (nrow:nrow+nTrialsBlock-1,:) = trialsPerBlockRand;
-        trialNoiseAmountNoise(nrow:nrow+nTrialsBlock-1,1) = noiseAmountsPerBlockRand;
-        nrow = nrow+nTrialsBlock;
+        % Combine iterations of blocks for this run.
+        trialOrderRun      (rrow:rrow+nTrialsBlock-1,:) = trialsPerBlockRand;
+        trialNoiseAmountRun(rrow:rrow+nTrialsBlock-1,1) = noiseAmountsPerBlockRand;
+        rrow = rrow+nTrialsBlock;
     end
     
-    % Combine trials across noise levels.
-    trialOrder      (srow:srow+nTrialsNoise-1,:) = trialOrderNoise;
-    trialNoiseLevel (srow:srow+nTrialsNoise-1,1) = noiseLevels(jj);
-    trialNoiseAmount(srow:srow+nTrialsNoise-1,1) = trialNoiseAmountNoise;
-    srow = srow+nTrialsNoise;
+    % Combine trials across runs.
+    trialOrder      (srow:srow+nTrialsRun-1,:) = trialOrderRun;
+    trialNoiseLevel (srow:srow+nTrialsRun-1,1) = noiseLevelthis;
+    trialNoiseAmount(srow:srow+nTrialsRun-1,1) = trialNoiseAmountRun;
+    srow = srow+nTrialsRun;
 end
 
 %% Calculate the correct response for each trial
