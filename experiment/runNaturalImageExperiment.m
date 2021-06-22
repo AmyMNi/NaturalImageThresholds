@@ -141,8 +141,7 @@ imageNames = {fileInfo(:).name}';
 %               Noise is in a task-irrelevant feature/object.
 %               Each noise level is a pool with a Gaussian distribution,
 %               mean of 0, and a set standard deviation.
-%               Per trial, take a random draw from the pool.
-%               14 iterations of a comparison will be made up of 14 random draws.
+%               Per stimulus (center position & comparison) take a random draw from the pool.
 %
 % SESSION     : Per session, 3 noise levels (0, 1, and 2).
 %               308 trials per noise level * 3 noise levels = 924 trials per session.
@@ -227,33 +226,41 @@ for jj = 1:numel(allRuns)
         noiseAmountsPerBlock = nan(nTrialsBlock,1);
         brow = 1;
         
-        % First create an ordered list of image index comparisons for trials of a single block.
+        % Create an ordered list of image index comparisons for trials of a single block.
         for jjj = 1:nConditions
             
-            % Find 'imageNames' index for the image with the center position for this condition.
-            % This reference image will always be from Noise Level 0.
+            % Get the center position for this condition.
             centerpos = conditions(jjj);
-            centerIdx = find(imageNoiseLevel==0 & imageCondition==centerpos & imageComparison==0);
             
-            % Create ordered list of image index comparisons and noise amounts
-            % for trials for this condition.
+            % For the center position of this condition, create a pool of 
+            % images (of the various noise amounts for this noise level,
+            % including the noise amount of 0 from Noise Level 0).
+            centerPool = find(imageComparison==0 & ...
+                imageCondition==centerpos & ...
+                (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
+
+            % Create ordered list of image index comparisons for trials for this condition.
             trialsPerCondition      = nan(nComparisons,2);
             noiseAmountPerCondition = nan(nComparisons,1);
             for iii = 1:nComparisons
-                % For each comparison amount, create pool of images (of the various
-                % noise amounts for this noise level, including the noise amount of
-                % 0 from Noise Level 0) for this condition.
-                imagePool = find(imageComparison==comparisons(iii) & ...
-                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0) & ...
-                    imageCondition==centerpos);
+                
+                % Randomly draw from the pool of images of the center position.
+                centerthis = centerPool(randi(numel(centerPool)));
+            
+                % For each comparison amount of this condition, create a pool
+                % of images (of the various noise amounts for this noise level,
+                % including the noise amount of 0 from Noise Level 0).
+                comparisonPool = find(imageComparison==comparisons(iii) & ...
+                    imageCondition==centerpos & ...
+                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
                 
                 % Randomly draw the comparison image index from the above pool.
-                thisImage = imagePool(randi(numel(imagePool)));
+                comparisonthis = comparisonPool(randi(numel(comparisonPool)));
                 
                 % Randomize whether the center position is shown in the 1st/2nd interval.
-                thisIndices = [centerIdx thisImage];
+                thisIndices = [centerthis comparisonthis];
                 trialsPerCondition(iii,:)    = thisIndices(randperm(2));
-                noiseAmountPerCondition(iii) = imageNoiseAmount(thisImage);
+                noiseAmountPerCondition(iii) = imageNoiseAmount(comparisonthis);
             end
             
             % Combine ordered trials across all conditions for a single block.
