@@ -18,7 +18,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 20)
+%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 15)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
@@ -32,7 +32,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('nIterations', 20, @isscalar);
+parser.addParameter('nIterations', 15, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
 parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
@@ -121,7 +121,7 @@ nImages = numel(fileInfo);
 % Get the image file names. Images will be called by their index here.
 imageNames = {fileInfo(:).name}';
 
-%% Create a random trial order for this session: OVERVIEW
+%% EXPERIMENT ORGANIZATION
 %
 % CONDITION   : Per condition, 1 center position.
 %               Per trial, a pseudorandom change position is compared to the center position.
@@ -132,24 +132,24 @@ imageNames = {fileInfo(:).name}';
 %
 % BLOCK       : Per block, trials will be interspersed from 2 conditions. 
 %
-% ITERATION   : 'nIterations' (default 20) of each block.
+% ITERATION   : 'nIterations' (default 15) of each block.
 %               Run a complete block (22 total comparisons, pseudorandom order) 
 %               before moving on to next block.
-%               22 total comparisons per block * 20 iterations of each block = 440 trials.
+%               22 total comparisons per block * 15 iterations of each block = 330 trials.
 %
-% NOISE LEVEL : 440 trials make up 1 noise level.
+% NOISE LEVEL : 330 trials make up 1 noise level.
 %               Noise is in a task-irrelevant feature/object.
 %               Each noise level is a pool with a Gaussian distribution,
 %               mean of 0, and a set standard deviation.
 %               Per trial, take a random draw from the pool.
-%               20 iterations of a comparison will be made up of 20 random draws.
-%
-% RUN         : Each noise level will be divided into 4 runs.
-%               15+ second break between runs.
+%               15 iterations of a comparison will be made up of 15 random draws.
 %
 % SESSION     : Per session, 3 noise levels (0, 1, and 2).
 %               Order of noise levels will be randomly assigned per session.
-%               1+ minute break between noise levels.
+%               330 trials per noise level * 3 noise levels = 990 trials.
+%
+% RUN         : Each session will be divided into 4 runs.
+%               1 minute break between runs.
 %
 % SUBJECT     : 6 sessions per subject.
 
@@ -182,12 +182,10 @@ for ii = 1:nImages
     imageNoiseAmount(ii) = sscanf(name(p2c+1:p5-4),'%f');
 end
 
-% Get the identities and number of noise levels, noise amounts, conditions,
-% and comparison amount (same amounts for each condition) per image.
+% Get the identities and number of noise levels, conditions, and comparison 
+% amounts (same amounts for each condition).
 noiseLevels   = unique(imageNoiseLevel);
 nNoiseLevels  = numel(noiseLevels);
-noiseAmounts  = unique(imageNoiseAmount);
-nNoiseAmounts = numel(noiseAmounts);
 conditions    = unique(imageCondition);
 nConditions   = numel(conditions);
 comparisons   = unique(imageComparison);
@@ -198,58 +196,79 @@ nComparisons  = numel(comparisons);
 % Preallocate matrix of trial order:
 %   col 1: image index for 1st interval
 %   col 2: image index for 2nd interval
-nTrials    = nImages*nIterations;
-trialOrder = nan(nTrials,2);
-noiserow   = 1;
+nTrialsBlock = nComparisons*nConditions;
+nTrialsNoise = nTrialsBlock*nIterations;
+nTrials      = nTrialsNoise*nNoiseLevels;
+trialOrder   = nan(nTrials,2);
+srow         = 1;
 
-% Preallocate vector of noise level and noise amount (within the level) per trial.
+% Preallocate vectors of noise level and noise amount (within the level) per trial.
 trialNoiseLevel  = nan(nTrials,1);
-trialNoiseAmount = nan(nTrials,1); 
+trialNoiseAmount = nan(nTrials,1);
 
 % Create a trial order per noise level, then combine across noise levels.
 for jj = 1:nNoiseLevels
-
-    % Create trial list of image index comparisons for a single block.
-    noiseL         = noiseLevels(jj);
-    nImagesthis    = sum(imageNoiseLevel==noiseL);
-    trialsPerBlock = nan(nImagesthis,2);
-    nrow           = 1;
-    for ii = 1:nConditions
-        % Find 'imageNames' index for the image with the center position for this condition.
-        centerpos = conditions(ii);
-        centerIdx = intersect(find(imageNoiseLevel==noiseL), ...
-                    intersect(find(imageCondition==centerpos),find(imageComparison==0)));
-        
-        % Create trial list of image index comparisons for this condition.
-        clear thiscondition
-        thiscondition(:,1) = repmat(centerIdx,nComparisons,1);
-        thiscondition(:,2) = intersect(find(imageNoiseLevel==noiseL),find(imageCondition==centerpos));
-        
-        % Combine all conditions for a single block.
-        trialsPerBlock(nrow:nrow+nComparisons-1,:) = thiscondition;
-        nrow = nrow+nComparisons;
-    end
-    
-    % Per iteration of the block, create a randomized trial order of the block trials.
-    nTrialsNoise  = nImagesthis*nIterations;
-    trialOrderPre = nan(nTrialsNoise,2);
+    trialOrderNoise       = nan(nTrialsNoise,2);
+    trialNoiseAmountNoise = nan(nTrialsNoise,1);
     nrow = 1;
-    for ii = 1:nIterations
-        trialOrderPre(nrow:nrow+nImagesthis-1,:) = trialsPerBlock(randperm(nImagesthis),:);
-        nrow = nrow+nImagesthis;
-    end
     
-    % Randomize whether the center position is shown in the 1st/2nd interval.
-    trialOrderRand = nan(size(trialOrderPre));
-    for ii = 1:nTrialsNoise
-        trialOrderRand(ii,:) = trialOrderPre(ii,randperm(2));
+    % Per iteration of a block, create a randomized order of trials within the block.
+    for ii = 1:nIterations
+        trialsPerBlock       = nan(nTrialsBlock,2);
+        noiseAmountsPerBlock = nan(nTrialsBlock,1);
+        brow = 1;
+        
+        % First create an ordered list of image index comparisons for trials of a single block.
+        for jjj = 1:nConditions
+            
+            % Find 'imageNames' index for the image with the center position for this condition.
+            % This reference image will always be from Noise Level 0.
+            centerpos = conditions(jjj);
+            centerIdx = find(imageNoiseLevel==0 & imageCondition==centerpos & imageComparison==0);
+            
+            % Create ordered list of image index comparisons and noise amounts
+            % for trials for this condition.
+            trialsPerCondition      = nan(nComparisons,2);
+            noiseAmountPerCondition = nan(nComparisons,1);
+            for iii = 1:nComparisons
+                % For each comparison amount, create pool of images (of the various
+                % noise amounts for this noise level, including the noise amount of
+                % 0 from Noise Level 0) for this condition.
+                imagePool = find(imageComparison==comparisons(iii) & ...
+                    (imageNoiseLevel==noiseLevels(jj) | imageNoiseLevel==0) & ...
+                    imageCondition==centerpos);
+                
+                % Randomly draw the comparison image index from the above pool.
+                thisImage = imagePool(randi(numel(imagePool)));
+                
+                % Randomize whether the center position is shown in the 1st/2nd interval.
+                thisIndices = [centerIdx thisImage];
+                trialsPerCondition(iii,:)    = thisIndices(randperm(2));
+                noiseAmountPerCondition(iii) = imageNoiseAmount(thisImage);
+            end
+            
+            % Combine ordered trials across all conditions for a single block.
+            trialsPerBlock      (brow:brow+nComparisons-1,:) = trialsPerCondition;
+            noiseAmountsPerBlock(brow:brow+nComparisons-1,1) = noiseAmountPerCondition;
+            brow = brow+nComparisons;
+        end
+        
+        % Randomize trial order within this single block.
+        trialsrand = randperm(nTrialsBlock);
+        trialsPerBlockRand       = trialsPerBlock      (trialsrand,:);
+        noiseAmountsPerBlockRand = noiseAmountsPerBlock(trialsrand,1);
+        
+        % Combine iterations of blocks for this noise level.
+        trialOrderNoise      (nrow:nrow+nTrialsBlock-1,:) = trialsPerBlockRand;
+        trialNoiseAmountNoise(nrow:nrow+nTrialsBlock-1,1) = noiseAmountsPerBlockRand;
+        nrow = nrow+nTrialsBlock;
     end
     
     % Combine trials across noise levels.
-    trialOrder(noiserow:noiserow+nTrialsNoise-1,:) = trialOrderRand;
-    trialNoiseLevel(noiserow:noiserow+nTrialsNoise-1) = noiseL;
-    %trialNoiseAmount(noiserow:noiserow+nTrialsNoise-1) = NEED TO FILL IN!!!
-    noiserow = noiserow+nTrialsNoise;
+    trialOrder      (srow:srow+nTrialsNoise-1,:) = trialOrderNoise;
+    trialNoiseLevel (srow:srow+nTrialsNoise-1,1) = noiseLevels(jj);
+    trialNoiseAmount(srow:srow+nTrialsNoise-1,1) = trialNoiseAmountNoise;
+    srow = srow+nTrialsNoise;
 end
 
 %% Calculate the correct response for each trial
@@ -321,6 +340,9 @@ end
 win.disableObject('instructions');
 win.disableObject('keyOptions');
 win.disableObject('startText');
+
+% Wait the duration of the intertrial interval.
+mglWaitSecs(params.ITI);
 
 %% Per trial, present images and wait for key press response
 %
@@ -506,6 +528,8 @@ while keepLooping
         win.disableObject('restOver');
         % Reset the keyboard queue.
         mglGetKeyEvent;
+        % Wait the duration of the intertrial interval.
+        mglWaitSecs(params.ITI);
     end
     
     % Check if two quarters of experiment is reached.
@@ -537,6 +561,8 @@ while keepLooping
         win.disableObject('restOver');
         % Reset the keyboard queue.
         mglGetKeyEvent;
+        % Wait the duration of the intertrial interval.
+        mglWaitSecs(params.ITI);
     end
     
     % Check if three quarters of experiment is reached.
@@ -568,6 +594,8 @@ while keepLooping
         win.disableObject('restOver');
         % Reset the keyboard queue.
         mglGetKeyEvent;
+        % Wait the duration of the intertrial interval.
+        mglWaitSecs(params.ITI);
     end
         
     % Check if end of experiment is reached.

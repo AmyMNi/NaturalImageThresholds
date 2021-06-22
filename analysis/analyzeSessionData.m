@@ -94,7 +94,6 @@ for nn = 1:nNoiseLevels
     % Get trial indices for this noise level.
     noiseL       = noiseLevels(nn);
     trialsNoise  = data.trialNoiseLevel==noiseL;
-    nTrialsNoise = sum(trialsNoise);
 
     % Get the image indices, target offset amount, and observer response per trial.
     imagesN    = data.trialOrder(trialsNoise,:);
@@ -106,8 +105,8 @@ for nn = 1:nNoiseLevels
 
         % Find image index for the image with the center position for this condition.
         centerpos = conditions(ii);
-        centerIdx = intersect(find(data.imageNoiseLevel==noiseL), ...
-                    intersect(find(data.imageCondition==centerpos),find(data.imageComparison==0)));
+        centerIdx = find(data.imageNoiseLevel==noiseL & data.imageCondition==centerpos ...
+                       & data.imageComparison==0);
 
         % Get the target offset amounts, comparison amount, and observer response per trial.
         trialsC      = any(imagesN==centerIdx,2);
@@ -126,8 +125,8 @@ for nn = 1:nNoiseLevels
             if comparisonThis==0
                 choseRight = find(responsesThis==2);
             else
-                choseRight = [intersect(find(offsetsThis(:,1)==0), find(responsesThis==2)); ...
-                    intersect(find(offsetsThis(:,2)==0), find(responsesThis==1))];
+                choseRight = [find(offsetsThis(:,1)==0 & responsesThis==2); ...
+                              find(offsetsThis(:,2)==0 & responsesThis==1)];
             end
             performanceC(jj) = numel(choseRight)/numel(responsesThis);
         end
@@ -142,17 +141,24 @@ end
 if plotFigures
     for nn = 1:nNoiseLevels
         for ii = 1:nConditions
-            figure;
+            figure; hold on;
             noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
             performancethis = data.performance.(noiseLevelName).performancePerCondition{ii};
-            plot(comparisons,performancethis,'ok','MarkerFace','k');
-            hold on;
-            title({sprintf('%s%s%s%d: %s%d %s%d',experimentName,subjectName,'\_', sessionNumber, ...
-                           'noiseLevel',noiseLevels(nn),'condition',ii),''});
-            xlabel(sprintf('Comparison offset rightward'));
+            
+            % Plot data and psychometric function fit.
+            [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performancethis);
+            plot(xOffset,performancethis,'ok','MarkerFace','k');
+            plot(xOffset,FittedCurve,'-k','LineWidth',1);
+        
+            % Plot parameters.
+            title({sprintf('%s%s%s%d %s%d %s%d: %s %0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+                           'noiseLevel',noiseLevels(nn),'condition',ii,'threshold =',threshold),''});
+            xlabel(sprintf('Comparison offset rightward (mm)'));
             ylabel('Proportion chose comparison as rightward');
             axis([-Inf Inf 0 1]);
             set(gca,'tickdir','out');
+            set(gca,'XTick',xOffset);
+            set(gca,'XTickLabel',comparisons);
             box off; hold off;
         end
     end
@@ -161,7 +167,8 @@ end
 %% Plot performance for all conditions combined, for each noise level
 if plotFigures
     for nn = 1:nNoiseLevels
-        noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+        figure; hold on;
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
         
         % Average performance across all conditions.
         performanceAll = nan(nComparisons,nConditions);
@@ -170,16 +177,20 @@ if plotFigures
         end
         performanceAll = mean(performanceAll,2);
         
-        % Plot average across conditions.
-        figure;
-        plot(comparisons,performanceAll,'ok','MarkerFace','k');
-        hold on;
-        title({sprintf('%s%s%s%d: %s%d %s',experimentName,subjectName,'\_', sessionNumber, ...
-                           'noiseLevel',noiseLevels(nn),'all conditions'),''});
-        xlabel(sprintf('Comparison offset rightward'));
+        % Plot data and psychometric function fit.
+        [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performanceAll);
+        plot(xOffset,performanceAll,'ok','MarkerFace','k');
+        plot(xOffset,FittedCurve,'-k','LineWidth',1);
+            
+        % Plot parameters.
+        title({sprintf('%s%s%s%d %s%d: %s %0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+            'noiseLevel',noiseLevels(nn),'threshold =',threshold),''});
+        xlabel(sprintf('Comparison offset rightward (mm)'));
         ylabel('Proportion chose comparison as rightward');
         axis([-Inf Inf 0 1]);
         set(gca,'tickdir','out');
+        set(gca,'XTick',xOffset);
+        set(gca,'XTickLabel',comparisons);
         box off; hold off;
     end
 end
@@ -190,6 +201,26 @@ if saveData
     % Save data struct (with analysis result additions).
     save(pathToOutputFile,'data');
     fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
+end
+end
+%% Helper functions
+
+%% Calculate data to plot psychometric function fit
+
+function [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performance)
+
+% Offset x-axis values so that there are no negative values.
+xOffset = comparisons + abs(min(comparisons));
+
+% Calculate Weibull fit.
+[estimates,model] = fitWeibull(xOffset,performance);
+[~,FittedCurve,p] = model(estimates);
+if isnan(p)
+	fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
+end
+
+% Offset threshold according to offset used for x-axis above.
+threshold = p(1) - abs(min(comparisons));
 end
 
 %% End

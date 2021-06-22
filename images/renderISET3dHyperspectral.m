@@ -11,7 +11,7 @@ function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,cal,varargin)
 %   Adapted from t_renderISET3dHyperspectral:
 %   https://github.com/isetbio/ISET3DProjects/tree/main/renderISET3dHyperspectral
 %
-% Required input:
+% Inputs:
 %   scene : (struct) ISET3d scene info
 %   cal   : (struct) Calibration file for this experimental machine
 %
