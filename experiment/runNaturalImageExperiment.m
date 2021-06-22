@@ -356,8 +356,9 @@ end
 win.disableObject('instructions');
 win.disableObject('keyOptions');
 win.disableObject('startText');
+win.draw;
 
-% Wait the duration of the intertrial interval.
+% Wait an intertrial interval before starting.
 mglWaitSecs(params.ITI);
 
 %% Per trial, present images and wait for key press response
@@ -542,10 +543,12 @@ while keepLooping
         end
         % Turn off text.
         win.disableObject('restOver');
+        win.draw;
+        % Wait an intertrial interval before starting.
+        mglWaitSecs(params.ITI);
         % Reset the keyboard queue.
         mglGetKeyEvent;
-        % Wait the duration of the intertrial interval.
-        mglWaitSecs(params.ITI);
+
     end
     
     % Check if two quarters of experiment is reached.
@@ -575,10 +578,11 @@ while keepLooping
         end
         % Turn off text.
         win.disableObject('restOver');
+        win.draw;
+        % Wait an intertrial interval before starting.
+        mglWaitSecs(params.ITI);
         % Reset the keyboard queue.
         mglGetKeyEvent;
-        % Wait the duration of the intertrial interval.
-        mglWaitSecs(params.ITI);
     end
     
     % Check if three quarters of experiment is reached.
@@ -608,10 +612,11 @@ while keepLooping
         end
         % Turn off text.
         win.disableObject('restOver');
+        win.draw;
+        % Wait an intertrial interval before starting.
+        mglWaitSecs(params.ITI);
         % Reset the keyboard queue.
         mglGetKeyEvent;
-        % Wait the duration of the intertrial interval.
-        mglWaitSecs(params.ITI);
     end
         
     % Check if end of experiment is reached.
