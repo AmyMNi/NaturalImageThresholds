@@ -766,7 +766,7 @@ try
         'Name', 'startText'); % Identifier for the object
     
     % Add text for when experiment is one quarter over.
-    win.addText('One quarter of trials complete. Take a 1 minute break.', ... % Text to display
+    win.addText('One quarter of trials complete. Take a minute to stand or stretch.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
@@ -780,14 +780,14 @@ try
         'Name', 'restOver'); % Identifier for the object
 
     % Add text for when experiment is two quarters over.
-    win.addText('Half of trials complete. Take a 1 minute break.', ... % Text to display
+    win.addText('Half of trials complete. Take a minute to stand or stretch.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'twoQuartersText'); % Identifier for the object
     
     % Add text for when experiment is three quarters over.
-    win.addText('Three quarters of trials complete. Take a 1 minute break.', ... % Text to display
+    win.addText('Three quarters of trials complete. Take a minute to stand or stretch.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color

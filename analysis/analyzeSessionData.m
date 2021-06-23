@@ -234,6 +234,15 @@ if isnan(p)
 	fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
 end
 
+% Constrain max parameter to 1.
+if p(3)>1
+    [estimates,model] = fitWeibullMax(xOffset,performance);
+    [~,FittedCurve,p] = model(estimates);
+    if isnan(p)
+        fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
+    end
+end
+
 % Offset threshold according to offset used for x-axis above.
 threshold = p(1) - abs(min(comparisons));
 end
