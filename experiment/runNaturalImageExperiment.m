@@ -172,21 +172,19 @@ imageComparison  = nan(nImages,1);
 % Break down image file names to get image info.
 for ii = 1:nImages
     name = imageNames{ii};
-    p1   = strfind(name,'center');
-    p2   = strfind(name,'_');
-    p2a  = p2(1);
-    p3   = strfind(name,'comp');
-    p2b  = p2(2);
-    p4   = strfind(name,'noise');
-    p2c  = p2(3);
-    p5   = strfind(name,'.mat');
-    
+    p    = strfind(name,'_');
+
     % Label the 'imageNames' indices by their condition, comparison amount,
     % noise level, and noise amount.
-    imageCondition(ii)   = sscanf(name(p1+6:p2a-3),'%f');
-    imageComparison(ii)  = sscanf(name(p3+4:p2b-3),'%f');
-    imageNoiseLevel(ii)  = sscanf(name(p4+5:p2c-1),'%f');
-    imageNoiseAmount(ii) = sscanf(name(p2c+1:p5-4),'%f');
+    s1 = name(1:p(1));
+    s2 = name(p(1):p(2));
+    s3 = name(p(2):p(3));
+    s4 = name(p(3):end);
+    
+    imageCondition(ii)   = str2double(regexp(s1,'[+-]?\d*','Match'));
+    imageComparison(ii)  = str2double(regexp(s2,'[+-]?\d*','Match'));
+    imageNoiseLevel(ii)  = str2double(regexp(s3,'[+-]?\d*','Match'));
+    imageNoiseAmount(ii) = str2double(regexp(s4,'[+-]?\d*','Match'));
 end
 
 % Get the identities and number of noise levels, conditions, and comparison 
