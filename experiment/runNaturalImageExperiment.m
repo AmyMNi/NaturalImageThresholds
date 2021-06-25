@@ -19,7 +19,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'nIterations'    : (scalar)  Number of iterations per image comparison (default: 14)
+%   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
@@ -50,6 +50,11 @@ option2Key     = parser.Results.option2Key;
 giveFeedback   = parser.Results.giveFeedback;
 isDemo         = parser.Results.isDemo;
 subjectName    = parser.Results.subjectName;
+
+% Give warning that experiment will not run if 'nIterations' is an odd number.
+if rem(nIterations,2)==1
+    warning('nIterations must be an even number. Experiment will fail.');
+end
 
 %% Get user input to verify/change inputs
 %
@@ -288,6 +293,33 @@ for jj = 1:numel(allRuns)
     srow = srow+nTrialsRun;
 end
 
+%% Create a trial order for the easy trials
+nEasyTrials = 4;
+
+% Preallocate matrix of trial order.
+easyTrialOrder = nan(nEasyTrials,2);
+trow = 1;
+
+% Create an ordered list of image index comparisons for easy comparisons.
+for jjj = 1:nConditions
+    centerpos = conditions(jjj);
+    centerIdx = find(imageComparison==0 & imageCondition==centerpos & ...
+                imageNoiseLevel==0);
+    compIdx1  = find(imageComparison==comparisons(1) & imageCondition==centerpos & ...
+                imageNoiseLevel==0);
+    thisIndices = [centerIdx compIdx1];
+    easyTrialOrder(trow,:) = thisIndices(randperm(2));
+    trow = trow+1;
+    compIdx2  = find(imageComparison==comparisons(end) & imageCondition==centerpos & ...
+                imageNoiseLevel==0);
+    thisIndices = [centerIdx compIdx2];
+    easyTrialOrder(trow,:) = thisIndices(randperm(2));
+    trow = trow+1;
+end
+
+% Randomize easy trial order.
+easyTrialOrder = easyTrialOrder(randperm(nEasyTrials),:);
+        
 %% Calculate the correct response for each trial
 %
 % Get comparison amount per image index.
@@ -301,10 +333,19 @@ correctResponse(trialDiff <0) = 1; % 2nd target is to the left
 correctResponse(trialDiff >0) = 2; % 2nd target is to the right
 correctResponse(trialDiff==0) = randi(2); % no difference: random assignment
 
+%% Calculate the correct response for each easy trial
+easyTrialOrderComparison = imageComparison(easyTrialOrder);
+easyTrialDiff = diff(easyTrialOrderComparison,1,2);
+easyCorrectResponse = nan(nEasyTrials,1);
+easyCorrectResponse(easyTrialDiff <0) = 1;
+easyCorrectResponse(easyTrialDiff >0) = 2;
+easyCorrectResponse(easyTrialDiff==0) = randi(2);
+
 %% Set up vectors to keep track of trial info
 %
 % Set up vector for subject response per trial.
-selectedResponse = nan(nTrials,1);
+selectedResponse     = nan(nTrials,1);
+easySelectedResponse = nan(nEasyTrials,1);
 
 % Set up cell array for second stimulus start time per trial
 % (to calculate observer reaction time per trial).
@@ -362,21 +403,20 @@ win.draw;
 % Wait an intertrial interval before starting.
 mglWaitSecs(params.ITI);
 
-%% Per trial, present images and wait for key press response
+%% Run easy trials
 %
-% Reset the keyboard queue.
-mglGetKeyEvent;
-
-saveData    = 1;
+% Run 5 easy trials to acclimate the subject. The data will not be saved.
+saveData    = 0;
 keepLooping = 1;
 iiTrial     = 0;
+easyquit    = false;
 
 while keepLooping
     iiTrial = iiTrial + 1; %trial iteration
     
     % Get image index for 1st interval and for 2nd interval.
-    idx1 = trialOrder(iiTrial,1);
-    idx2 = trialOrder(iiTrial,2);
+    idx1 = easyTrialOrder(iiTrial,1);
+    idx2 = easyTrialOrder(iiTrial,2);
     
     % Get RGB image for 1st interval and for 2nd interval.
     file1 = fullfile(pathToFolder,imageNames{idx1});
@@ -408,9 +448,6 @@ while keepLooping
     win.enableObject('image2');
     win.draw;
     
-    % Store 2nd image start time.
-    reactionTimeStart{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
-    
     % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
     win.disableObject('image2');
@@ -426,9 +463,7 @@ while keepLooping
             if ~isempty(key)
                 switch key.charCode
                     case {option1Key,option2Key}
-                        selectedResponse(iiTrial) = getUserResponse(params,key);
-                        % Store observer response time.
-                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
                     case {'q'}
                         fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response \n');
                         key2 = [];
@@ -437,9 +472,7 @@ while keepLooping
                             if ~isempty(key2)
                                 switch key2.charCode
                                     case {option1Key,option2Key}
-                                        selectedResponse(iiTrial) = getUserResponse(params,key2);
-                                        % Store observer response time.
-                                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                                        easySelectedResponse(iiTrial) = getUserResponse(params,key2);
                                     case {'y'}
                                         keepLooping = false;
                                     otherwise
@@ -457,9 +490,7 @@ while keepLooping
             if ~isempty(key)
                 switch key.charCode
                     case {option1Key,option2Key}
-                        selectedResponse(iiTrial) = getUserResponse(params,key);
-                        % Store observer response time.
-                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
                     otherwise
                         key = [];
                 end
@@ -487,9 +518,7 @@ while keepLooping
                                 switch keyG.charCode
                                     case {option1Key,option2Key}
                                         key = keyG;
-                                        selectedResponse(iiTrial) = getUserResponse(params,key);
-                                        % Store observer response time.
-                                        reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
                                     otherwise
                                         keyG = [];
                                 end
@@ -502,10 +531,10 @@ while keepLooping
     
     % Check if the experiment continues, otherwise quit without saving data.    
     if keepLooping
-        fprintf('Selected interval: %d\n',selectedResponse(iiTrial));
+        fprintf('Selected interval: %d\n',easySelectedResponse(iiTrial));
         % Give feedback if option is on.
         if giveFeedback
-            if selectedResponse(iiTrial) == correctResponse(iiTrial)
+            if easySelectedResponse(iiTrial) == easyCorrectResponse(iiTrial)
                 sound(rightSound);
             else
                 sound(wrongSound);
@@ -513,119 +542,280 @@ while keepLooping
         end
         mglWaitSecs(params.ITI);        
     else
+        easyquit = true;
         fprintf(2,'Quitting without saving any data.\n');
-        saveData = 0;
     end
     
-    % Check if one quarter of experiment is reached.
-    if iiTrial == ceil(nTrials/4)
-        win.enableObject('oneQuarterText');
-        win.disableObject('fp');        
-        win.enableObject('fpRed');
-        win.draw;
-        pause(60);
-        win.disableObject('oneQuarterText');
-        win.enableObject('restOver');
-        win.disableObject('fpRed');
-        win.enableObject('fp');
-        win.draw;
-        FlushEvents;
-        % Wait for key press.
-        if strcmp(controlSignal, 'keyboard')
-            key = [];
-            while isempty(key)
-                key = mglGetKeyEvent;
-            end
-        else
-            key = [];
-            while isempty(key)
-                key = gamePad.getKeyEvent();
-            end
-        end
-        % Turn off text.
-        win.disableObject('restOver');
-        win.draw;
-        % Wait an intertrial interval before starting.
-        mglWaitSecs(params.ITI);
-        % Reset the keyboard queue.
-        mglGetKeyEvent;
-
-    end
-    
-    % Check if two quarters of experiment is reached.
-    if iiTrial == ceil(2*nTrials/4)
-        win.enableObject('twoQuartersText');
-        win.disableObject('fp');        
-        win.enableObject('fpRed');
-        win.draw;
-        pause(60);
-        win.disableObject('twoQuartersText');
-        win.enableObject('restOver');
-        win.disableObject('fpRed');
-        win.enableObject('fp');
-        win.draw;        
-        FlushEvents;
-        % Wait for key press.
-        if strcmp(controlSignal, 'keyboard')
-            key = [];
-            while isempty(key)
-                key = mglGetKeyEvent;
-            end
-        else
-            key = [];
-            while isempty(key)
-                key = gamePad.getKeyEvent();
-            end
-        end
-        % Turn off text.
-        win.disableObject('restOver');
-        win.draw;
-        % Wait an intertrial interval before starting.
-        mglWaitSecs(params.ITI);
-        % Reset the keyboard queue.
-        mglGetKeyEvent;
-    end
-    
-    % Check if three quarters of experiment is reached.
-    if iiTrial == ceil(3*nTrials/4)
-        win.enableObject('threeQuartersText');
-        win.disableObject('fp');        
-        win.enableObject('fpRed');
-        win.draw;
-        pause(60);
-        win.disableObject('threeQuartersText');
-        win.enableObject('restOver');
-        win.disableObject('fpRed');
-        win.enableObject('fp');
-        win.draw;        
-        FlushEvents;
-        % Wait for key press.
-        if strcmp(controlSignal, 'keyboard')
-            key = [];
-            while isempty(key)
-                key = mglGetKeyEvent;
-            end
-        else
-            key = [];
-            while isempty(key)
-                key = gamePad.getKeyEvent();
-            end
-        end
-        % Turn off text.
-        win.disableObject('restOver');
-        win.draw;
-        % Wait an intertrial interval before starting.
-        mglWaitSecs(params.ITI);
-        % Reset the keyboard queue.
-        mglGetKeyEvent;
-    end
-        
     % Check if end of experiment is reached.
-    if iiTrial == nTrials
+    if iiTrial == nEasyTrials
         keepLooping = false;
     end
 end
 
+%% Per trial, present images and wait for key press response
+if ~easyquit
+    % Reset the keyboard queue.
+    mglGetKeyEvent;
+    
+    saveData    = 1;
+    keepLooping = 1;
+    iiTrial     = 0;
+    
+    while keepLooping
+        iiTrial = iiTrial + 1; %trial iteration
+        
+        % Get image index for 1st interval and for 2nd interval.
+        idx1 = trialOrder(iiTrial,1);
+        idx2 = trialOrder(iiTrial,2);
+        
+        % Get RGB image for 1st interval and for 2nd interval.
+        file1 = fullfile(pathToFolder,imageNames{idx1});
+        file2 = fullfile(pathToFolder,imageNames{idx2});
+        temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+        temp = load(file2,'RGBImage'); image2 = temp.RGBImage; clear temp;
+        
+        % Flip images.
+        image1 = image1(end:-1:1,:,:);
+        image2 = image2(end:-1:1,:,:);
+        
+        % Write the images into the window and disable.
+        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+        win.disableObject('image1');
+        win.disableObject('image2');
+        
+        % Enable 1st image and draw.
+        win.enableObject('image1');
+        win.draw;
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image1');
+        win.draw;
+        
+        % Wait for ISI and show 2nd image.
+        mglWaitSecs(params.ISI);
+        win.enableObject('image2');
+        win.draw;
+        
+        % Store 2nd image start time.
+        reactionTimeStart{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image2');
+        win.draw;
+        
+        % Wait for key press response.
+        FlushEvents;
+        key =[];
+        while isempty(key)
+            % Get user response from keyboard.
+            if strcmp(controlSignal, 'keyboard')
+                key = mglGetKeyEvent;
+                if ~isempty(key)
+                    switch key.charCode
+                        case {option1Key,option2Key}
+                            selectedResponse(iiTrial) = getUserResponse(params,key);
+                            % Store observer response time.
+                            reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                        case {'q'}
+                            fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response \n');
+                            key2 = [];
+                            while isempty(key2)
+                                key2 = mglGetKeyEvent;
+                                if ~isempty(key2)
+                                    switch key2.charCode
+                                        case {option1Key,option2Key}
+                                            selectedResponse(iiTrial) = getUserResponse(params,key2);
+                                            % Store observer response time.
+                                            reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                                        case {'y'}
+                                            keepLooping = false;
+                                        otherwise
+                                            key2 = [];
+                                    end
+                                end
+                            end
+                        otherwise
+                            key = [];
+                    end
+                end
+                % Get user response from gamePad.
+            else
+                key = gamePad.getKeyEvent();
+                if ~isempty(key)
+                    switch key.charCode
+                        case {option1Key,option2Key}
+                            selectedResponse(iiTrial) = getUserResponse(params,key);
+                            % Store observer response time.
+                            reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                        otherwise
+                            key = [];
+                    end
+                end
+                pressedKeyboard = mglGetKeyEvent;
+                if ~isempty(pressedKeyboard)
+                    switch pressedKeyboard.charCode
+                        case {'q'}
+                            fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
+                            key2 = [];
+                            keyG = [];
+                            FlushEvents;
+                            while isempty(key2) && isempty(keyG)
+                                key2 = mglGetKeyEvent;
+                                keyG = gamePad.getKeyEvent();
+                                if ~isempty(key2)
+                                    switch key2.charCode
+                                        case {'y'}
+                                            keepLooping = false;
+                                            key = 0; % set key = 0 in order to exit this loop
+                                        otherwise
+                                            key2 = [];
+                                    end
+                                elseif ~isempty(keyG)
+                                    switch keyG.charCode
+                                        case {option1Key,option2Key}
+                                            key = keyG;
+                                            selectedResponse(iiTrial) = getUserResponse(params,key);
+                                            % Store observer response time.
+                                            reactionTimeEnd{iiTrial} = datestr(now,'mm/dd/yyyy HH:MM:SS.FFF');
+                                        otherwise
+                                            keyG = [];
+                                    end
+                                end
+                            end
+                    end
+                end
+            end
+        end
+        
+        % Check if the experiment continues, otherwise quit without saving data.
+        if keepLooping
+            fprintf('Selected interval: %d\n',selectedResponse(iiTrial));
+            % Give feedback if option is on.
+            if giveFeedback
+                if selectedResponse(iiTrial) == correctResponse(iiTrial)
+                    sound(rightSound);
+                else
+                    sound(wrongSound);
+                end
+            end
+            mglWaitSecs(params.ITI);
+        else
+            fprintf(2,'Quitting without saving any data.\n');
+            saveData = 0;
+        end
+        
+        % Check if one quarter of experiment is reached.
+        if iiTrial == ceil(nTrials/4)
+            win.enableObject('oneQuarterText');
+            win.disableObject('fp');
+            win.enableObject('fpRed');
+            win.draw;
+            pause(60);
+            win.disableObject('oneQuarterText');
+            win.enableObject('restOver');
+            win.disableObject('fpRed');
+            win.enableObject('fp');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            % Wait an intertrial interval before starting.
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+            
+        end
+        
+        % Check if two quarters of experiment is reached.
+        if iiTrial == ceil(2*nTrials/4)
+            win.enableObject('twoQuartersText');
+            win.disableObject('fp');
+            win.enableObject('fpRed');
+            win.draw;
+            pause(60);
+            win.disableObject('twoQuartersText');
+            win.enableObject('restOver');
+            win.disableObject('fpRed');
+            win.enableObject('fp');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            % Wait an intertrial interval before starting.
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
+        
+        % Check if three quarters of experiment is reached.
+        if iiTrial == ceil(3*nTrials/4)
+            win.enableObject('threeQuartersText');
+            win.disableObject('fp');
+            win.enableObject('fpRed');
+            win.draw;
+            pause(60);
+            win.disableObject('threeQuartersText');
+            win.enableObject('restOver');
+            win.disableObject('fpRed');
+            win.enableObject('fp');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            % Wait an intertrial interval before starting.
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
+        
+        % Check if end of experiment is reached.
+        if iiTrial == nTrials
+            keepLooping = false;
+        end
+    end
+end
 %% Close up experiment
 %
 % Show end of experiment text.
