@@ -64,19 +64,24 @@ fileInfo = dir([pathToFolder '/*.mat']);
 for ii = 1:length(fileInfo)
     
     % Specify the .mat file.
-    fileToLoad = fullfile(pathToFolder,fileInfo(ii).name);
+    fileToLoad  = fullfile(pathToFolder,fileInfo(ii).name);
+    fileToCheck = fullfile(pathToOutput,fileInfo(ii).name);
     
-    % Load the 'scene' variable contained in this .mat file.
-    temp = load(fileToLoad,'scene'); scene = temp.scene; clear temp;
-    
-    % Convert this ISET3d scene to a metameric RGB image.
-    % Input whether to display the RGBImage and/or the sRGBImage.
-    RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',true,'showSRGB',false);
-
-    % Save the RGB image in the output folder.
-    savedFile = fullfile(pathToOutput,fileInfo(ii).name);
-    save(savedFile,'RGBImage');
-    fprintf('RGB image saved as %s\n', fileInfo(ii).name);
+    % If file hasn't already been converted to an RGB imate, convert and save it.
+    if ~isfile(fileToCheck)
+        
+        % Load the 'scene' variable contained in this .mat file.
+        temp = load(fileToLoad,'scene'); scene = temp.scene; clear temp;
+        
+        % Convert this ISET3d scene to a metameric RGB image.
+        % Input whether to display the RGBImage and/or the sRGBImage.
+        RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',true,'showSRGB',false);
+        
+        % Save the RGB image in the output folder.
+        savedFile = fullfile(pathToOutput,fileInfo(ii).name);
+        save(savedFile,'RGBImage');
+        fprintf('RGB image saved as %s\n', fileInfo(ii).name);
+    end
 end
 
 %% End
