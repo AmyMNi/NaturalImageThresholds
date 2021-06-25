@@ -64,11 +64,11 @@ fileInfo = dir([pathToFolder '/*.mat']);
 for ii = 1:length(fileInfo)
     
     % Specify the .mat file.
-    fileToLoad  = fullfile(pathToFolder,fileInfo(ii).name);
-    fileToCheck = fullfile(pathToOutput,fileInfo(ii).name);
+    fileToLoad = fullfile(pathToFolder,fileInfo(ii).name);
+    fileToSave = fullfile(pathToOutput,fileInfo(ii).name);
     
-    % If file hasn't already been converted to an RGB imate, convert and save it.
-    if ~isfile(fileToCheck)
+    % If the file hasn't already been converted to an RGB image, convert and save it.
+    if ~isfile(fileToSave)
         
         % Load the 'scene' variable contained in this .mat file.
         temp = load(fileToLoad,'scene'); scene = temp.scene; clear temp;
@@ -78,8 +78,7 @@ for ii = 1:length(fileInfo)
         RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',true,'showSRGB',false);
         
         % Save the RGB image in the output folder.
-        savedFile = fullfile(pathToOutput,fileInfo(ii).name);
-        save(savedFile,'RGBImage');
+        save(fileToSave,'RGBImage');
         fprintf('RGB image saved as %s\n', fileInfo(ii).name);
     end
 end
