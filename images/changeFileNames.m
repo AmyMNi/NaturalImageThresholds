@@ -61,17 +61,18 @@ for ii = 1:length(fileInfo)
     if ismember(imageNoiseAmount,[-30 -27 -24 -21 -18 18 21 24 27 30])
         
         % Specify new file name.
-        fileNameNew = sprintf('%s%s%s%s',s1,s2,'_noise2',s4);
-        % Specify new file path.
-        fileToSave = fullfile(pathToOutput,fileNameNew);
- 
-        % Load the 'scene' variable contained in this .mat file.
-        temp = load(fileToLoad,'scene'); scene = temp.scene; clear temp;
-        
-        % Save renamed file in the new output folder.
-        save(fileToSave,'scene');
-        fprintf('Renamed file saved as %s\n', fileToSave);
+        fileName = sprintf('%s%s%s%s',s1,s2,'_noise2',s4);
     end
+ 
+    % Load the 'scene' variable contained in this .mat file.
+    temp = load(fileToLoad,'scene'); scene = temp.scene; clear temp;
+    
+    % Specify new file path.
+    fileToSave = fullfile(pathToOutput,fileName);
+    
+    % Save renamed file in the new output folder.
+    save(fileToSave,'scene');
+    fprintf('Renamed file saved as %s\n', fileToSave);
 end
 
 %% End
