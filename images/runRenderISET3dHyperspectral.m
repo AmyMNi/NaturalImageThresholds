@@ -75,7 +75,7 @@ for ii = 1:length(fileInfo)
         
         % Convert this ISET3d scene to a metameric RGB image.
         % Input whether to display the RGBImage and/or the sRGBImage.
-        RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',true,'showSRGB',false);
+        RGBImage = renderISET3dHyperspectral(scene,cal,'showRGB',false,'showSRGB',false);
         
         % Save the RGB image in the output folder.
         save(fileToSave,'RGBImage');
