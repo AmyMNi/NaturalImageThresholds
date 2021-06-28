@@ -209,7 +209,7 @@ srow         = 1;
 
 % Preallocate vectors of noise level and noise amount (within the level) per trial.
 trialNoiseLevel  = nan(nTrials,1);
-trialNoiseAmount = nan(nTrials,1);
+trialNoiseAmount = nan(nTrials,2);
 
 % Create random order of runs (each noise level divided into two runs).
 allRunsOrdered = [noiseLevels; noiseLevels];
@@ -219,7 +219,7 @@ allRuns        = allRunsOrdered(randperm(numel(allRunsOrdered)));
 for jj = 1:numel(allRuns)
     noiseLevelthis      = allRuns(jj);
     trialOrderRun       = nan(nTrialsRun,2);
-    trialNoiseAmountRun = nan(nTrialsRun,1);
+    trialNoiseAmountRun = nan(nTrialsRun,2);
     rrow = 1;
     
     % Include nIterations/2 blocks per run.
@@ -227,7 +227,7 @@ for jj = 1:numel(allRuns)
     % Within each block, create a randomized order of trials.
     for ii = 1:nIterations/2
         trialsPerBlock       = nan(nTrialsBlock,2);
-        noiseAmountsPerBlock = nan(nTrialsBlock,1);
+        noiseAmountsPerBlock = nan(nTrialsBlock,2);
         brow = 1;
         
         % Create an ordered list of image index comparisons for trials of a single block.
@@ -236,58 +236,90 @@ for jj = 1:numel(allRuns)
             % Get the center position for this condition.
             centerpos = conditions(jjj);
             
-            % For the center position of this condition, create a pool of 
-            % images (of the various noise amounts for this noise level,
-            % including the noise amount of 0 from Noise Level 0).
-            centerPool = find(imageComparison==0 & ...
-                imageCondition==centerpos & ...
-                (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
-
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % NOTE: currently using evenly distributed pool (not Gaussian)
+            % NOTE: currently including all lower noise levels in current
+            %       noise level (e.g., noise level 2 includes levels 0 & 1)
+            if noiseLevelthis==2
+                % For the center position of this condition, create a pool of
+                % images (of the various noise amounts for this noise level,
+                % including the noise amounts from noise levels 0 and 1).
+                centerPool = find(imageComparison==0 & ...
+                    imageCondition==centerpos & ...
+                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0 | imageNoiseLevel==1));
+            else
+                % For the center position of this condition, create a pool of
+                % images (of the various noise amounts for this noise level,
+                % including the noise amount of 0 from Noise Level 0).
+                centerPool = find(imageComparison==0 & ...
+                    imageCondition==centerpos & ...
+                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
+            end
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
             % Create ordered list of image index comparisons for trials for this condition.
             trialsPerCondition      = nan(nComparisons,2);
-            noiseAmountPerCondition = nan(nComparisons,1);
+            noiseAmountPerCondition = nan(nComparisons,2);
             for iii = 1:nComparisons
                 
                 % Randomly draw from the pool of images of the center position.
                 centerthis = centerPool(randi(numel(centerPool)));
-            
-                % For each comparison amount of this condition, create a pool
-                % of images (of the various noise amounts for this noise level,
-                % including the noise amount of 0 from Noise Level 0).
-                comparisonPool = find(imageComparison==comparisons(iii) & ...
-                    imageCondition==centerpos & ...
-                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
                 
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: same as above notes
+                if noiseLevelthis==2
+                    % For each comparison amount of this condition, create a pool
+                    % of images (of the various noise amounts for this noise level,
+                    % including the noise amounts from noise levels 0 and 1).
+                    comparisonPool = find(imageComparison==comparisons(iii) & ...
+                        imageCondition==centerpos & ...
+                        (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0 | imageNoiseLevel==1));
+                else
+                    % For each comparison amount of this condition, create a pool
+                    % of images (of the various noise amounts for this noise level,
+                    % including the noise amount of 0 from Noise Level 0).
+                    comparisonPool = find(imageComparison==comparisons(iii) & ...
+                        imageCondition==centerpos & ...
+                        (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
+                end
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
                 % Randomly draw the comparison image index from the above pool.
                 comparisonthis = comparisonPool(randi(numel(comparisonPool)));
                 
                 % Randomize whether the center position is shown in the 1st/2nd interval.
-                thisIndices = [centerthis comparisonthis];
-                trialsPerCondition(iii,:)    = thisIndices(randperm(2));
-                noiseAmountPerCondition(iii) = imageNoiseAmount(comparisonthis);
+                thisIndices      = [centerthis comparisonthis];
+                thisNoiseAmounts = imageNoiseAmount(thisIndices)';
+                orderrand        = randperm(2);
+                trialsPerCondition(iii,:)      = thisIndices(orderrand);
+                noiseAmountPerCondition(iii,:) = thisNoiseAmounts(orderrand);
             end
             
             % Combine ordered trials across all conditions for a single block.
             trialsPerBlock      (brow:brow+nComparisons-1,:) = trialsPerCondition;
-            noiseAmountsPerBlock(brow:brow+nComparisons-1,1) = noiseAmountPerCondition;
+            noiseAmountsPerBlock(brow:brow+nComparisons-1,:) = noiseAmountPerCondition;
             brow = brow+nComparisons;
         end
         
         % Randomize trial order within this single block.
         trialsrand = randperm(nTrialsBlock);
         trialsPerBlockRand       = trialsPerBlock      (trialsrand,:);
-        noiseAmountsPerBlockRand = noiseAmountsPerBlock(trialsrand,1);
+        noiseAmountsPerBlockRand = noiseAmountsPerBlock(trialsrand,:);
         
         % Combine iterations of blocks for this run.
         trialOrderRun      (rrow:rrow+nTrialsBlock-1,:) = trialsPerBlockRand;
-        trialNoiseAmountRun(rrow:rrow+nTrialsBlock-1,1) = noiseAmountsPerBlockRand;
+        trialNoiseAmountRun(rrow:rrow+nTrialsBlock-1,:) = noiseAmountsPerBlockRand;
         rrow = rrow+nTrialsBlock;
     end
     
     % Combine trials across runs.
     trialOrder      (srow:srow+nTrialsRun-1,:) = trialOrderRun;
     trialNoiseLevel (srow:srow+nTrialsRun-1,1) = noiseLevelthis;
-    trialNoiseAmount(srow:srow+nTrialsRun-1,1) = trialNoiseAmountRun;
+    trialNoiseAmount(srow:srow+nTrialsRun-1,:) = trialNoiseAmountRun;
     srow = srow+nTrialsRun;
 end
 
@@ -705,108 +737,284 @@ if ~easyquit
             saveData = 0;
         end
         
-        % Check if one quarter of experiment is reached.
-        if iiTrial == ceil(nTrials/4)
-            win.enableObject('oneQuarterText');
-            win.disableObject('fp');
-            win.enableObject('fpRed');
-            win.draw;
-            pause(60);
-            win.disableObject('oneQuarterText');
-            win.enableObject('restOver');
-            win.disableObject('fpRed');
-            win.enableObject('fp');
-            win.draw;
-            FlushEvents;
-            % Wait for key press.
-            if strcmp(controlSignal, 'keyboard')
-                key = [];
-                while isempty(key)
-                    key = mglGetKeyEvent;
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % NOTE: includes both options of 4 runs or 6 runs
+        if nNoiseLevels<3
+            % Check if one quarter of experiment is reached.
+            if iiTrial == ceil(nTrials/4)
+                win.enableObject('oneQuarterText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('oneQuarterText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
                 end
-            else
-                key = [];
-                while isempty(key)
-                    key = gamePad.getKeyEvent();
-                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
             end
-            % Turn off text.
-            win.disableObject('restOver');
-            win.draw;
-            % Wait an intertrial interval before starting.
-            mglWaitSecs(params.ITI);
-            % Reset the keyboard queue.
-            mglGetKeyEvent;
             
-        end
-        
-        % Check if two quarters of experiment is reached.
-        if iiTrial == ceil(2*nTrials/4)
-            win.enableObject('twoQuartersText');
-            win.disableObject('fp');
-            win.enableObject('fpRed');
-            win.draw;
-            pause(60);
-            win.disableObject('twoQuartersText');
-            win.enableObject('restOver');
-            win.disableObject('fpRed');
-            win.enableObject('fp');
-            win.draw;
-            FlushEvents;
-            % Wait for key press.
-            if strcmp(controlSignal, 'keyboard')
-                key = [];
-                while isempty(key)
-                    key = mglGetKeyEvent;
+            % Check if two quarters of experiment is reached.
+            if iiTrial == ceil(2*nTrials/4)
+                win.enableObject('twoQuartersText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('twoQuartersText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
                 end
-            else
-                key = [];
-                while isempty(key)
-                    key = gamePad.getKeyEvent();
-                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
             end
-            % Turn off text.
-            win.disableObject('restOver');
-            win.draw;
-            % Wait an intertrial interval before starting.
-            mglWaitSecs(params.ITI);
-            % Reset the keyboard queue.
-            mglGetKeyEvent;
-        end
-        
-        % Check if three quarters of experiment is reached.
-        if iiTrial == ceil(3*nTrials/4)
-            win.enableObject('threeQuartersText');
-            win.disableObject('fp');
-            win.enableObject('fpRed');
-            win.draw;
-            pause(60);
-            win.disableObject('threeQuartersText');
-            win.enableObject('restOver');
-            win.disableObject('fpRed');
-            win.enableObject('fp');
-            win.draw;
-            FlushEvents;
-            % Wait for key press.
-            if strcmp(controlSignal, 'keyboard')
-                key = [];
-                while isempty(key)
-                    key = mglGetKeyEvent;
+            
+            % Check if three quarters of experiment is reached.
+            if iiTrial == ceil(3*nTrials/4)
+                win.enableObject('threeQuartersText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('threeQuartersText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
                 end
-            else
-                key = [];
-                while isempty(key)
-                    key = gamePad.getKeyEvent();
-                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
             end
-            % Turn off text.
-            win.disableObject('restOver');
-            win.draw;
-            % Wait an intertrial interval before starting.
-            mglWaitSecs(params.ITI);
-            % Reset the keyboard queue.
-            mglGetKeyEvent;
+        else
+            % Check if 1/6 of experiment is reached.
+            if iiTrial == ceil(nTrials/6)
+                win.enableObject('oneSixthText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('oneSixthText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
+                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
+            end
+            
+            % Check if 2/6 of experiment is reached.
+            if iiTrial == ceil(2*nTrials/6)
+                win.enableObject('twoSixthsText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('twoSixthsText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
+                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
+            end
+            
+            % Check if 3/6 of experiment is reached.
+            if iiTrial == ceil(3*nTrials/6)
+                win.enableObject('threeSixthsText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('threeSixthsText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
+                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
+            end
+            
+            % Check if 4/6 of experiment is reached.
+            if iiTrial == ceil(4*nTrials/6)
+                win.enableObject('fourSixthsText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('fourSixthsText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
+                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
+            end
+            
+            % Check if 5/6 of experiment is reached.
+            if iiTrial == ceil(5*nTrials/6)
+                win.enableObject('fiveSixthsText');
+                win.disableObject('fp');
+                win.enableObject('fpRed');
+                win.draw;
+                pause(60);
+                win.disableObject('fiveSixthsText');
+                win.enableObject('restOver');
+                win.disableObject('fpRed');
+                win.enableObject('fp');
+                win.draw;
+                FlushEvents;
+                % Wait for key press.
+                if strcmp(controlSignal, 'keyboard')
+                    key = [];
+                    while isempty(key)
+                        key = mglGetKeyEvent;
+                    end
+                else
+                    key = [];
+                    while isempty(key)
+                        key = gamePad.getKeyEvent();
+                    end
+                end
+                % Turn off text.
+                win.disableObject('restOver');
+                win.draw;
+                % Wait an intertrial interval before starting.
+                mglWaitSecs(params.ITI);
+                % Reset the keyboard queue.
+                mglGetKeyEvent;
+            end
         end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % Check if end of experiment is reached.
         if iiTrial == nTrials
@@ -952,6 +1160,10 @@ try
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'startText'); % Identifier for the object
+ 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE: includes text for both options of 4 runs or 6 runs
     
     % Add text for when experiment is one quarter over.
     win.addText('One quarter of trials complete. Take a minute to stand or stretch.', ... % Text to display
@@ -980,7 +1192,44 @@ try
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'threeQuartersText'); % Identifier for the object
-
+    
+    % Add text for when experiment is 1/6 over.
+    win.addText('One sixth of trials complete. Take a minute to stand or stretch.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'oneSixthText'); % Identifier for the object
+    
+    % Add text for when experiment is 2/6 over.
+    win.addText('One third of trials complete. Take a minute to stand or stretch.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'twoSixthsText'); % Identifier for the object
+    
+    % Add text for when experiment is 3/6 over.
+    win.addText('One half trials complete. Take a minute to stand or stretch.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'threeSixthsText'); % Identifier for the object
+    
+    % Add text for when experiment is 4/6 over.
+    win.addText('Two thirds of trials complete. Take a minute to stand or stretch.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'fourSixthsText'); % Identifier for the object
+    
+    % Add text for when experiment is 5/6 over.
+    win.addText('Five sixths of trials complete. Take a minute to stand or stretch.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'fiveSixthsText'); % Identifier for the object
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     % Add text for when experiment is complete.
     win.addText('Experiment is complete.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)

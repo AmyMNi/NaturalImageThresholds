@@ -101,7 +101,7 @@ for nn = 1:nNoiseLevels
     % observer response per trial.
     imagesN       = data.trialOrder(trialsNoise,:);
     offsetsN      = data.trialOrderComparison(trialsNoise,:);
-    noiseAmountsN = data.trialNoiseAmount(trialsNoise,1);
+    noiseAmountsN = data.trialNoiseAmount(trialsNoise,:);
     responsesN    = data.selectedResponse(trialsNoise);
     
     % Analyze performance on each condition separately.
@@ -122,7 +122,7 @@ for nn = 1:nNoiseLevels
         trialsC       = any(ismember(imagesN,centerPool),2);
         offsetsC      = offsetsN(trialsC,:);
         comparisonsC  = sum(offsetsC,2);
-        noiseAmountsC = noiseAmountsN(trialsC); 
+        noiseAmountsC = noiseAmountsN(trialsC,:); 
         responsesC    = responsesN(trialsC);
         
         % Calculate performance per comparison amount.
