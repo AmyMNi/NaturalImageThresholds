@@ -11,7 +11,7 @@ function changeFileNames(varargin)
 % Optional parameter/value:
 %   'experimentName' : (string) Name of experiment folder (default: 'Experiment000')
 % 
-% History:
+% History: 
 %   06/26/21  amn  Wrote it.
 
 %% Parse the input
