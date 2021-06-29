@@ -109,13 +109,28 @@ for nn = 1:nNoiseLevels
         
         % Get the center position for this condition.
         centerpos = conditions(ii);
-            
-        % For the center position of this condition, get the pool of
-        % images (of the various noise amounts for this noise level,
-        % including the noise amount of 0 from Noise Level 0).
-        centerPool = find(data.imageComparison==0 & ...
-            data.imageCondition==centerpos & ...
-            (data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0));
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % NOTE: currently including all lower noise levels in current
+        %       noise level (e.g., noise level 2 includes levels 0 & 1)
+        if noiseLevelthis==2
+            % For the center position of this condition, get a pool of
+            % images (of the various noise amounts for this noise level,
+            % including the noise amounts from noise levels 0 and 1).
+            centerPool = find(data.imageComparison==0 & ...
+                data.imageCondition==centerpos & ...
+                (data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0 | data.imageNoiseLevel==1));
+        else
+            % For the center position of this condition, get the pool of
+            % images (of the various noise amounts for this noise level,
+            % including the noise amount of 0 from Noise Level 0).
+            centerPool = find(data.imageComparison==0 & ...
+                data.imageCondition==centerpos & ...
+                (data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0));
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % Get the target offset amounts, comparison amount, noise amount,
         % and observer response per trial.
@@ -183,11 +198,11 @@ if plotFigures
     for nn = 1:nNoiseLevels
         figure; hold on;
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        conditionName  = sprintf('%s%d','condition',ii);
         
         % Average performance across all conditions.
         performanceAll = nan(nComparisons,nConditions);
         for ii = 1:nConditions
+            conditionName  = sprintf('%s%d','condition',ii);
             performanceAll(:,ii) = data.performance.(noiseLevelName).(conditionName);
         end
         performanceAll = mean(performanceAll,2);
