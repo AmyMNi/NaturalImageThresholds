@@ -127,6 +127,14 @@ nImages = numel(fileInfo);
 % Get the image file names. Images will be called by their index here.
 imageNames = {fileInfo(:).name}';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: save the name of the first image file (later, will change
+% instruction text depending on the image name.
+params.imageName1 = imageNames{1};
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% EXPERIMENT ORGANIZATION
 %
 % CONDITION   : Per condition, 1 center position.
@@ -1134,25 +1142,60 @@ try
     % Add the fixation point in red color.
     win.addOval([0 0], params.fpSize, params.fpColorRed, 'Name', 'fpRed');
     
-    % Add instructions text.
-    win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'instructions'); % Identifier for the object
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE: change text if the task-relevant feature is the banana's size.
     
-    % Add key option text.
-    key1 = params.option1Key;
-    key2 = params.option2Key;
-    if strcmp(key1,'GP:UpperLeftTrigger');  key1 = 'Upper Left Trigger';  end
-    if strcmp(key2,'GP:UpperRightTrigger'); key2 = 'Upper Right Trigger'; end   
-    if strcmp(key1,'GP:X'); key1 = 'gamepad X'; end    
-    if strcmp(key2,'GP:A'); key2 = 'gamepad A'; end      
-    win.addText(['If to left -> ', key1, '     If to right -> ', key2], ... % Text to display
-        'Center', [0 5], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ...  % RGB color
-        'Name', 'keyOptions'); % Identifier for the object
+    % Break down the first image file name to get image info.
+    name = params.imageName1;
+    p    = strfind(name,'_');
+    s1 = name(1:p(1));
+    s1end = s1(end-5:end-1);
+    
+    % If the task-relevant feature is banana size, change the instructions.
+    if strcmp(s1end,'scale')
+        % Add instructions text.
+        win.addText('Compared to the 1st banana, is the 2nd banana smaller or larger?', ...
+            'Center', [0 8], ... % Where to center the text (x,y)
+            'FontSize', 75, ... % Font size
+            'Color', params.textColor, ... % RGB color
+            'Name', 'instructions'); % Identifier for the object
+        
+        % Add key option text.
+        key1 = params.option1Key;
+        key2 = params.option2Key;
+        if strcmp(key1,'GP:UpperLeftTrigger');  key1 = 'Upper Left Trigger';  end
+        if strcmp(key2,'GP:UpperRightTrigger'); key2 = 'Upper Right Trigger'; end
+        if strcmp(key1,'GP:X'); key1 = 'gamepad X'; end
+        if strcmp(key2,'GP:A'); key2 = 'gamepad A'; end
+        win.addText(['If smaller -> ', key1, '     If larger -> ', key2], ... % Text to display
+            'Center', [0 5], ... % Where to center the text (x,y)
+            'FontSize', 75, ... % Font size
+            'Color', params.textColor, ...  % RGB color
+            'Name', 'keyOptions'); % Identifier for the object
+    else
+        % Add instructions text.
+        win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
+            'Center', [0 8], ... % Where to center the text (x,y)
+            'FontSize', 75, ... % Font size
+            'Color', params.textColor, ... % RGB color
+            'Name', 'instructions'); % Identifier for the object
+        
+        % Add key option text.
+        key1 = params.option1Key;
+        key2 = params.option2Key;
+        if strcmp(key1,'GP:UpperLeftTrigger');  key1 = 'Upper Left Trigger';  end
+        if strcmp(key2,'GP:UpperRightTrigger'); key2 = 'Upper Right Trigger'; end
+        if strcmp(key1,'GP:X'); key1 = 'gamepad X'; end
+        if strcmp(key2,'GP:A'); key2 = 'gamepad A'; end
+        win.addText(['If to left -> ', key1, '     If to right -> ', key2], ... % Text to display
+            'Center', [0 5], ... % Where to center the text (x,y)
+            'FontSize', 75, ... % Font size
+            'Color', params.textColor, ...  % RGB color
+            'Name', 'keyOptions'); % Identifier for the object
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Add start text.
     win.addText('Hit any button to start.', ... % Text to display
