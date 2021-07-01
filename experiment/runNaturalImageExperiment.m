@@ -495,11 +495,7 @@ while keepLooping
     mglWaitSecs(params.stimDuration);
     win.disableObject('image2');
     win.draw;
-    
-    % Turn fixation point back on.
-    win.enableObject('fp');
-    win.draw;
-    
+
     % Wait for key press response.
     FlushEvents;
     key =[];
@@ -593,6 +589,10 @@ while keepLooping
         fprintf(2,'Quitting without saving any data.\n');
     end
     
+    % Turn fixation point back on.
+    win.enableObject('fp');
+    win.draw;
+    
     % Check if end of experiment is reached.
     if iiTrial == nEasyTrials
         keepLooping = false;
@@ -655,10 +655,6 @@ if ~easyquit
         % Wait for stimulus duration.
         mglWaitSecs(params.stimDuration);
         win.disableObject('image2');
-        win.draw;
-        
-        % Turn fixation point back on.
-        win.enableObject('fp');
         win.draw;
         
         % Wait for key press response.
@@ -744,7 +740,7 @@ if ~easyquit
                 end
             end
         end
-        
+
         % Check if the experiment continues, otherwise quit without saving data.
         if keepLooping
             fprintf('Selected interval: %d\n',selectedResponse(iiTrial));
@@ -761,6 +757,10 @@ if ~easyquit
             fprintf(2,'Quitting without saving any data.\n');
             saveData = 0;
         end
+        
+        % Turn fixation point back on.
+        win.enableObject('fp');
+        win.draw;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
