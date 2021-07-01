@@ -475,6 +475,7 @@ while keepLooping
     
     % Turn off fixation point prior to 1st image.
     win.disableObject('fp');
+    win.draw;
     
     % Enable 1st image and draw.
     win.enableObject('image1');
@@ -497,6 +498,7 @@ while keepLooping
     
     % Turn fixation point back on.
     win.enableObject('fp');
+    win.draw;
     
     % Wait for key press response.
     FlushEvents;
@@ -631,6 +633,7 @@ if ~easyquit
         
         % Turn off fixation point prior to 1st image.
         win.disableObject('fp');
+        win.draw;
         
         % Enable 1st image and draw.
         win.enableObject('image1');
@@ -656,6 +659,7 @@ if ~easyquit
         
         % Turn fixation point back on.
         win.enableObject('fp');
+        win.draw;
         
         % Wait for key press response.
         FlushEvents;
