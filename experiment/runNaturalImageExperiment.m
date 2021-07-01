@@ -29,6 +29,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % History:
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
+%   06/30/21  amn  Removed fixation dot between stimulus presentations 
 
 %% Parse the inputs
 parser = inputParser();
@@ -441,7 +442,7 @@ win.draw;
 % Wait an intertrial interval before starting.
 mglWaitSecs(params.ITI);
 
-%% Run easy trials
+%% Run easy trials: per trial, present images and wait for key press response
 %
 % Run 5 easy trials to acclimate the subject. The data will not be saved.
 saveData    = 0;
@@ -472,6 +473,9 @@ while keepLooping
     win.disableObject('image1');
     win.disableObject('image2');
     
+    % Turn off fixation point prior to 1st image.
+    win.disableObject('fp');
+    
     % Enable 1st image and draw.
     win.enableObject('image1');
     win.draw;
@@ -490,6 +494,9 @@ while keepLooping
     mglWaitSecs(params.stimDuration);
     win.disableObject('image2');
     win.draw;
+    
+    % Turn fixation point back on.
+    win.enableObject('fp');
     
     % Wait for key press response.
     FlushEvents;
@@ -590,7 +597,7 @@ while keepLooping
     end
 end
 
-%% Per trial, present images and wait for key press response
+%% Run experiment: per trial, present images and wait for key press response
 if ~easyquit
     % Reset the keyboard queue.
     mglGetKeyEvent;
@@ -622,6 +629,9 @@ if ~easyquit
         win.disableObject('image1');
         win.disableObject('image2');
         
+        % Turn off fixation point prior to 1st image.
+        win.disableObject('fp');
+        
         % Enable 1st image and draw.
         win.enableObject('image1');
         win.draw;
@@ -643,6 +653,9 @@ if ~easyquit
         mglWaitSecs(params.stimDuration);
         win.disableObject('image2');
         win.draw;
+        
+        % Turn fixation point back on.
+        win.enableObject('fp');
         
         % Wait for key press response.
         FlushEvents;
