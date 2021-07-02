@@ -166,6 +166,7 @@ for nn = 1:nNoiseLevels
 end
 
 %% Plot performance on each condition separately, for each noise level
+%{
 if plotFigures
     for nn = 1:nNoiseLevels
         for ii = 1:nConditions
@@ -192,11 +193,17 @@ if plotFigures
         end
     end
 end
-
+%}
 %% Plot performance for all conditions combined, for each noise level
+%
+% Plot colors for each noise level.
+colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+
+% Plot all noise levels.
+threshold = nan(nNoiseLevels,1);
 if plotFigures
+    figure; hold on;
     for nn = 1:nNoiseLevels
-        figure; hold on;
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
         
         % Average performance across all conditions.
@@ -208,21 +215,28 @@ if plotFigures
         performanceAll = mean(performanceAll,2);
         
         % Plot data and psychometric function fit.
-        [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performanceAll);
-        plot(xOffset,performanceAll,'ok','MarkerFace','k');
-        plot(xOffset,FittedCurve,'-k','LineWidth',1);
-            
-        % Plot parameters.
-        title({sprintf('%s%s%s%d %s: %s %0.1f',experimentName,subjectName,'\_', sessionNumber, ...
-                           noiseLevelName,'threshold =',threshold),''});
-        xlabel(sprintf('Comparison offset rightward (mm)'));
-        ylabel('Proportion chose comparison as rightward');
-        axis([-Inf Inf 0 1]);
-        set(gca,'tickdir','out');
-        set(gca,'XTick',xOffset);
-        set(gca,'XTickLabel',comparisons);
-        box off; hold off;
+        [xOffset,FittedCurve,thresholdthis] = plotPsychometric(noiseLevelName,comparisons,performanceAll);
+        plot(xOffset,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        plot(xOffset,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        threshold(nn) = thresholdthis;
     end
+    % Plot parameters.
+    if nNoiseLevels==2
+        title({sprintf('%s%s%s%d%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+            ': threshold0 = ',threshold(1),' threshold1 = ',threshold(2)),''});
+        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Location','northwest')
+    elseif nNoiseLevels==3
+        title({sprintf('%s%s%s%d%s%0.1f%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+            ': threshold0 = ',threshold(1),' threshold1 = ',threshold(2),' threshold2 = ',threshold(3)),''});
+        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
+    end
+    xlabel(sprintf('Comparison offset rightward (mm)'));
+    ylabel('Proportion chose comparison as rightward');
+    axis([-Inf Inf 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',xOffset);
+    set(gca,'XTickLabel',comparisons);
+    box off; hold off;
 end
 
 %% Save data analysis results
