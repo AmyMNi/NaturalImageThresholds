@@ -472,11 +472,7 @@ while keepLooping
     win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
     win.disableObject('image1');
     win.disableObject('image2');
-    
-    % Turn off fixation point prior to 1st image.
-    win.disableObject('fp');
-    win.draw;
-    
+   
     % Enable 1st image and draw.
     win.enableObject('image1');
     win.draw;
@@ -588,11 +584,7 @@ while keepLooping
         easyquit = true;
         fprintf(2,'Quitting without saving any data.\n');
     end
-    
-    % Turn fixation point back on.
-    win.enableObject('fp');
-    win.draw;
-    
+
     % Check if end of experiment is reached.
     if iiTrial == nEasyTrials
         keepLooping = false;
@@ -630,11 +622,7 @@ if ~easyquit
         win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
         win.disableObject('image1');
         win.disableObject('image2');
-        
-        % Turn off fixation point prior to 1st image.
-        win.disableObject('fp');
-        win.draw;
-        
+ 
         % Enable 1st image and draw.
         win.enableObject('image1');
         win.draw;
@@ -757,10 +745,6 @@ if ~easyquit
             fprintf(2,'Quitting without saving any data.\n');
             saveData = 0;
         end
-        
-        % Turn fixation point back on.
-        win.enableObject('fp');
-        win.draw;
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
