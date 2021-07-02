@@ -105,7 +105,13 @@ acquisitionStatus = 0;
 % Set task parameters.
 params.screenDimsCm = [59.67 33.57]; %cm
 params.fpSize       = [0.1 0.1]; % fixation point size
-params.fpColor      = [34 70 34]/255; % fixation point color
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: testing yellow fixation point
+params.fpColor      = [246 228 180]/255; % fixation point color yellow
+%params.fpColor      = [34 70 34]/255; % fixation point color black
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 params.fpColorRed   = [0.6 0.2 0.2]; % fixation point color red
 params.bgColor      = [128 128 128]/255; % to match electrophys task
 params.textColor    = [0.6 0.2 0.2];
