@@ -122,11 +122,7 @@ params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angl
 params.image2Size = [10.54 10.54];
 params.ISI = 1; % seconds
 params.ITI = 0.25; % seconds
-
-
-
-params.stimDuration = 1; % seconds
-%params.stimDuration = 0.25; % seconds
+params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
 params.option2Key = option2Key;
 
