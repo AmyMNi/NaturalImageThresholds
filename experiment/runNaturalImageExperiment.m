@@ -16,47 +16,47 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   3) Set monitor distance to 75 cm
 %   4) Have observer dark adapt in the dark room for 5 min
 %   5) Instruct observers to:
-%      a) Keep eyes fixated on the center of the screen
+%      a) Keep eyes centered on the screen
 %      b) Press firmly on the gamepad buttons
 %
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
+%   'subjectName'    : (string)  Name of subject (default: 'AN')
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
 %   'giveFeedback'   : (logical) Give feedback if option is on (default: true)
 %   'isDemo'         : (logical) Data won't be saved if on (default: false)
-%   'subjectName'    : (string)  Name of subject (default: 'AN')
 %
 % History:
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
-%   06/30/21  amn  Removed fixation dot between stimulus presentations 
+%   07/05/21  amn  Experiment edits based on pilot tests
 
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment000', @ischar);
+parser.addParameter('subjectName', 'AN', @ischar);
 parser.addParameter('nIterations', 14, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
 parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
 parser.addParameter('giveFeedback', true, @islogical);
 parser.addParameter('isDemo', false, @islogical);
-parser.addParameter('subjectName', 'AN', @ischar);
 parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
+subjectName    = parser.Results.subjectName;
 nIterations    = parser.Results.nIterations;
 controlSignal  = parser.Results.controlSignal;
 option1Key     = parser.Results.option1Key;
 option2Key     = parser.Results.option2Key;
 giveFeedback   = parser.Results.giveFeedback;
 isDemo         = parser.Results.isDemo;
-subjectName    = parser.Results.subjectName;
 
 % Give warning that experiment will not run if 'nIterations' is an odd number.
 if rem(nIterations,2)==1
-    warning('nIterations must be an even number. Experiment will fail.');
+    error('nIterations must be an even number.');
 end
 
 %% Get user input to verify/change inputs
@@ -107,7 +107,8 @@ params.screenDimsCm = [59.67 33.57]; %cm
 params.fpSize       = [0.1 0.1]; % fixation point size
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: testing yellow fixation point
+% NOTE: fixation point currently set to color of banana
+% NOTE: though not using fixation point for this pilot
 
 params.fpColor      = [174 174 128]/255; % fixation point color of banana
 %params.fpColor      = [34 70 34]/255; % fixation point color black
@@ -120,11 +121,12 @@ params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
 params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
 params.image2Size = [10.54 10.54];
-params.ISI = 1; % seconds
-params.ITI = 0.25; % seconds
+params.ISI          = 0.50; % seconds
+params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
 params.option2Key = option2Key;
+params.nBlocks = 20; % number of blocks/image for mask
 
 %% Get image info
 %
@@ -140,7 +142,8 @@ imageNames = {fileInfo(:).name}';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NOTE: save the name of the first image file (later, will change
-% instruction text depending on the image name.
+% instruction text depending on the image name, for testing various pilots)
+
 params.imageName1 = imageNames{1};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,8 +166,7 @@ params.imageName1 = imageNames{1};
 %
 % NOISE LEVEL : 308 trials make up 1 noise level.
 %               Noise is in a task-irrelevant feature/object.
-%               Each noise level is a pool with a Gaussian distribution,
-%               mean of 0, and a set standard deviation.
+%               Each noise level is made up of a pool of various task-irrelevant change amounts.
 %               Per stimulus (center position & comparison) take a random draw from the pool.
 %
 % SESSION     : Per session, 3 noise levels (0, 1, and 2).
@@ -256,24 +258,14 @@ for jj = 1:numel(allRuns)
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % NOTE: currently using evenly distributed pool (not Gaussian)
-            % NOTE: currently including all lower noise levels in current
-            %       noise level (e.g., noise level 2 includes levels 0 & 1)
-            if noiseLevelthis==2
-                % For the center position of this condition, create a pool of
-                % images (of the various noise amounts for this noise level,
-                % including the noise amounts from noise levels 0 and 1).
-                centerPool = find(imageComparison==0 & ...
-                    imageCondition==centerpos & ...
-                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0 | imageNoiseLevel==1));
-            else
-                % For the center position of this condition, create a pool of
-                % images (of the various noise amounts for this noise level,
-                % including the noise amount of 0 from Noise Level 0).
-                centerPool = find(imageComparison==0 & ...
-                    imageCondition==centerpos & ...
-                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
-            end
+            % NOTE: NoiseLevel1 and NoiseLevel2 are separate (though both include noise 0)
+
+            % For the center position of this condition, create a pool of
+            % images (of the various noise amounts for this noise level,
+            % including the noise amount of 0 from Noise Level 0).
+            centerPool = find(imageComparison==0 & ...
+                imageCondition==centerpos & ...
+                (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
@@ -287,22 +279,14 @@ for jj = 1:numel(allRuns)
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % NOTE: same as above notes
-                if noiseLevelthis==2
-                    % For each comparison amount of this condition, create a pool
-                    % of images (of the various noise amounts for this noise level,
-                    % including the noise amounts from noise levels 0 and 1).
-                    comparisonPool = find(imageComparison==comparisons(iii) & ...
-                        imageCondition==centerpos & ...
-                        (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0 | imageNoiseLevel==1));
-                else
-                    % For each comparison amount of this condition, create a pool
-                    % of images (of the various noise amounts for this noise level,
-                    % including the noise amount of 0 from Noise Level 0).
-                    comparisonPool = find(imageComparison==comparisons(iii) & ...
-                        imageCondition==centerpos & ...
-                        (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
-                end
+                % NOTE: NoiseLevel1 and NoiseLevel2 are separate (though both include noise 0)
+
+                % For each comparison amount of this condition, create a pool
+                % of images (of the various noise amounts for this noise level,
+                % including the noise amount of 0 from Noise Level 0).
+                comparisonPool = find(imageComparison==comparisons(iii) & ...
+                    imageCondition==centerpos & ...
+                    (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
@@ -426,7 +410,13 @@ else
 end
 
 %% Enable fixation and start text
-win.enableObject('fp');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: removing fixation point from experiment
+%win.enableObject('fp');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 win.enableObject('instructions');
 win.enableObject('keyOptions');
 win.enableObject('startText');
@@ -476,10 +466,15 @@ while keepLooping
     image1 = image1(end:-1:1,:,:);
     image2 = image2(end:-1:1,:,:);
     
+    % Create mask for the ISI.
+    mask = MakeBlockMask(image1,image2,params.nBlocks);
+
     % Write the images into the window and disable.
     win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+    win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
     win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
     win.disableObject('image1');
+    win.disableObject('mask');
     win.disableObject('image2');
    
     % Enable 1st image and draw.
@@ -489,10 +484,16 @@ while keepLooping
     % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
     win.disableObject('image1');
+    
+    % Enable mask and draw.
+    win.enableObject('mask');
     win.draw;
     
-    % Wait for ISI and show 2nd image.
+    % Wait for ISI.
     mglWaitSecs(params.ISI);
+    win.disableObject('mask');
+    
+    % Enable 2nd image and draw.
     win.enableObject('image2');
     win.draw;
     
@@ -626,12 +627,17 @@ if ~easyquit
         image1 = image1(end:-1:1,:,:);
         image2 = image2(end:-1:1,:,:);
         
+        % Create mask for the ISI.
+        mask = MakeBlockMask(image1,image2,params.nBlocks);
+        
         % Write the images into the window and disable.
         win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
         win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
         win.disableObject('image1');
+        win.disableObject('mask');
         win.disableObject('image2');
- 
+        
         % Enable 1st image and draw.
         win.enableObject('image1');
         win.draw;
@@ -639,10 +645,16 @@ if ~easyquit
         % Wait for stimulus duration.
         mglWaitSecs(params.stimDuration);
         win.disableObject('image1');
-        win.draw;
         
-        % Wait for ISI and show 2nd image.
+        % Enable mask and draw.
+        win.enableObject('mask');
+        win.draw;
+    
+        % Wait for ISI.
         mglWaitSecs(params.ISI);
+        win.disableObject('mask');
+    
+        % Enable 2nd image and draw.
         win.enableObject('image2');
         win.draw;
         
@@ -653,7 +665,7 @@ if ~easyquit
         mglWaitSecs(params.stimDuration);
         win.disableObject('image2');
         win.draw;
-        
+
         % Wait for key press response.
         FlushEvents;
         key =[];
@@ -762,14 +774,24 @@ if ~easyquit
             % Check if one quarter of experiment is reached.
             if iiTrial == ceil(nTrials/4)
                 win.enableObject('oneQuarterText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('oneQuarterText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -796,14 +818,24 @@ if ~easyquit
             % Check if two quarters of experiment is reached.
             if iiTrial == ceil(2*nTrials/4)
                 win.enableObject('twoQuartersText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('twoQuartersText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -830,14 +862,24 @@ if ~easyquit
             % Check if three quarters of experiment is reached.
             if iiTrial == ceil(3*nTrials/4)
                 win.enableObject('threeQuartersText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('threeQuartersText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -864,14 +906,24 @@ if ~easyquit
             % Check if 1/6 of experiment is reached.
             if iiTrial == ceil(nTrials/6)
                 win.enableObject('oneSixthText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('oneSixthText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -898,14 +950,24 @@ if ~easyquit
             % Check if 2/6 of experiment is reached.
             if iiTrial == ceil(2*nTrials/6)
                 win.enableObject('twoSixthsText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('twoSixthsText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -932,14 +994,24 @@ if ~easyquit
             % Check if 3/6 of experiment is reached.
             if iiTrial == ceil(3*nTrials/6)
                 win.enableObject('threeSixthsText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('threeSixthsText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -966,14 +1038,24 @@ if ~easyquit
             % Check if 4/6 of experiment is reached.
             if iiTrial == ceil(4*nTrials/6)
                 win.enableObject('fourSixthsText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('fourSixthsText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -1000,14 +1082,24 @@ if ~easyquit
             % Check if 5/6 of experiment is reached.
             if iiTrial == ceil(5*nTrials/6)
                 win.enableObject('fiveSixthsText');
-                win.disableObject('fp');
-                win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fp');
+                %win.enableObject('fpRed');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 pause(60);
                 win.disableObject('fiveSixthsText');
                 win.enableObject('restOver');
-                win.disableObject('fpRed');
-                win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: removing fixation point from experiment
+                %win.disableObject('fpRed');
+                %win.enableObject('fp');
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 win.draw;
                 FlushEvents;
                 % Wait for key press.
@@ -1310,6 +1402,41 @@ switch key.charCode
     % Option 2 key response.
     case params.option2Key
         response = 2;
+end
+end
+
+%% Create mask for interstimulus interval
+%
+% Take the average intensity per block for each image, then randomly draw
+% each block from one image or the other. Thus, the mask will have the same
+% basic luminance and color as the images.
+function mask = MakeBlockMask(image1,image2,nBlocks)
+
+% The number of blocks must evenly divide the number of image pixels.
+nPixels = size(image1,1);
+if rem(nPixels,nBlocks)~=0
+    error('params.nBlocks must evenly divide the number of image pixels.');
+end
+
+% Calculate the number of pixels per block.
+blockPixels = nPixels/nBlocks;
+
+% Per mask block, randomly draw an average intensity block from one image or the other.
+mask = zeros(size(image1));
+for ii = 1:nBlocks
+    for jj = 1:nBlocks
+        for kk = 1:3
+            if CoinFlip(1,0.5)
+                theBlock = image1((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
+                blockRGB = mean(theBlock(:));
+                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
+            else
+                theBlock = image2((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
+                blockRGB = mean(theBlock(:));
+                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
+            end
+        end
+    end
 end
 end
 
