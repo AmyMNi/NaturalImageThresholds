@@ -161,6 +161,7 @@ for nn = 1:nNoiseLevels
 end
 
 %% Plot performance on each condition separately, for each noise level
+%{
 if plotFigures
     for nn = 1:nNoiseLevels
         noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
@@ -192,7 +193,7 @@ if plotFigures
         end
     end
 end
-
+%}
 %% Plot performance for all conditions combined, for each noise level
 %
 % Plot colors for each noise level.
