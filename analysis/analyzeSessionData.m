@@ -131,8 +131,10 @@ for nn = 1:nNoiseLevels
         noiseAmountsC = noiseAmountsN(trialsC,:); 
         responsesC    = responsesN(trialsC);
         
-        % Calculate performance per comparison amount.
-        performanceC = nan(nComparisons,1);
+        % Calculate per comparison amount: the number of trials a positive response was given.
+        % Calculate per comparison amount: the total number of trials.
+        performanceNumPos   = nan(nComparisons,1);
+        performanceOutOfNum = nan(nComparisons,1);
         for jj = 1:nComparisons
             comparisonthis = comparisons(jj);
             offsetsthis    = offsetsC  (comparisonsC==comparisonthis,:);
@@ -145,32 +147,38 @@ for nn = 1:nNoiseLevels
                 choseRight = [find(offsetsthis(:,1)==0 & responsesthis==2); ...
                               find(offsetsthis(:,2)==0 & responsesthis==1)];
             end
-            performanceC(jj) = numel(choseRight)/numel(responsesthis);
+            performanceNumPos(jj)   = numel(choseRight);
+            performanceOutOfNum(jj) = numel(responsesthis);
         end
         
         % Save noise amounts and performance for this condition (in this noise level).
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevelthis);
         conditionName  = sprintf('%s%d','condition',ii);
         data.noiseAmounts.(noiseLevelName).(conditionName) = noiseAmountsC;
-        data.performance.(noiseLevelName).(conditionName) = performanceC;
+        data.performance.(noiseLevelName).(conditionName).NumPos   = performanceNumPos;
+        data.performance.(noiseLevelName).(conditionName).OutOfNum = performanceOutOfNum;
     end
 end
 
 %% Plot performance on each condition separately, for each noise level
-%{
 if plotFigures
     for nn = 1:nNoiseLevels
+        noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+        
         for ii = 1:nConditions
             figure; hold on;
-            noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
             conditionName   = sprintf('%s%d','condition',ii);
-            performancethis = data.performance.(noiseLevelName).(conditionName);
+            NumPos   = data.performance.(noiseLevelName).(conditionName).NumPos;
+            OutOfNum = data.performance.(noiseLevelName).(conditionName).OutOfNum;
+            performancethis = NumPos./OutOfNum;
             
-            % Plot data and psychometric function fit.
-            [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performancethis);
-            plot(xOffset,performancethis,'ok','MarkerFace','k');
-            plot(xOffset,FittedCurve,'-k','LineWidth',1);
-        
+            % Plot data.
+            plot(comparisons,performancethis,'o','MarkerFace','k');
+            
+            % Plot psychometric function fit.
+            [xx,FittedCurve,threshold] = fitPsychometric(comparisons,NumPos,OutOfNum);
+            plot(xx,FittedCurve,'-','LineWidth',1,'Color','k');
+
             % Plot parameters.
             title({sprintf('%s%s%s%d %s %s: %s %0.1f',experimentName,subjectName,'\_', sessionNumber, ...
                            noiseLevelName,conditionName,'threshold =',threshold),''});
@@ -178,13 +186,13 @@ if plotFigures
             ylabel('Proportion chose comparison as rightward');
             axis([-Inf Inf 0 1]);
             set(gca,'tickdir','out');
-            set(gca,'XTick',xOffset);
+            set(gca,'XTick',comparisons);
             set(gca,'XTickLabel',comparisons);
             box off; hold off;
         end
     end
 end
-%}
+
 %% Plot performance for all conditions combined, for each noise level
 %
 % Plot colors for each noise level.
@@ -197,18 +205,24 @@ if plotFigures
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
         
-        % Average performance across all conditions.
-        performanceAll = nan(nComparisons,nConditions);
+        % Calculate performance across all conditions.
+        performanceAllNumPos   = nan(nComparisons,nConditions);
+        performanceAllOutOfNum = nan(nComparisons,nConditions);
         for ii = 1:nConditions
             conditionName  = sprintf('%s%d','condition',ii);
-            performanceAll(:,ii) = data.performance.(noiseLevelName).(conditionName);
+            performanceAllNumPos  (:,ii) = data.performance.(noiseLevelName).(conditionName).NumPos;
+            performanceAllOutOfNum(:,ii) = data.performance.(noiseLevelName).(conditionName).OutOfNum;
         end
-        performanceAll = mean(performanceAll,2);
+        NumPos   = sum(performanceAllNumPos,  2);
+        OutOfNum = sum(performanceAllOutOfNum,2); 
+        performanceAll = NumPos./OutOfNum;
         
-        % Plot data and psychometric function fit.
-        [xOffset,FittedCurve,thresholdthis] = plotPsychometric(noiseLevelName,comparisons,performanceAll);
-        plot(xOffset,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        plot(xOffset,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        % Plot data.
+        plot(comparisons,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        
+        % Plot psychometric function fit.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisons,NumPos,OutOfNum);
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
     end
     % Plot parameters.
@@ -225,7 +239,7 @@ if plotFigures
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',xOffset);
+    set(gca,'XTick',comparisons);
     set(gca,'XTickLabel',comparisons);
     box off; hold off;
 end
@@ -238,33 +252,4 @@ if saveData
     fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
 end
 end
-%% Helper functions
-
-%% Calculate data to plot psychometric function fit
-
-function [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performance)
-
-% Offset x-axis values so that there are no negative values.
-xOffset = comparisons + abs(min(comparisons));
-
-% Calculate Weibull fit.
-[estimates,model] = fitWeibull(xOffset,performance);
-[~,FittedCurve,p] = model(estimates);
-if isnan(p)
-	fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
-end
-
-% Constrain max parameter to 1.
-if p(3)>1
-    [estimates,model] = fitWeibullMax(xOffset,performance);
-    [~,FittedCurve,p] = model(estimates);
-    if isnan(p)
-        fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
-    end
-end
-
-% Offset threshold according to offset used for x-axis above.
-threshold = p(1) - abs(min(comparisons));
-end
-
 %% End

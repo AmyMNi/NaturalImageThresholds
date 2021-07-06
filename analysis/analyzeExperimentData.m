@@ -114,7 +114,7 @@ if plotFigures
         performanceMean = nanmean(performanceAll,2);
         
         % Plot data and psychometric function fit.
-        [xOffset,FittedCurve,thresholdthis] = plotPsychometric(noiseLevelName,comparisons,performanceMean);
+        [xOffset,FittedCurve,thresholdthis] = fitPsychometric(comparisons,performanceMean);
         plot(xOffset,performanceMean,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
         plot(xOffset,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
@@ -146,33 +146,4 @@ if saveData
     fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
 end
 end
-%% Helper functions
-
-%% Calculate data to plot psychometric function fit
-
-function [xOffset,FittedCurve,threshold] = plotPsychometric(noiseLevelName,comparisons,performance)
-
-% Offset x-axis values so that there are no negative values.
-xOffset = comparisons + abs(min(comparisons));
-
-% Calculate Weibull fit.
-[estimates,model] = fitWeibull(xOffset,performance);
-[~,FittedCurve,p] = model(estimates);
-if isnan(p)
-	fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
-end
-
-% Constrain max parameter to 1.
-if p(3)>1
-    [estimates,model] = fitWeibullMax(xOffset,performance);
-    [~,FittedCurve,p] = model(estimates);
-    if isnan(p)
-        fprintf(2,'Weibull function fit fail for %s\n',noiseLevelName);
-    end
-end
-
-% Offset threshold according to offset used for x-axis above.
-threshold = p(1) - abs(min(comparisons));
-end
-
 %% End
