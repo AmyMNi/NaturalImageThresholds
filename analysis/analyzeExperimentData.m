@@ -85,15 +85,19 @@ for ii = 1:length(fileInfo)
     % Save the performance data from this session.
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        performanceAll = nan(nComparisons,nConditions);
+        NumPos   = nan(nComparisons,nConditions);
+        OutOfNum = nan(nComparisons,nConditions);
         for jj = 1:nConditions
             conditionName  = sprintf('%s%d','condition',jj);
-            performanceAll(:,jj) = data.performance.(noiseLevelName).(conditionName);
+            NumPos  (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPos;
+            OutOfNum(:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNum;
         end
         
-        % For this session, average across the conditions of this noise level.
-        performanceAll = mean(performanceAll,2);
-        dataExperiment.performance.(noiseLevelName)(:,ii) = performanceAll;
+        % For this session, calculate across the conditions of this noise level.
+        NumPosAll   = sum(NumPos,  2);
+        OutOfNumAll = sum(OutOfNum,2);
+        dataExperiment.performance.(noiseLevelName).NumPos  (:,ii) = NumPosAll;
+        dataExperiment.performance.(noiseLevelName).OutOfNum(:,ii) = OutOfNumAll;
     end
 end
 
@@ -110,13 +114,18 @@ if plotFigures
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
         
         % Average performance across all sessions.
-        performanceAll  = dataExperiment.performance.(noiseLevelName);
-        performanceMean = nanmean(performanceAll,2);
+        performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
+        performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
+        NumPos   = sum(performanceAllNumPos,  2);
+        OutOfNum = sum(performanceAllOutOfNum,2); 
+        performanceAll = NumPos./OutOfNum
         
-        % Plot data and psychometric function fit.
-        [xOffset,FittedCurve,thresholdthis] = fitPsychometric(comparisons,performanceMean);
-        plot(xOffset,performanceMean,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        plot(xOffset,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        % Plot data.
+        plot(comparisons,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        
+        % Plot psychometric function fit.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisons,NumPos,OutOfNum);
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
     end
     % Plot parameters.
@@ -133,7 +142,7 @@ if plotFigures
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',xOffset);
+    set(gca,'XTick',comparisons);
     set(gca,'XTickLabel',comparisons);
     box off; hold off;
 end
