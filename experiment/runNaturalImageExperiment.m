@@ -126,11 +126,13 @@ params.image2Loc  = [0 0];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NOTE: testing larger scene
 
-params.image1Size = [21.51 21.51]; % monitor distance=75cm: scene 16 deg vis angle (target 4 deg)
-params.image2Size = [21.51 21.51];
-
-%params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
-%params.image2Size = [10.54 10.54];
+if strcmp(experimentName, 'Experiment014')
+    params.image1Size = [21.51 21.51]; % monitor distance=75cm: scene 16 deg vis angle (target 4 deg)
+    params.image2Size = [21.51 21.51];
+else
+    params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
+    params.image2Size = [10.54 10.54];
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
