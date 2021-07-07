@@ -105,6 +105,7 @@ acquisitionStatus = 0;
 % Set task parameters.
 params.screenDimsCm = [59.67 33.57]; %cm
 params.fpSize       = [0.1 0.1]; % fixation point size
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NOTE: fixation point currently set to color of banana
@@ -114,13 +115,25 @@ params.fpColor      = [174 174 128]/255; % fixation point color of banana
 %params.fpColor      = [34 70 34]/255; % fixation point color black
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 params.fpColorRed   = [0.6 0.2 0.2]; % fixation point color red
 params.bgColor      = [128 128 128]/255; % to match electrophys task
 params.textColor    = [0.6 0.2 0.2];
 params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
-params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
-params.image2Size = [10.54 10.54];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: testing larger scene
+
+params.image1Size = [21.51 21.51]; % monitor distance=75cm: scene 16 deg vis angle (target 4 deg)
+params.image2Size = [21.51 21.51];
+
+%params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
+%params.image2Size = [10.54 10.54];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 params.ISI          = 0.50; % seconds
 params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
