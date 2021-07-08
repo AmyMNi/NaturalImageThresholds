@@ -152,7 +152,17 @@ params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
 params.option2Key = option2Key;
-params.nBlocks = 20; % number of blocks/image for mask
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: testing larger mask blocks
+if strcmp(experimentName, 'Experiment014')
+    params.nBlocks = 16; % number of blocks/image for mask
+else
+    params.nBlocks = 20; % number of blocks/image for mask
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Get image info
 %
@@ -492,32 +502,80 @@ while keepLooping
     image1 = image1(end:-1:1,:,:);
     image2 = image2(end:-1:1,:,:);
     
-    % Create mask for the ISI.
-    mask = MakeBlockMask(image1,image2,params.nBlocks);
-
-    % Write the images into the window and disable.
-    win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
-    win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
-    win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
-    win.disableObject('image1');
-    win.disableObject('mask');
-    win.disableObject('image2');
-   
-    % Enable 1st image and draw.
-    win.enableObject('image1');
-    win.draw;
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE: testing showing 2 different masks sequentially
     
-    % Wait for stimulus duration.
-    mglWaitSecs(params.stimDuration);
-    win.disableObject('image1');
-    
-    % Enable mask and draw.
-    win.enableObject('mask');
-    win.draw;
-    
-    % Wait for ISI.
-    mglWaitSecs(params.ISI);
-    win.disableObject('mask');
+    if strcmp(experimentName, 'Experiment014')
+        % Create mask for the ISI.
+        mask = MakeBlockMask(image1,image2,params.nBlocks);
+        
+        % Create 2nd mask for the ISI.
+        mask2 = MakeBlockMask(image1,image2,params.nBlocks);
+        
+        % Write the images into the window and disable.
+        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
+        win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
+        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+        win.disableObject('image1');
+        win.disableObject('mask');
+        win.disableObject('mask2');
+        win.disableObject('image2');
+        
+        % Enable 1st image and draw.
+        win.enableObject('image1');
+        win.draw;
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image1');
+        
+        % Enable mask and draw.
+        win.enableObject('mask');
+        win.draw;
+        
+        % Wait for ISI.
+        mglWaitSecs(params.ISI);
+        win.disableObject('mask');
+        
+        % Enable 2nd mask and draw.
+        win.enableObject('mask2');
+        win.draw;
+        
+        % Wait for ISI.
+        mglWaitSecs(params.ISI);
+        win.disableObject('mask2');
+    else
+        % Create mask for the ISI.
+        mask = MakeBlockMask(image1,image2,params.nBlocks);
+        
+        % Write the images into the window and disable.
+        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
+        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+        win.disableObject('image1');
+        win.disableObject('mask');
+        win.disableObject('image2');
+        
+        % Enable 1st image and draw.
+        win.enableObject('image1');
+        win.draw;
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image1');
+        
+        % Enable mask and draw.
+        win.enableObject('mask');
+        win.draw;
+        
+        % Wait for ISI.
+        mglWaitSecs(params.ISI);
+        win.disableObject('mask');
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Enable 2nd image and draw.
     win.enableObject('image2');
@@ -653,32 +711,80 @@ if ~easyquit
         image1 = image1(end:-1:1,:,:);
         image2 = image2(end:-1:1,:,:);
         
-        % Create mask for the ISI.
-        mask = MakeBlockMask(image1,image2,params.nBlocks);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % NOTE: testing showing 2 different masks sequentially
         
-        % Write the images into the window and disable.
-        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
-        win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
-        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
-        win.disableObject('image1');
-        win.disableObject('mask');
-        win.disableObject('image2');
-        
-        % Enable 1st image and draw.
-        win.enableObject('image1');
-        win.draw;
-        
-        % Wait for stimulus duration.
-        mglWaitSecs(params.stimDuration);
-        win.disableObject('image1');
-        
-        % Enable mask and draw.
-        win.enableObject('mask');
-        win.draw;
-    
-        % Wait for ISI.
-        mglWaitSecs(params.ISI);
-        win.disableObject('mask');
+        if strcmp(experimentName, 'Experiment014')
+            % Create mask for the ISI.
+            mask = MakeBlockMask(image1,image2,params.nBlocks);
+            
+            % Create 2nd mask for the ISI.
+            mask2 = MakeBlockMask(image1,image2,params.nBlocks);
+            
+            % Write the images into the window and disable.
+            win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+            win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
+            win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
+            win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+            win.disableObject('image1');
+            win.disableObject('mask');
+            win.disableObject('mask2');
+            win.disableObject('image2');
+            
+            % Enable 1st image and draw.
+            win.enableObject('image1');
+            win.draw;
+            
+            % Wait for stimulus duration.
+            mglWaitSecs(params.stimDuration);
+            win.disableObject('image1');
+            
+            % Enable mask and draw.
+            win.enableObject('mask');
+            win.draw;
+            
+            % Wait for ISI.
+            mglWaitSecs(params.ISI);
+            win.disableObject('mask');
+            
+            % Enable 2nd mask and draw.
+            win.enableObject('mask2');
+            win.draw;
+            
+            % Wait for ISI.
+            mglWaitSecs(params.ISI);
+            win.disableObject('mask2');  
+        else
+            % Create mask for the ISI.
+            mask = MakeBlockMask(image1,image2,params.nBlocks);
+            
+            % Write the images into the window and disable.
+            win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+            win.addImage(params.image1Loc, params.image1Size, mask,   'Name', 'mask');
+            win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+            win.disableObject('image1');
+            win.disableObject('mask');
+            win.disableObject('image2');
+            
+            % Enable 1st image and draw.
+            win.enableObject('image1');
+            win.draw;
+            
+            % Wait for stimulus duration.
+            mglWaitSecs(params.stimDuration);
+            win.disableObject('image1');
+            
+            % Enable mask and draw.
+            win.enableObject('mask');
+            win.draw;
+            
+            % Wait for ISI.
+            mglWaitSecs(params.ISI);
+            win.disableObject('mask');
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
         % Enable 2nd image and draw.
         win.enableObject('image2');
