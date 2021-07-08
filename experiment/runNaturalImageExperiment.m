@@ -156,7 +156,7 @@ params.option2Key = option2Key;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NOTE: testing larger mask blocks
-if strcmp(experimentName, 'Experiment014')
+if strcmp(experimentName, 'Experiment014') || strcmp(experimentName, 'Experiment015')
     params.nBlocks = 16; % number of blocks/image for mask
 else
     params.nBlocks = 20; % number of blocks/image for mask
@@ -506,7 +506,7 @@ while keepLooping
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % NOTE: testing showing 2 different masks sequentially
     
-    if strcmp(experimentName, 'Experiment014')
+    if strcmp(experimentName, 'Experiment014') || strcmp(experimentName, 'Experiment015')
         % Create mask for the ISI.
         mask = MakeBlockMask(image1,image2,params.nBlocks);
         
@@ -715,7 +715,7 @@ if ~easyquit
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % NOTE: testing showing 2 different masks sequentially
         
-        if strcmp(experimentName, 'Experiment014')
+        if strcmp(experimentName, 'Experiment014') || strcmp(experimentName, 'Experiment015')
             % Create mask for the ISI.
             mask = MakeBlockMask(image1,image2,params.nBlocks);
             
