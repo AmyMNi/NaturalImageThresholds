@@ -85,19 +85,23 @@ for ii = 1:length(fileInfo)
     % Save the performance data from this session.
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        NumPos   = nan(nComparisons,nConditions);
-        OutOfNum = nan(nComparisons,nConditions);
+        NumPos       = nan(nComparisons,nConditions);
+        OutOfNum     = nan(nComparisons,nConditions);
+        reactionTime = nan(nComparisons,nConditions);
         for jj = 1:nConditions
             conditionName  = sprintf('%s%d','condition',jj);
-            NumPos  (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPos;
-            OutOfNum(:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNum;
+            NumPos      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPos;
+            OutOfNum    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNum;
+            reactionTime(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTime;
         end
         
         % For this session, calculate across the conditions of this noise level.
-        NumPosAll   = sum(NumPos,  2);
-        OutOfNumAll = sum(OutOfNum,2);
-        dataExperiment.performance.(noiseLevelName).NumPos  (:,ii) = NumPosAll;
-        dataExperiment.performance.(noiseLevelName).OutOfNum(:,ii) = OutOfNumAll;
+        NumPosAll       = sum(NumPos,  2);
+        OutOfNumAll     = sum(OutOfNum,2);
+        reactionTimeAll = nanmean(reactionTime,2);
+        dataExperiment.performance.(noiseLevelName).NumPos      (:,ii) = NumPosAll;
+        dataExperiment.performance.(noiseLevelName).OutOfNum    (:,ii) = OutOfNumAll;
+        dataExperiment.performance.(noiseLevelName).reactionTime(:,ii) = reactionTimeAll;
     end
 end
 
@@ -118,7 +122,7 @@ if plotFigures
         performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
         NumPos   = sum(performanceAllNumPos,  2);
         OutOfNum = sum(performanceAllOutOfNum,2); 
-        performanceAll = NumPos./OutOfNum
+        performanceAll = NumPos./OutOfNum;
         
         % Plot data.
         plot(comparisons,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
@@ -141,6 +145,45 @@ if plotFigures
     xlabel(sprintf('Comparison offset rightward (mm)'));
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',comparisons);
+    set(gca,'XTickLabel',comparisons);
+    box off; hold off;
+end
+
+%% Plot reaction times for all sessions combined, for each noise level
+%
+% Plot colors for each noise level.
+colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+
+% Plot all noise levels.
+meanRT = nan(nNoiseLevels,1);
+if plotFigures
+    figure; hold on;
+    for nn = 1:nNoiseLevels
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+        
+        % Average reaction time across all sessions.
+        reactionTime    = dataExperiment.performance.(noiseLevelName).reactionTime;
+        reactionTimeAll = nanmean(reactionTime,2);
+        
+        % Plot data.
+        plot(comparisons,reactionTimeAll,'Color',colors{nn});
+        meanRT(nn) = round(nanmean(reactionTimeAll));
+    end
+    % Plot parameters.
+    if nNoiseLevels==2
+        title({sprintf('%s%s%s%d%s%d',experimentName,subjectName, ...
+            ': mean0=',meanRT(1),' mean1=',meanRT(2)),''});
+        legend('Noise0 data','Noise1 data','Location','northwest')
+    elseif nNoiseLevels==3
+        title({sprintf('%s%s%s%d%s%d%s%d',experimentName,subjectName, ...
+            ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''});
+        legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
+    end
+    xlabel(sprintf('Comparison offset rightward (mm)'));
+    ylabel('Reaction time (ms)');
+    axis([-Inf Inf -Inf Inf]);
     set(gca,'tickdir','out');
     set(gca,'XTick',comparisons);
     set(gca,'XTickLabel',comparisons);

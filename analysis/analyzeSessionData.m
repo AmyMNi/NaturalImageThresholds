@@ -97,14 +97,17 @@ for nn = 1:nNoiseLevels
     noiseLevelthis = noiseLevels(nn);
     trialsNoise    = data.trialNoiseLevel==noiseLevelthis;
 
-    % Get the image indices, target offset amount, noise amount, and 
-    % observer response per trial.
+    % Get the image indices, target offset amount, noise amount, observer
+    % response, and reaction time per trial.
     imagesN       = data.trialOrder(trialsNoise,:);
     offsetsN      = data.trialOrderComparison(trialsNoise,:);
     noiseAmountsN = data.trialNoiseAmount(trialsNoise,:);
     responsesN    = data.selectedResponse(trialsNoise);
+    rtbeg = datetime(data.reactionTimeStart(trialsNoise),'InputFormat','MM/dd/yyyy HH:mm:ss.SSS','Format','HH:mm:ss.SSS');
+    rtend = datetime(data.reactionTimeEnd(trialsNoise),  'InputFormat','MM/dd/yyyy HH:mm:ss.SSS','Format','HH:mm:ss.SSS');
+    reactionTimeN = milliseconds(diff([rtbeg rtend],1,2));
     
-    % Analyze performance on each condition separately.
+    % Analyze each condition separately.
     for ii = 1:nConditions
         
         % Get the center position for this condition.
@@ -123,23 +126,25 @@ for nn = 1:nNoiseLevels
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-        % Get the target offset amounts, comparison amount, noise amount,
-        % and observer response per trial.
+        % Get parameters per trial.
         trialsC       = any(ismember(imagesN,centerPool),2);
         offsetsC      = offsetsN(trialsC,:);
         comparisonsC  = sum(offsetsC,2);
         noiseAmountsC = noiseAmountsN(trialsC,:); 
         responsesC    = responsesN(trialsC);
+        reactionTimeC = reactionTimeN(trialsC);
         
         % Calculate per comparison amount: the number of trials a positive response was given.
         % Calculate per comparison amount: the total number of trials.
+        % Calculate per comparison amount: mean reaction time (outliers excluded with Tukey method).
         performanceNumPos   = nan(nComparisons,1);
         performanceOutOfNum = nan(nComparisons,1);
+        reactionTime        = nan(nComparisons,1);        
         for jj = 1:nComparisons
-            comparisonthis = comparisons(jj);
-            offsetsthis    = offsetsC  (comparisonsC==comparisonthis,:);
-            responsesthis  = responsesC(comparisonsC==comparisonthis);
-            
+            comparisonthis   = comparisons(jj);
+            offsetsthis      = offsetsC     (comparisonsC==comparisonthis,:);
+            responsesthis    = responsesC   (comparisonsC==comparisonthis);
+            reactionTimethis = reactionTimeC(comparisonsC==comparisonthis);
             % Calculate proportion observer chose the comparison as rightward.
             if comparisonthis==0
                 choseRight = find(responsesthis==2);
@@ -149,14 +154,17 @@ for nn = 1:nNoiseLevels
             end
             performanceNumPos(jj)   = numel(choseRight);
             performanceOutOfNum(jj) = numel(responsesthis);
+            reactionTimeTukey       = calcTukey(reactionTimethis);
+            reactionTime(jj)        = nanmean(reactionTimeTukey);  
         end
         
-        % Save noise amounts and performance for this condition (in this noise level).
+        % Save noise amounts, performance and reaction times for this condition (in this noise level).
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevelthis);
         conditionName  = sprintf('%s%d','condition',ii);
         data.noiseAmounts.(noiseLevelName).(conditionName) = noiseAmountsC;
-        data.performance.(noiseLevelName).(conditionName).NumPos   = performanceNumPos;
-        data.performance.(noiseLevelName).(conditionName).OutOfNum = performanceOutOfNum;
+        data.performance.(noiseLevelName).(conditionName).NumPos       = performanceNumPos;
+        data.performance.(noiseLevelName).(conditionName).OutOfNum     = performanceOutOfNum;
+        data.performance.(noiseLevelName).(conditionName).reactionTime = reactionTime;
     end
 end
 
@@ -181,8 +189,8 @@ if plotFigures
             plot(xx,FittedCurve,'-','LineWidth',1,'Color','k');
 
             % Plot parameters.
-            title({sprintf('%s%s%s%d %s %s: %s %0.1f',experimentName,subjectName,'\_', sessionNumber, ...
-                           noiseLevelName,conditionName,'threshold =',threshold),''});
+            title({sprintf('%s%s%s%d %s %s: %s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+                           noiseLevelName,conditionName,'threshold=',threshold),''});
             xlabel(sprintf('Comparison offset rightward (mm)'));
             ylabel('Proportion chose comparison as rightward');
             axis([-Inf Inf 0 1]);
@@ -229,16 +237,59 @@ if plotFigures
     % Plot parameters.
     if nNoiseLevels==2
         title({sprintf('%s%s%s%d%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
-            ': threshold0 = ',threshold(1),' threshold1 = ',threshold(2)),''});
+            ': threshold0=',threshold(1),' threshold1=',threshold(2)),''});
         legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Location','northwest')
     elseif nNoiseLevels==3
         title({sprintf('%s%s%s%d%s%0.1f%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
-            ': threshold0 = ',threshold(1),' threshold1 = ',threshold(2),' threshold2 = ',threshold(3)),''});
+            ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''});
         legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
     end
     xlabel(sprintf('Comparison offset rightward (mm)'));
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',comparisons);
+    set(gca,'XTickLabel',comparisons);
+    box off; hold off;
+end
+
+%% Plot reaction times for all condition combined, for each noise level
+%
+% Plot colors for each noise level.
+colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+
+% Plot all noise levels.
+meanRT = nan(nNoiseLevels,1);
+if plotFigures
+    figure; hold on;
+    for nn = 1:nNoiseLevels
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+        
+        % Calculate mean reaction time across all conditions.
+        reactionTimeAll = nan(nComparisons,nConditions);
+        for ii = 1:nConditions
+            conditionName = sprintf('%s%d','condition',ii);
+            reactionTimeAll(:,ii) = data.performance.(noiseLevelName).(conditionName).reactionTime;
+        end
+        reactionTime = nanmean(reactionTimeAll,2);
+        
+        % Plot data.
+        plot(comparisons,reactionTime,'Color',colors{nn});
+        meanRT(nn) = round(nanmean(reactionTime));
+    end
+    % Plot parameters.
+    if nNoiseLevels==2
+        title({sprintf('%s%s%s%d%s%d%s%d',experimentName,subjectName,'\_', sessionNumber, ...
+            ': mean0=',meanRT(1),' mean1=',meanRT(2)),''});
+        legend('Noise0 data','Noise1 data','Location','northwest')
+    elseif nNoiseLevels==3
+        title({sprintf('%s%s%s%d%s%d%s%d%s%d',experimentName,subjectName,'\_', sessionNumber, ...
+            ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''});
+        legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
+    end
+    xlabel(sprintf('Comparison offset rightward (mm)'));
+    ylabel('Reaction time (ms)');
+    axis([-Inf Inf -Inf Inf]);
     set(gca,'tickdir','out');
     set(gca,'XTick',comparisons);
     set(gca,'XTickLabel',comparisons);
