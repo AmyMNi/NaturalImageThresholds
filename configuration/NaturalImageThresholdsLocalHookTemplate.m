@@ -48,6 +48,10 @@ setpref(theProject,'BaseDir',BaseDir);
 
 %% Calibration folder/file
 setpref(theProject,'CalDataFolder',fullfile(BaseDir,'CalibrationData'));
+setpref('BrainardLabToolbox','CalDataFolder',fullfile(BaseDir,'CalibrationData'));
 setpref(theProject,'CalDataFile',calFile);
+
+%% Device string for computer that runs this project's calibration
+setpref('BrainardLabToolbox','PR650DevicePortString','/dev/cu.KeySerial1');
 
 %% End
