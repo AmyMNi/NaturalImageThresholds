@@ -168,40 +168,12 @@ for nn = 1:nNoiseLevels
     end
 end
 
-%% Plot performance on each condition separately, for each noise level
-%{
-if plotFigures
-    for nn = 1:nNoiseLevels
-        noiseLevelName  = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        
-        for ii = 1:nConditions
-            figure; hold on;
-            conditionName   = sprintf('%s%d','condition',ii);
-            NumPos   = data.performance.(noiseLevelName).(conditionName).NumPos;
-            OutOfNum = data.performance.(noiseLevelName).(conditionName).OutOfNum;
-            performancethis = NumPos./OutOfNum;
-            
-            % Plot data.
-            plot(comparisons,performancethis,'o','MarkerFace','k');
-            
-            % Plot psychometric function fit.
-            [xx,FittedCurve,threshold] = fitPsychometric(comparisons,NumPos,OutOfNum);
-            plot(xx,FittedCurve,'-','LineWidth',1,'Color','k');
+%% Convert comparison amounts from mm to degrees of visual angle for plotting
 
-            % Plot parameters.
-            title({sprintf('%s%s%s%d %s %s: %s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
-                           noiseLevelName,conditionName,'threshold=',threshold),''});
-            xlabel(sprintf('Comparison offset rightward (mm)'));
-            ylabel('Proportion chose comparison as rightward');
-            axis([-Inf Inf 0 1]);
-            set(gca,'tickdir','out');
-            set(gca,'XTick',comparisons);
-            set(gca,'XTickLabel',comparisons);
-            box off; hold off;
-        end
-    end
-end
-%}
+monitorDistance   = 75; %cm
+monitorDistancemm = monitorDistance*10;
+comparisonsDeg    = atand(comparisons/monitorDistancemm);
+
 %% Plot performance for all conditions combined, for each noise level
 %
 % Plot colors for each noise level.
@@ -227,29 +199,30 @@ if plotFigures
         performanceAll = NumPos./OutOfNum;
         
         % Plot data.
-        plot(comparisons,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
         
         % Plot psychometric function fit.
-        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisons,NumPos,OutOfNum);
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
         plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
     end
     % Plot parameters.
     if nNoiseLevels==2
-        title({sprintf('%s%s%s%d%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+        title({sprintf('%s%s%s%d%s%0.2f%s%0.2f',experimentName,subjectName,'\_', sessionNumber, ...
             ': threshold0=',threshold(1),' threshold1=',threshold(2)),''});
         legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Location','northwest')
     elseif nNoiseLevels==3
-        title({sprintf('%s%s%s%d%s%0.1f%s%0.1f%s%0.1f',experimentName,subjectName,'\_', sessionNumber, ...
+        title({sprintf('%s%s%s%d%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName,'\_', sessionNumber, ...
             ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''});
         legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
     end
-    xlabel(sprintf('Comparison offset rightward (mm)'));
+    xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',comparisons);
-    set(gca,'XTickLabel',comparisons);
+    set(gca,'XTick',comparisonsDeg);
+    set(gca,'XTickLabel',comparisonsDeg);
+    xtickformat('%.1f');
     box off; hold off;
 end
 
@@ -274,7 +247,7 @@ if plotFigures
         reactionTime = nanmean(reactionTimeAll,2);
         
         % Plot data.
-        plot(comparisons,reactionTime,'Color',colors{nn});
+        plot(comparisonsDeg,reactionTime,'Color',colors{nn});
         meanRT(nn) = round(nanmean(reactionTime));
     end
     % Plot parameters.
@@ -287,12 +260,13 @@ if plotFigures
             ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''});
         legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
     end
-    xlabel(sprintf('Comparison offset rightward (mm)'));
+    xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Reaction time (ms)');
     axis([-Inf Inf -Inf Inf]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',comparisons);
-    set(gca,'XTickLabel',comparisons);
+    set(gca,'XTick',comparisonsDeg);
+    set(gca,'XTickLabel',comparisonsDeg);
+    xtickformat('%.1f');
     box off; hold off;
 end
 
