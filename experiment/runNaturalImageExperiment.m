@@ -113,7 +113,7 @@ params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
 params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
 params.image2Size = [10.54 10.54];
-params.ISI          = 0.10; % seconds
+params.ISI          = 0.20; % seconds
 params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
