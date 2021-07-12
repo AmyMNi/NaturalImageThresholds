@@ -1111,6 +1111,7 @@ if saveData
     data.image1Size   = params.image1Size;
     data.image2Size   = params.image2Size;
     data.ISI          = params.ISI;
+    data.PTI          = params.PTI;
     data.ITI          = params.ITI;
     data.stimDuration = params.stimDuration;
     
