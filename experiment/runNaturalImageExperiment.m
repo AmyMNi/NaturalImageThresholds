@@ -114,6 +114,7 @@ params.image2Loc  = [0 0];
 params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
 params.image2Size = [10.54 10.54];
 params.ISI          = 0.20; % seconds
+params.PTI          = 0.10; % seconds
 params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
@@ -427,22 +428,36 @@ while keepLooping
     image1 = image1(end:-1:1,:,:);
     image2 = image2(end:-1:1,:,:);
 
-    % Create masks for the ISI.
-    mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-    mask2 = MakeBlockMask(image1,image2,params.nBlocks);
-    mask3 = MakeBlockMask(image1,image2,params.nBlocks);
+    % Create masks.
+    maskPre  = MakeBlockMask(image1,image2,params.nBlocks);
+    mask1    = MakeBlockMask(image1,image2,params.nBlocks);
+    mask2    = MakeBlockMask(image1,image2,params.nBlocks);
+    mask3    = MakeBlockMask(image1,image2,params.nBlocks);
+    maskPost = MakeBlockMask(image1,image2,params.nBlocks);
     
     % Write the images into the window and disable.
-    win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
-    win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
-    win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
-    win.addImage(params.image1Loc, params.image1Size, mask3,  'Name', 'mask3');
-    win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+    win.addImage(params.image1Loc, params.image1Size, maskPre,  'Name', 'maskPre');
+    win.addImage(params.image1Loc, params.image1Size, image1,   'Name', 'image1');
+    win.addImage(params.image1Loc, params.image1Size, mask1,    'Name', 'mask1');
+    win.addImage(params.image1Loc, params.image1Size, mask2,    'Name', 'mask2');
+    win.addImage(params.image1Loc, params.image1Size, mask3,    'Name', 'mask3');
+    win.addImage(params.image2Loc, params.image2Size, image2,   'Name', 'image2');
+    win.addImage(params.image1Loc, params.image1Size, maskPost, 'Name', 'maskPost');
+    win.disableObject('maskPre');
     win.disableObject('image1');
     win.disableObject('mask1');
     win.disableObject('mask2');
     win.disableObject('mask3');
     win.disableObject('image2');
+    win.disableObject('maskPost');
+    
+    % Enable premask and draw.
+    win.enableObject('maskPre');
+    win.draw
+    
+    % Wait for PTI.
+    mglWaitSecs(params.PTI);
+    win.disableObject('maskPre');
     
     % Enable 1st image and draw.
     win.enableObject('image1');
@@ -483,6 +498,14 @@ while keepLooping
     % Wait for stimulus duration.
     mglWaitSecs(params.stimDuration);
     win.disableObject('image2');
+    
+    % Enable postmask and draw.
+    win.enableObject('maskPost');
+    win.draw
+    
+    % Wait for PTI.
+    mglWaitSecs(params.PTI);
+    win.disableObject('maskPost');
     win.draw;
 
     % Wait for key press response.
@@ -610,22 +633,36 @@ if ~easyquit
         image1 = image1(end:-1:1,:,:);
         image2 = image2(end:-1:1,:,:);
         
-        % Create masks for the ISI.
-        mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-        mask2 = MakeBlockMask(image1,image2,params.nBlocks);
-        mask3 = MakeBlockMask(image1,image2,params.nBlocks);
+        % Create masks.
+        maskPre  = MakeBlockMask(image1,image2,params.nBlocks);
+        mask1    = MakeBlockMask(image1,image2,params.nBlocks);
+        mask2    = MakeBlockMask(image1,image2,params.nBlocks);
+        mask3    = MakeBlockMask(image1,image2,params.nBlocks);
+        maskPost = MakeBlockMask(image1,image2,params.nBlocks);
         
         % Write the images into the window and disable.
-        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
-        win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
-        win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
-        win.addImage(params.image1Loc, params.image1Size, mask3,  'Name', 'mask3');
-        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+        win.addImage(params.image1Loc, params.image1Size, maskPre,  'Name', 'maskPre');
+        win.addImage(params.image1Loc, params.image1Size, image1,   'Name', 'image1');
+        win.addImage(params.image1Loc, params.image1Size, mask1,    'Name', 'mask1');
+        win.addImage(params.image1Loc, params.image1Size, mask2,    'Name', 'mask2');
+        win.addImage(params.image1Loc, params.image1Size, mask3,    'Name', 'mask3');
+        win.addImage(params.image2Loc, params.image2Size, image2,   'Name', 'image2');
+        win.addImage(params.image1Loc, params.image1Size, maskPost, 'Name', 'maskPost');
+        win.disableObject('maskPre');
         win.disableObject('image1');
         win.disableObject('mask1');
         win.disableObject('mask2');
         win.disableObject('mask3');
         win.disableObject('image2');
+        win.disableObject('maskPost');
+        
+        % Enable premask and draw.
+        win.enableObject('maskPre');
+        win.draw
+        
+        % Wait for PTI.
+        mglWaitSecs(params.PTI);
+        win.disableObject('maskPre');
         
         % Enable 1st image and draw.
         win.enableObject('image1');
@@ -669,6 +706,14 @@ if ~easyquit
         % Wait for stimulus duration.
         mglWaitSecs(params.stimDuration);
         win.disableObject('image2');
+        
+        % Enable postmask and draw.
+        win.enableObject('maskPost');
+        win.draw
+        
+        % Wait for PTI.
+        mglWaitSecs(params.PTI);
+        win.disableObject('maskPost');
         win.draw;
 
         % Wait for key press response.
