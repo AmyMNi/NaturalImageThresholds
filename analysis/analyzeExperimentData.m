@@ -2,8 +2,8 @@ function data = analyzeExperimentData(varargin)
 %analyzeExperimentData
 %
 % Usage:
-%   data = analyzeExperimentData('experimentName', 'Experiment000', ...
-%                                'subjectName', 'AN');
+%   data = analyzeExperimentData('experimentName', 'Experiment100', ...
+%                                'subjectName', 'test');
 %
 % Description:
 %   Analyze psychophysical data for a single experiment, across all data
@@ -11,8 +11,8 @@ function data = analyzeExperimentData(varargin)
 %   'dataExperiment') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'subjectName'    : (string)  Name of subject (default: 'AN')
+%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (string)  Name of subject (default: 'test')
 %   'plotFigures'    : (logical) Plot figures if option is on (default: true)
 %   'saveData'       : (logical) Save data if option is on (default: true)
 %
@@ -21,8 +21,8 @@ function data = analyzeExperimentData(varargin)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('subjectName', 'AN', @ischar);
+parser.addParameter('experimentName', 'Experiment100', @ischar);
+parser.addParameter('subjectName', 'test', @ischar);
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
 parser.parse(varargin{:});

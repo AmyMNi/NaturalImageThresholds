@@ -10,7 +10,7 @@ function runRenderISET3dHyperspectral(varargin)
 %   output folder.
 %
 % Optional parameter/value:
-%   'experimentName' : (string) Name of experiment folder (default: 'Experiment000')
+%   'experimentName' : (string) Name of experiment folder (default: 'Experiment100')
 % 
 % History:
 %   06/07/21  amn  Wrote it.
@@ -19,7 +19,7 @@ function runRenderISET3dHyperspectral(varargin)
 
 %% Parse the input
 parser = inputParser();
-parser.addParameter('experimentName', 'Experiment000', @ischar);
+parser.addParameter('experimentName', 'Experiment100', @ischar);
 parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;

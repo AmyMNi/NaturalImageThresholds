@@ -2,8 +2,8 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %runNaturalImageExperiment
 %
 % Usage:
-%   runNaturalImageExperiment('experimentName', 'Experiment000', ...
-%                             'subjectName', 'AN');
+%   runNaturalImageExperiment('experimentName', 'Experiment100', ...
+%                             'subjectName', 'test');
 %
 % Description:
 %   Run the natural image psychophysics experiment given the specified
@@ -20,8 +20,8 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %      b) Press firmly on the gamepad buttons
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'subjectName'    : (string)  Name of subject (default: 'AN')
+%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (string)  Name of subject (default: 'test')
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
@@ -31,12 +31,13 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %
 % History:
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
-%   07/05/21  amn  Experiment edits based on pilot tests
+%   07/05/21  amn  Edits based on pilot tests
+%   07/19/21  amn  Edits for main experiment 
 
 %% Parse the inputs
 parser = inputParser();
-parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('subjectName', 'AN', @ischar);
+parser.addParameter('experimentName', 'Experiment100', @ischar);
+parser.addParameter('subjectName', 'test', @ischar);
 parser.addParameter('nIterations', 14, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
@@ -103,11 +104,8 @@ wrongSound = rand(1,1000).*ceil(sin(2*pi*(1:1000)/10))/10;
 acquisitionStatus = 0;
 
 % Set task parameters.
-params.screenDimsCm = [59.67 33.57]; %cm
-params.fpSize       = [0.1 0.1]; % fixation point size
-params.fpColor      = [174 174 128]/255; % fixation point: color of banana (unused)
-params.fpColorRed   = [0.6 0.2 0.2]; % fixation point color red
-params.bgColor      = [128 128 128]/255; % to match electrophys task
+params.screenDimsCm = [59.67 33.57]; % cm
+params.bgColor      = [128 128 128]/255; % to match electrophysiology task
 params.textColor    = [0.6 0.2 0.2];
 params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
@@ -750,244 +748,150 @@ if ~easyquit
             saveData = 0;
         end
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: includes both options of 4 runs or 6 runs
-        if nNoiseLevels<3
-            % Check if one quarter of experiment is reached.
-            if iiTrial == ceil(nTrials/4)
-                win.enableObject('oneQuarterText');
-                win.draw;
-                pause(60);
-                win.disableObject('oneQuarterText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
+        % Check if 1/6 of experiment is reached.
+        if iiTrial == ceil(nTrials/6)
+            win.enableObject('oneSixthText');
+            win.draw;
+            pause(60);
+            win.disableObject('oneSixthText');
+            win.enableObject('restOver');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
                 end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-            
-            % Check if two quarters of experiment is reached.
-            if iiTrial == ceil(2*nTrials/4)
-                win.enableObject('twoQuartersText');
-                win.draw;
-                pause(60);
-                win.disableObject('twoQuartersText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
                 end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
             end
-            
-            % Check if three quarters of experiment is reached.
-            if iiTrial == ceil(3*nTrials/4)
-                win.enableObject('threeQuartersText');
-                win.draw;
-                pause(60);
-                win.disableObject('threeQuartersText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-        else
-            % Check if 1/6 of experiment is reached.
-            if iiTrial == ceil(nTrials/6)
-                win.enableObject('oneSixthText');
-                win.draw;
-                pause(60);
-                win.disableObject('oneSixthText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-            
-            % Check if 2/6 of experiment is reached.
-            if iiTrial == ceil(2*nTrials/6)
-                win.enableObject('twoSixthsText');
-                win.draw;
-                pause(60);
-                win.disableObject('twoSixthsText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-            
-            % Check if 3/6 of experiment is reached.
-            if iiTrial == ceil(3*nTrials/6)
-                win.enableObject('threeSixthsText');
-                win.draw;
-                pause(60);
-                win.disableObject('threeSixthsText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-            
-            % Check if 4/6 of experiment is reached.
-            if iiTrial == ceil(4*nTrials/6)
-                win.enableObject('fourSixthsText');
-                win.draw;
-                pause(60);
-                win.disableObject('fourSixthsText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
-            
-            % Check if 5/6 of experiment is reached.
-            if iiTrial == ceil(5*nTrials/6)
-                win.enableObject('fiveSixthsText');
-                win.draw;
-                pause(60);
-                win.disableObject('fiveSixthsText');
-                win.enableObject('restOver');
-                win.draw;
-                FlushEvents;
-                % Wait for key press.
-                if strcmp(controlSignal, 'keyboard')
-                    key = [];
-                    while isempty(key)
-                        key = mglGetKeyEvent;
-                    end
-                else
-                    key = [];
-                    while isempty(key)
-                        key = gamePad.getKeyEvent();
-                    end
-                end
-                % Turn off text.
-                win.disableObject('restOver');
-                win.draw;
-                mglWaitSecs(params.ITI);
-                % Reset the keyboard queue.
-                mglGetKeyEvent;
-            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        % Check if 2/6 of experiment is reached.
+        if iiTrial == ceil(2*nTrials/6)
+            win.enableObject('twoSixthsText');
+            win.draw;
+            pause(60);
+            win.disableObject('twoSixthsText');
+            win.enableObject('restOver');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
+        
+        % Check if 3/6 of experiment is reached.
+        if iiTrial == ceil(3*nTrials/6)
+            win.enableObject('threeSixthsText');
+            win.draw;
+            pause(60);
+            win.disableObject('threeSixthsText');
+            win.enableObject('restOver');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
+        
+        % Check if 4/6 of experiment is reached.
+        if iiTrial == ceil(4*nTrials/6)
+            win.enableObject('fourSixthsText');
+            win.draw;
+            pause(60);
+            win.disableObject('fourSixthsText');
+            win.enableObject('restOver');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
+        
+        % Check if 5/6 of experiment is reached.
+        if iiTrial == ceil(5*nTrials/6)
+            win.enableObject('fiveSixthsText');
+            win.draw;
+            pause(60);
+            win.disableObject('fiveSixthsText');
+            win.enableObject('restOver');
+            win.draw;
+            FlushEvents;
+            % Wait for key press.
+            if strcmp(controlSignal, 'keyboard')
+                key = [];
+                while isempty(key)
+                    key = mglGetKeyEvent;
+                end
+            else
+                key = [];
+                while isempty(key)
+                    key = gamePad.getKeyEvent();
+                end
+            end
+            % Turn off text.
+            win.disableObject('restOver');
+            win.draw;
+            mglWaitSecs(params.ITI);
+            % Reset the keyboard queue.
+            mglGetKeyEvent;
+        end
         
         % Check if end of experiment is reached.
         if iiTrial == nTrials
@@ -1034,9 +938,6 @@ if saveData
     
     % Save task parameters.
     data.screenDimsCm = params.screenDimsCm;
-    data.fpSize       = params.fpSize;
-    data.fpColor      = params.fpColor;
-    data.fpColorRed   = params.fpColorRed;
     data.bgColor      = params.bgColor;
     data.textColor    = params.textColor;
     data.image1Loc    = params.image1Loc;
@@ -1100,12 +1001,6 @@ win = GLWindow('SceneDimensions',params.screenDimsCm,'BackgroundColor',params.bg
 try
     % Open the display.
     win.open;
-    
-    % Add the fixation point.
-    win.addOval([0 0], params.fpSize, params.fpColor, 'Name', 'fp');
-    
-    % Add the fixation point in red color.
-    win.addOval([0 0], params.fpSize, params.fpColorRed, 'Name', 'fpRed');
 
     % Add instructions text.
     win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
@@ -1133,45 +1028,20 @@ try
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'startText'); % Identifier for the object
- 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: includes text for both options of 4 runs or 6 runs
-    
-    % Add text for when experiment is one quarter over.
-    win.addText('One quarter of trials complete. Take a minute to stand or stretch.', ... % Text to display
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'oneQuarterText'); % Identifier for the object
 
-    % Add text for when rest period is over.
-    win.addText('Rest time complete. Hit any button to continue.', ... % Text to display
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'restOver'); % Identifier for the object
-
-    % Add text for when experiment is two quarters over.
-    win.addText('Half of trials complete. Take a minute to stand or stretch.', ... % Text to display
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'twoQuartersText'); % Identifier for the object
-    
-    % Add text for when experiment is three quarters over.
-    win.addText('Three quarters of trials complete. Take a minute to stand or stretch.', ... % Text to display
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 75, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'threeQuartersText'); % Identifier for the object
-    
     % Add text for when experiment is 1/6 over.
     win.addText('One sixth of trials complete. Take a minute to stand or stretch.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'oneSixthText'); % Identifier for the object
+    
+    % Add text for when rest period is over.
+    win.addText('Rest time complete. Hit any button to continue.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'restOver'); % Identifier for the object
     
     % Add text for when experiment is 2/6 over.
     win.addText('One third of trials complete. Take a minute to stand or stretch.', ... % Text to display
@@ -1200,9 +1070,7 @@ try
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'fiveSixthsText'); % Identifier for the object
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     % Add text for when experiment is complete.
     win.addText('Experiment is complete.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)

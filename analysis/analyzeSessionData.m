@@ -2,8 +2,8 @@ function data = analyzeSessionData(varargin)
 %analyzeSessionData
 %
 % Usage:
-%   data = analyzeSessionData('experimentName', 'Experiment000', ...
-%                             'subjectName', 'AN', ...
+%   data = analyzeSessionData('experimentName', 'Experiment100', ...
+%                             'subjectName', 'test', ...
 %                             'sessionNumber', 1);
 %
 % Description:
@@ -11,8 +11,8 @@ function data = analyzeSessionData(varargin)
 %   the results (struct 'data') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment000')
-%   'subjectName'    : (string)  Name of subject (default: 'AN')
+%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (string)  Name of subject (default: 'test')
 %   'sessionNumber'  : (scalar)  Number of session (default: 1)
 %   'plotFigures'    : (logical) Plot figures if option is on (default: true)
 %   'saveData'       : (logical) Save data if option is on (default: true)
@@ -22,8 +22,8 @@ function data = analyzeSessionData(varargin)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addParameter('experimentName', 'Experiment000', @ischar);
-parser.addParameter('subjectName', 'AN', @ischar);
+parser.addParameter('experimentName', 'Experiment100', @ischar);
+parser.addParameter('subjectName', 'test', @ischar);
 parser.addParameter('sessionNumber', 1, @isscalar);
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
