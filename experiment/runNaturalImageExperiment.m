@@ -186,7 +186,7 @@ for ii = 1:nImages
     imageNoiseLevel(ii) = str2double(regexp(s3,'[+-]?\d*','Match'));
     if numel(p)==3
         s4 = name(p(3):end);
-        s5 = '';
+        s5 = '0';
     elseif numel(p)==4
         s4 = name(p(3):p(4));   
         s5 = name(p(4):end);
