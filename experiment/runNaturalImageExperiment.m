@@ -165,10 +165,11 @@ imageNames = {fileInfo(:).name}';
 %
 % Preallocate vectors of noise level, noise amount, condition, and 
 % comparison amount per image.
-imageNoiseLevel  = nan(nImages,1);
-imageNoiseAmount = nan(nImages,1);
-imageCondition   = nan(nImages,1);
-imageComparison  = nan(nImages,1);
+imageNoiseLevel   = nan(nImages,1);
+imageNoiseAmount1 = nan(nImages,1);
+imageNoiseAmount2 = nan(nImages,1);
+imageCondition    = nan(nImages,1);
+imageComparison   = nan(nImages,1);
 
 % Break down image file names to get image info.
 for ii = 1:nImages
@@ -178,14 +179,20 @@ for ii = 1:nImages
     % Label the 'imageNames' indices by their condition, comparison amount,
     % noise level, and noise amount.
     s1 = name(1:p(1));
+    imageCondition(ii)  = str2double(regexp(s1,'[+-]?\d*','Match'));
     s2 = name(p(1):p(2));
+    imageComparison(ii) = str2double(regexp(s2,'[+-]?\d*','Match'));
     s3 = name(p(2):p(3));
-    s4 = name(p(3):end);
-    
-    imageCondition(ii)   = str2double(regexp(s1,'[+-]?\d*','Match'));
-    imageComparison(ii)  = str2double(regexp(s2,'[+-]?\d*','Match'));
-    imageNoiseLevel(ii)  = str2double(regexp(s3,'[+-]?\d*','Match'));
-    imageNoiseAmount(ii) = str2double(regexp(s4,'[+-]?\d*','Match'));
+    imageNoiseLevel(ii) = str2double(regexp(s3,'[+-]?\d*','Match'));
+    if numel(p)==3
+        s4 = name(p(3):end);
+        s5 = '';
+    elseif numel(p)==4
+        s4 = name(p(3):p(4));   
+        s5 = name(p(4):end);
+    end
+    imageNoiseAmount1(ii) = str2double(regexp(s4,'[+-]?\d*','Match'));
+    imageNoiseAmount2(ii) = str2double(regexp(s5,'[+-]?\d*','Match'));
 end
 
 % Get the identities and number of noise levels, conditions, and comparison 
@@ -208,9 +215,10 @@ nTrials      = nTrialsRun*2*nNoiseLevels;
 trialOrder   = nan(nTrials,2);
 srow         = 1;
 
-% Preallocate vectors of noise level and noise amount (within the level) per trial.
-trialNoiseLevel  = nan(nTrials,1);
-trialNoiseAmount = nan(nTrials,2);
+% Preallocate vectors of noise level and noise amounts (within the level) per trial.
+trialNoiseLevel   = nan(nTrials,1);
+trialNoiseAmount1 = nan(nTrials,2);
+trialNoiseAmount2 = nan(nTrials,2);
 
 % Create random order of runs (each noise level divided into two runs).
 allRunsOrdered = [noiseLevels; noiseLevels];
@@ -218,17 +226,19 @@ allRuns        = allRunsOrdered(randperm(numel(allRunsOrdered)));
 
 % Create a trial order per run, then combine across runs.
 for jj = 1:numel(allRuns)
-    noiseLevelthis      = allRuns(jj);
-    trialOrderRun       = nan(nTrialsRun,2);
-    trialNoiseAmountRun = nan(nTrialsRun,2);
+    noiseLevelthis       = allRuns(jj);
+    trialOrderRun        = nan(nTrialsRun,2);
+    trialNoiseAmount1Run = nan(nTrialsRun,2);
+    trialNoiseAmount2Run = nan(nTrialsRun,2);
     rrow = 1;
     
     % Include nIterations/2 blocks per run.
     % Complete a block before moving on to the next block.
     % Within each block, create a randomized order of trials.
     for ii = 1:nIterations/2
-        trialsPerBlock       = nan(nTrialsBlock,2);
-        noiseAmountsPerBlock = nan(nTrialsBlock,2);
+        trialsPerBlock        = nan(nTrialsBlock,2);
+        noiseAmounts1PerBlock = nan(nTrialsBlock,2);
+        noiseAmounts2PerBlock = nan(nTrialsBlock,2);
         brow = 1;
         
         % Create an ordered list of image index comparisons for trials of a single block.
@@ -245,8 +255,9 @@ for jj = 1:numel(allRuns)
                 (imageNoiseLevel==noiseLevelthis | imageNoiseLevel==0));
 
             % Create ordered list of image index comparisons for trials for this condition.
-            trialsPerCondition      = nan(nComparisons,2);
-            noiseAmountPerCondition = nan(nComparisons,2);
+            trialsPerCondition       = nan(nComparisons,2);
+            noiseAmount1PerCondition = nan(nComparisons,2);
+            noiseAmount2PerCondition = nan(nComparisons,2);
             for iii = 1:nComparisons
                 
                 % Randomly draw from the pool of images of the center position.
@@ -263,34 +274,40 @@ for jj = 1:numel(allRuns)
                 comparisonthis = comparisonPool(randi(numel(comparisonPool)));
                 
                 % Randomize whether the center position is shown in the 1st/2nd interval.
-                thisIndices      = [centerthis comparisonthis];
-                thisNoiseAmounts = imageNoiseAmount(thisIndices)';
-                orderrand        = randperm(2);
-                trialsPerCondition(iii,:)      = thisIndices(orderrand);
-                noiseAmountPerCondition(iii,:) = thisNoiseAmounts(orderrand);
+                thisIndices       = [centerthis comparisonthis];
+                thisNoiseAmounts1 = imageNoiseAmount1(thisIndices)';
+                thisNoiseAmounts2 = imageNoiseAmount2(thisIndices)';
+                orderrand         = randperm(2);
+                trialsPerCondition(iii,:)       = thisIndices(orderrand);
+                noiseAmount1PerCondition(iii,:) = thisNoiseAmounts1(orderrand);
+                noiseAmount2PerCondition(iii,:) = thisNoiseAmounts2(orderrand);
             end
             
             % Combine ordered trials across all conditions for a single block.
-            trialsPerBlock      (brow:brow+nComparisons-1,:) = trialsPerCondition;
-            noiseAmountsPerBlock(brow:brow+nComparisons-1,:) = noiseAmountPerCondition;
+            trialsPerBlock       (brow:brow+nComparisons-1,:) = trialsPerCondition;
+            noiseAmounts1PerBlock(brow:brow+nComparisons-1,:) = noiseAmount1PerCondition;
+            noiseAmounts2PerBlock(brow:brow+nComparisons-1,:) = noiseAmount2PerCondition;
             brow = brow+nComparisons;
         end
         
         % Randomize trial order within this single block.
         trialsrand = randperm(nTrialsBlock);
-        trialsPerBlockRand       = trialsPerBlock      (trialsrand,:);
-        noiseAmountsPerBlockRand = noiseAmountsPerBlock(trialsrand,:);
+        trialsPerBlockRand        = trialsPerBlock       (trialsrand,:);
+        noiseAmounts1PerBlockRand = noiseAmounts1PerBlock(trialsrand,:);
+        noiseAmounts2PerBlockRand = noiseAmounts2PerBlock(trialsrand,:);
         
         % Combine iterations of blocks for this run.
-        trialOrderRun      (rrow:rrow+nTrialsBlock-1,:) = trialsPerBlockRand;
-        trialNoiseAmountRun(rrow:rrow+nTrialsBlock-1,:) = noiseAmountsPerBlockRand;
+        trialOrderRun       (rrow:rrow+nTrialsBlock-1,:) = trialsPerBlockRand;
+        trialNoiseAmount1Run(rrow:rrow+nTrialsBlock-1,:) = noiseAmounts1PerBlockRand;
+        trialNoiseAmount2Run(rrow:rrow+nTrialsBlock-1,:) = noiseAmounts2PerBlockRand;
         rrow = rrow+nTrialsBlock;
     end
     
     % Combine trials across runs.
-    trialOrder      (srow:srow+nTrialsRun-1,:) = trialOrderRun;
-    trialNoiseLevel (srow:srow+nTrialsRun-1,1) = noiseLevelthis;
-    trialNoiseAmount(srow:srow+nTrialsRun-1,:) = trialNoiseAmountRun;
+    trialOrder       (srow:srow+nTrialsRun-1,:) = trialOrderRun;
+    trialNoiseLevel  (srow:srow+nTrialsRun-1,1) = noiseLevelthis;
+    trialNoiseAmount1(srow:srow+nTrialsRun-1,:) = trialNoiseAmount1Run;
+    trialNoiseAmount2(srow:srow+nTrialsRun-1,:) = trialNoiseAmount2Run;
     srow = srow+nTrialsRun;
 end
 
@@ -953,17 +970,19 @@ if saveData
     data.endTime   = endTime;
     
     % Save image information.
-    data.imageNames       = imageNames;
-    data.imageNoiseLevel  = imageNoiseLevel;
-    data.imageNoiseAmount = imageNoiseAmount;
-    data.imageCondition   = imageCondition;
-    data.imageComparison  = imageComparison;
+    data.imageNames        = imageNames;
+    data.imageNoiseLevel   = imageNoiseLevel;
+    data.imageNoiseAmount1 = imageNoiseAmount1;
+    data.imageNoiseAmount2 = imageNoiseAmount2;
+    data.imageCondition    = imageCondition;
+    data.imageComparison   = imageComparison;
     
     % Save trial information.
     data.trialOrder           = trialOrder;
     data.trialOrderComparison = trialOrderComparison;
     data.trialNoiseLevel      = trialNoiseLevel;
-    data.trialNoiseAmount     = trialNoiseAmount;
+    data.trialNoiseAmount1    = trialNoiseAmount1;
+    data.trialNoiseAmount2    = trialNoiseAmount2;
     data.correctResponse      = correctResponse;
     data.selectedResponse     = selectedResponse;
     data.reactionTimeStart    = reactionTimeStart;
