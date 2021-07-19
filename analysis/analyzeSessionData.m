@@ -79,27 +79,22 @@ nNoiseLevels     = numel(noiseLevels);
 data.noiseLevels = noiseLevels;
 
 % Per noise level, get the identities of noise amounts and median noise amount combination.
-noiseAmountsDiffMed = zeros(nNoiseLevels,1);
-noiseAmounts = data.imageNoiseAmount;
+noiseAmounts1DiffMed = zeros(nNoiseLevels,1);
+noiseAmounts1 = data.imageNoiseAmount1;
 % Skip first NoiseLevel (NoiseLevel0) because the median noise amount combination is zero.
 for nn = 2:nNoiseLevels
     % Get image indices for this noise level.
     noiseLevelthis = noiseLevels(nn);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: NoiseLevel1 and NoiseLevel2 are separate (though both include noise 0)
-    
+
     % Always include noise level 0 in each noise level.
     imagesNoise = data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Get the noise amounts for this noise level.
-    noiseAmountsthis = unique(noiseAmounts(imagesNoise));
-    data.noiseAmounts{nn,1} = noiseAmountsthis;
-    noiseAmountsCombo = nchoosek(noiseAmountsthis,2);
-    noiseAmountsAll = [noiseAmountsCombo; [noiseAmountsthis noiseAmountsthis]];
-    noiseAmountsDiff  = abs(noiseAmountsAll(:,1)-noiseAmountsAll(:,2));
-    noiseAmountsDiffMed(nn) = median(noiseAmountsDiff);
+    noiseAmounts1this = unique(noiseAmounts1(imagesNoise));
+    data.noiseAmounts1{nn,1} = noiseAmounts1this;
+    noiseAmounts1Combo = nchoosek(noiseAmounts1this,2);
+    noiseAmounts1All = [noiseAmounts1Combo; [noiseAmounts1this noiseAmounts1this]];
+    noiseAmounts1Diff  = abs(noiseAmounts1All(:,1)-noiseAmounts1All(:,2));
+    noiseAmounts1DiffMed(nn) = median(noiseAmounts1Diff);
 end
 
 % Get the identifies of conditions (same per noise level).
@@ -123,10 +118,10 @@ for nn = 1:nNoiseLevels
 
     % Get the image indices, target offset amount, noise amount, observer
     % response, and reaction time per trial.
-    imagesN       = data.trialOrder(trialsNoise,:);
-    offsetsN      = data.trialOrderComparison(trialsNoise,:);
-    noiseAmountsN = data.trialNoiseAmount(trialsNoise,:);
-    responsesN    = data.selectedResponse(trialsNoise);
+    imagesN        = data.trialOrder(trialsNoise,:);
+    offsetsN       = data.trialOrderComparison(trialsNoise,:);
+    noiseAmounts1N = data.trialNoiseAmount1(trialsNoise,:);
+    responsesN     = data.selectedResponse(trialsNoise);
     rtbeg = datetime(data.reactionTimeStart(trialsNoise),'InputFormat','MM/dd/yyyy HH:mm:ss.SSS','Format','HH:mm:ss.SSS');
     rtend = datetime(data.reactionTimeEnd(trialsNoise),  'InputFormat','MM/dd/yyyy HH:mm:ss.SSS','Format','HH:mm:ss.SSS');
     reactionTimeN = milliseconds(diff([rtbeg rtend],1,2));
@@ -136,27 +131,21 @@ for nn = 1:nNoiseLevels
         
         % Get the center position for this condition.
         centerpos = conditions(ii);
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: NoiseLevel1 and NoiseLevel2 are separate (though both include noise 0)
-        
+
         % For the center position of this condition, get the pool of
         % images (of the various noise amounts for this noise level,
         % including the noise amount of 0 from Noise Level 0).
         centerPool = find(data.imageComparison==0 & ...
             data.imageCondition==centerpos & ...
             (data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0));
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
         % Get parameters per trial.
-        trialsC       = any(ismember(imagesN,centerPool),2);
-        offsetsC      = offsetsN(trialsC,:);
-        comparisonsC  = sum(offsetsC,2);
-        noiseAmountsC = noiseAmountsN(trialsC,:); 
-        responsesC    = responsesN(trialsC);
-        reactionTimeC = reactionTimeN(trialsC);
+        trialsC        = any(ismember(imagesN,centerPool),2);
+        offsetsC       = offsetsN(trialsC,:);
+        comparisonsC   = sum(offsetsC,2);
+        noiseAmounts1C = noiseAmounts1N(trialsC,:); 
+        responsesC     = responsesN(trialsC);
+        reactionTimeC  = reactionTimeN(trialsC);
         
         % Calculate per comparison amount: 
         %   The number of trials a positive response was given
@@ -173,11 +162,11 @@ for nn = 1:nNoiseLevels
         reactionTimeSMALL        = nan(nComparisons,1);
         reactionTimeLARGE        = nan(nComparisons,1);
         for jj = 1:nComparisons
-            comparisonthis   = comparisons(jj);
-            offsetsthis      = offsetsC     (comparisonsC==comparisonthis,:);
-            noiseAmountsthis = noiseAmountsC(comparisonsC==comparisonthis,:);
-            responsesthis    = responsesC   (comparisonsC==comparisonthis);
-            reactionTimethis = reactionTimeC(comparisonsC==comparisonthis);
+            comparisonthis    = comparisons(jj);
+            offsetsthis       = offsetsC      (comparisonsC==comparisonthis,:);
+            noiseAmounts1this = noiseAmounts1C(comparisonsC==comparisonthis,:);
+            responsesthis     = responsesC    (comparisonsC==comparisonthis);
+            reactionTimethis  = reactionTimeC (comparisonsC==comparisonthis);
             
             % Calculate proportion observer chose the comparison as rightward.
             if comparisonthis==0
@@ -193,9 +182,9 @@ for nn = 1:nNoiseLevels
             
             % Calculate for each noise amount combination level (smaller, larger).
             if nn>1
-                noiseAmountsDiffthis = abs(noiseAmountsthis(:,1)-noiseAmountsthis(:,2));
-                idxSMALL = find(noiseAmountsDiffthis<=noiseAmountsDiffMed(nn));
-                idxLARGE = find(noiseAmountsDiffthis> noiseAmountsDiffMed(nn));
+                noiseAmounts1Diffthis = abs(noiseAmounts1this(:,1)-noiseAmounts1this(:,2));
+                idxSMALL = find(noiseAmounts1Diffthis<=noiseAmounts1DiffMed(nn));
+                idxLARGE = find(noiseAmounts1Diffthis> noiseAmounts1DiffMed(nn));
                 performanceNumPosSMALL(jj)   = numel(intersect(choseRight,idxSMALL));
                 performanceNumPosLARGE(jj)   = numel(intersect(choseRight,idxLARGE));
                 performanceOutOfNumSMALL(jj) = numel(idxSMALL);

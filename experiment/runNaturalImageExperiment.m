@@ -1,4 +1,4 @@
-function acquisitionStatus = runNaturalImageExperiment(varargin)
+ gfunction acquisitionStatus = runNaturalImageExperiment(varargin)
 %runNaturalImageExperiment
 %
 % Usage:
