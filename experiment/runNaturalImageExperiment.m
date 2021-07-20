@@ -86,7 +86,11 @@ end
 projectName = 'NaturalImageThresholds';
 
 % Set path to image folder.
-pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
+if strcmpi(subjectName,'ANauthor')
+    pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBsAmy');
+else
+    pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
+end
 
 % Set path to output folder.
 pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'PsychophysicalData');
