@@ -32,12 +32,6 @@ projectName = 'NaturalImageThresholds';
 % Set path to input folder.
 pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageScenes');
 
-% Set path to output folder.
-pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
-if ~exist(pathToOutput, 'dir')
-    mkdir(pathToOutput);
-end
-
 % Set path to calibration folder.
 calDir = getpref(projectName,'CalDataFolder');
 
@@ -52,6 +46,18 @@ if (isempty(cal))
 end
 fprintf('Using calibration done by %s on %s\n', ...
     cal.describe.who,cal.describe.date);
+
+%% Set path to output folder
+if strcmp(calFile,'NaturalImageThresholdsCal_Amy')
+    pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBsAmy');
+else
+    pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
+end
+
+% Create output folder if it doesn't exist.
+if ~exist(pathToOutput, 'dir')
+    mkdir(pathToOutput);
+end
 
 %% Get names of all scene files in the input folder
 %
