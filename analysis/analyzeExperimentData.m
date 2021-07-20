@@ -60,7 +60,7 @@ dataExperiment = struct;
 fileToLoad = fullfile(pathToFolder,fileInfo(1).name);
 temp = load(fileToLoad,'data'); data = temp.data; clear temp;
 fn = fieldnames(data);
-fn = fn([1:20 37:41]);
+fn = fn([1:17 36:41]);
 for ii=1:numel(fn)
     dataExperiment.(fn{ii}) = data.(fn{ii});
 end
@@ -88,46 +88,70 @@ for ii = 1:length(fileInfo)
         NumPos       = nan(nComparisons,nConditions);
         OutOfNum     = nan(nComparisons,nConditions);
         reactionTime = nan(nComparisons,nConditions);
-        NumPosSMALL       = nan(nComparisons,nConditions);
-        OutOfNumSMALL     = nan(nComparisons,nConditions);
-        reactionTimeSMALL = nan(nComparisons,nConditions);
-        NumPosLARGE       = nan(nComparisons,nConditions);
-        OutOfNumLARGE     = nan(nComparisons,nConditions);
-        reactionTimeLARGE = nan(nComparisons,nConditions);
+        NumPosSMALL1       = nan(nComparisons,nConditions);
+        OutOfNumSMALL1     = nan(nComparisons,nConditions);
+        reactionTimeSMALL1 = nan(nComparisons,nConditions);
+        NumPosLARGE1       = nan(nComparisons,nConditions);
+        OutOfNumLARGE1     = nan(nComparisons,nConditions);
+        reactionTimeLARGE1 = nan(nComparisons,nConditions);
+        NumPosSMALL2       = nan(nComparisons,nConditions);
+        OutOfNumSMALL2     = nan(nComparisons,nConditions);
+        reactionTimeSMALL2 = nan(nComparisons,nConditions);
+        NumPosLARGE2       = nan(nComparisons,nConditions);
+        OutOfNumLARGE2     = nan(nComparisons,nConditions);
+        reactionTimeLARGE2 = nan(nComparisons,nConditions);
         for jj = 1:nConditions
             conditionName  = sprintf('%s%d','condition',jj);
             NumPos      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPos;
             OutOfNum    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNum;
             reactionTime(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTime;
-            NumPosSMALL      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosSMALL;
-            OutOfNumSMALL    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumSMALL;
-            reactionTimeSMALL(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeSMALL;
-            NumPosLARGE      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosLARGE;
-            OutOfNumLARGE    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumLARGE;
-            reactionTimeLARGE(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeLARGE;
+            NumPosSMALL1      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosSMALL1;
+            OutOfNumSMALL1    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumSMALL1;
+            reactionTimeSMALL1(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeSMALL1;
+            NumPosLARGE1      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosLARGE1;
+            OutOfNumLARGE1    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumLARGE1;
+            reactionTimeLARGE1(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeLARGE1;
+            NumPosSMALL2      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosSMALL2;
+            OutOfNumSMALL2    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumSMALL2;
+            reactionTimeSMALL2(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeSMALL2;
+            NumPosLARGE2      (:,jj) = data.performance.(noiseLevelName).(conditionName).NumPosLARGE2;
+            OutOfNumLARGE2    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumLARGE2;
+            reactionTimeLARGE2(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeLARGE2;
         end
         
         % For this session, calculate across the conditions of this noise level.
         NumPosAll       = sum(NumPos,  2);
         OutOfNumAll     = sum(OutOfNum,2);
         reactionTimeAll = nanmean(reactionTime,2);
-        NumPosAllSMALL       = sum(NumPosSMALL,  2);
-        OutOfNumAllSMALL     = sum(OutOfNumSMALL,2);
-        reactionTimeAllSMALL = nanmean(reactionTimeSMALL,2);
-        NumPosAllLARGE       = sum(NumPosLARGE,  2);
-        OutOfNumAllLARGE     = sum(OutOfNumLARGE,2);
-        reactionTimeAllLARGE = nanmean(reactionTimeLARGE,2);
+        NumPosAllSMALL1       = sum(NumPosSMALL1,  2);
+        OutOfNumAllSMALL1     = sum(OutOfNumSMALL1,2);
+        reactionTimeAllSMALL1 = nanmean(reactionTimeSMALL1,2);
+        NumPosAllLARGE1       = sum(NumPosLARGE1,  2);
+        OutOfNumAllLARGE1     = sum(OutOfNumLARGE1,2);
+        reactionTimeAllLARGE1 = nanmean(reactionTimeLARGE1,2);
+        NumPosAllSMALL2       = sum(NumPosSMALL2,  2);
+        OutOfNumAllSMALL2     = sum(OutOfNumSMALL2,2);
+        reactionTimeAllSMALL2 = nanmean(reactionTimeSMALL2,2);
+        NumPosAllLARGE2       = sum(NumPosLARGE2,  2);
+        OutOfNumAllLARGE2     = sum(OutOfNumLARGE2,2);
+        reactionTimeAllLARGE2 = nanmean(reactionTimeLARGE2,2);
         
         % Store data.
         dataExperiment.performance.(noiseLevelName).NumPos      (:,ii) = NumPosAll;
         dataExperiment.performance.(noiseLevelName).OutOfNum    (:,ii) = OutOfNumAll;
         dataExperiment.performance.(noiseLevelName).reactionTime(:,ii) = reactionTimeAll;
-        dataExperiment.performance.(noiseLevelName).NumPosSMALL      (:,ii) = NumPosAllSMALL;
-        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL    (:,ii) = OutOfNumAllSMALL;
-        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL(:,ii) = reactionTimeAllSMALL;
-        dataExperiment.performance.(noiseLevelName).NumPosLARGE      (:,ii) = NumPosAllLARGE;
-        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE    (:,ii) = OutOfNumAllLARGE;
-        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE(:,ii) = reactionTimeAllLARGE;
+        dataExperiment.performance.(noiseLevelName).NumPosSMALL1      (:,ii) = NumPosAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1    (:,ii) = OutOfNumAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL1(:,ii) = reactionTimeAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).NumPosLARGE1      (:,ii) = NumPosAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1    (:,ii) = OutOfNumAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE1(:,ii) = reactionTimeAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).NumPosSMALL2      (:,ii) = NumPosAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2    (:,ii) = OutOfNumAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL2(:,ii) = reactionTimeAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).NumPosLARGE2      (:,ii) = NumPosAllLARGE2;
+        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2    (:,ii) = OutOfNumAllLARGE2;
+        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE2(:,ii) = reactionTimeAllLARGE2;
     end
 end
 
@@ -164,15 +188,9 @@ if plotFigures
         threshold(nn) = thresholdthis;
     end
     % Plot parameters.
-    if nNoiseLevels==2
-        title({sprintf('%s%s%s%0.2f%s%0.2f',experimentName,subjectName, ...
-            ': threshold0=',threshold(1),' threshold1=',threshold(2)),''});
-        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Location','northwest')
-    elseif nNoiseLevels==3
-        title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName, ...
-            ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''});
-        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
-    end
+    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName, ...
+        ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''});
+    legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
@@ -183,7 +201,7 @@ if plotFigures
     box off; hold off;
 end
 
-%% Plot performance for each noise level as above, but separated by noise amount combination level (smaller, larger)
+%% Plot performance for each noise level as above, but separated by NoiseAmounts1 combination level (smaller, larger)
 %
 % Plot colors for each noise level.
 colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
@@ -216,15 +234,15 @@ if plotFigures
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
         
         % Average performance across all sessions.
-        performanceAllNumPosSMALL   = dataExperiment.performance.(noiseLevelName).NumPosSMALL;
-        performanceAllOutOfNumSMALL = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL;
-        performanceAllNumPosLARGE   = dataExperiment.performance.(noiseLevelName).NumPosLARGE;
-        performanceAllOutOfNumLARGE = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE;
-        NumPosSMALL   = sum(performanceAllNumPosSMALL,  2);
-        OutOfNumSMALL = sum(performanceAllOutOfNumSMALL,2); 
+        performanceAllNumPosSMALL1   = dataExperiment.performance.(noiseLevelName).NumPosSMALL1;
+        performanceAllOutOfNumSMALL1 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1;
+        performanceAllNumPosLARGE1   = dataExperiment.performance.(noiseLevelName).NumPosLARGE1;
+        performanceAllOutOfNumLARGE1 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1;
+        NumPosSMALL   = sum(performanceAllNumPosSMALL1,  2);
+        OutOfNumSMALL = sum(performanceAllOutOfNumSMALL1,2); 
         performanceAllSMALL = NumPosSMALL./OutOfNumSMALL;
-        NumPosLARGE   = sum(performanceAllNumPosLARGE,  2);
-        OutOfNumLARGE = sum(performanceAllOutOfNumLARGE,2); 
+        NumPosLARGE   = sum(performanceAllNumPosLARGE1,  2);
+        OutOfNumLARGE = sum(performanceAllOutOfNumLARGE1,2); 
         performanceAllLARGE = NumPosLARGE./OutOfNumLARGE;
         
         % Plot data: SMALL noise amount combination level.
@@ -244,17 +262,88 @@ if plotFigures
         row = row+1;  
     end
     % Plot parameters.
-    if nNoiseLevels==2
-        title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-            ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')'),''});
-        legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit','Location','northwest')
-    elseif nNoiseLevels==3
-        title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-            ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
-            ' threshold2=(',threshold(4),',',threshold(5),')'),''});
-        legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit', ...
-            'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
+    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+        ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
+        ' threshold2=(',threshold(4),',',threshold(5),')'),''});
+    legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit', ...
+        'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
+    xlabel(sprintf('Comparison offset rightward (deg)'));
+    ylabel('Proportion chose comparison as rightward');
+    axis([-Inf Inf 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',comparisonsDeg);
+    set(gca,'XTickLabel',comparisonsDeg);
+    xtickformat('%.1f');
+    box off; hold off;
+end
+
+%% Plot performance for each noise level as above, but separated by NoiseAmounts2 combination level (smaller, larger)
+%
+% Plot colors for each noise level.
+colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+
+% Plot all noise levels.
+threshold = nan(nNoiseLevels+nNoiseLevels-2,1);
+row = 1;
+if plotFigures
+    figure; hold on;
+    
+    % Average performance across all sessions, for NoiseLevel0 and NoiseLevel1.
+    for nn = 1:2
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+        performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
+        performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
+        NumPos   = sum(performanceAllNumPos,  2);
+        OutOfNum = sum(performanceAllOutOfNum,2);
+        performanceAll = NumPos./OutOfNum;
+        
+        % Plot data.
+        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        
+        % Plot psychometric function fit.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        threshold(row) = thresholdthis;
+        row = row+1;
     end
+    
+    % Plot average performance across all sessions for NoiseLevel2, per noise amount combination level.   
+    noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(3));
+    
+    % Average performance across all sessions.
+    performanceAllNumPosSMALL2   = dataExperiment.performance.(noiseLevelName).NumPosSMALL2;
+    performanceAllOutOfNumSMALL2 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2;
+    performanceAllNumPosLARGE2   = dataExperiment.performance.(noiseLevelName).NumPosLARGE2;
+    performanceAllOutOfNumLARGE2 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2;
+    NumPosSMALL   = sum(performanceAllNumPosSMALL2,  2);
+    OutOfNumSMALL = sum(performanceAllOutOfNumSMALL2,2);
+    performanceAllSMALL = NumPosSMALL./OutOfNumSMALL;
+    NumPosLARGE   = sum(performanceAllNumPosLARGE2,  2);
+    OutOfNumLARGE = sum(performanceAllOutOfNumLARGE2,2);
+    performanceAllLARGE = NumPosLARGE./OutOfNumLARGE;
+    
+    % Plot data: SMALL noise amount combination level.
+    plot(comparisonsDeg,performanceAllSMALL,'o','MarkerFace','w','MarkerEdge',colors{3});
+    % Plot psychometric function fit: SMALL noise amount combination level.
+    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosSMALL,OutOfNumSMALL);
+    plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{3});
+    threshold(row) = thresholdthis;
+    row = row+1;
+    
+    % Plot data: LARGE noise amount combination level.
+    plot(comparisonsDeg,performanceAllLARGE,'o','MarkerFace',colors{3},'MarkerEdge',colors{3});
+    % Plot psychometric function fit: LARGE noise amount combination level.
+    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosLARGE,OutOfNumLARGE);
+    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
+    threshold(row) = thresholdthis;
+    row = row+1;
+
+    % Plot parameters.
+    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+        ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
+        ' threshold2=(',threshold(3),',',threshold(4),')'),''});
+    legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
+        'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Proportion chose comparison as rightward');
     axis([-Inf Inf 0 1]);
