@@ -74,22 +74,22 @@ data.sessionNumber = sessionNumber;
 %% Get experiment info
 %
 % Get the identifies of noise levels.
-noiseLevels      = unique(data.imageNoiseLevel);
+noiseLevels      = unique(data.trialNoiseLevel);
 nNoiseLevels     = numel(noiseLevels);
 data.noiseLevels = noiseLevels;
 
 % Per noise level, get the identities of noise amounts and median noise amount combination.
 noiseAmounts1DiffMed = zeros(nNoiseLevels,1);
 noiseAmounts2DiffMed = zeros(nNoiseLevels,1);
-noiseAmounts1 = data.imageNoiseAmount1;
-noiseAmounts2 = data.imageNoiseAmount2;
+noiseAmounts1 = data.trialNoiseAmount1;
+noiseAmounts2 = data.trialNoiseAmount2;
 % Skip first NoiseLevel (NoiseLevel0) because the median noise amount combination is zero.
 for nn = 2:nNoiseLevels
     % Get image indices for this noise level.
     noiseLevelthis = noiseLevels(nn);
 
     % Always include noise level 0 in each noise level.
-    imagesNoise = data.imageNoiseLevel==noiseLevelthis | data.imageNoiseLevel==0;
+    imagesNoise = data.trialNoiseLevel==noiseLevelthis | data.trialNoiseLevel==0;
 
     % Get noiseAmounts1 for this noise level.
     noiseAmounts1this = unique(noiseAmounts1(imagesNoise));
@@ -110,13 +110,15 @@ for nn = 2:nNoiseLevels
     end
 end
 
-% Get the identifies of conditions (same per noise level).
+% Get the identifies of conditions (same per noise level) based on the
+% conditions available in all of the images (this should be fine - the
+% conditions tested is never changed).
 conditions      = unique(data.imageCondition);
 nConditions     = numel(conditions);
 data.conditions = conditions;
 
 % Get the identities of comparisons (same per condition).
-comparisons      = unique(data.imageComparison);
+comparisons      = unique(data.trialOrderComparison);
 nComparisons     = numel(comparisons);
 data.comparisons = comparisons;
 
