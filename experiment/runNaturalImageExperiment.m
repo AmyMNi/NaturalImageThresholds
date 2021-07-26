@@ -91,7 +91,7 @@ end
 fprintf(2,'The smallest comparison value tested will be: %d\n', rangeMin);
 str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
 if strcmpi(str1,'N')
-    fprintf(2,'Enter the correct smallest comparison value below\n');
+    fprintf(2,'Enter the correct smallest comparison value below (4 or 8)\n');
     rangeMin = str2double(input('Enter here: ','s'));
     fprintf(2,'The smallest comparison value has been updated to: %d\n', rangeMin);
 end
@@ -100,7 +100,7 @@ end
 fprintf(2,'The largest comparison value tested will be: %d\n', rangeMax);
 str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
 if strcmpi(str1,'N')
-    fprintf(2,'Enter the correct largest comparison value below\n');
+    fprintf(2,'Enter the correct largest comparison value below (20 or 24)\n');
     rangeMax = str2double(input('Enter here: ','s'));
     fprintf(2,'The largest comparison value has been updated to: %d\n', rangeMax);
 end
@@ -232,6 +232,10 @@ nNoiseLevels  = numel(noiseLevels);
 conditions    = unique(imageCondition);
 nConditions   = numel(conditions);
 comparisons   = unique(imageComparison);
+
+% Update comparison range based on user inputs.
+comparisons(abs(comparisons)<rangeMin & comparisons~=0) = [];
+comparisons(abs(comparisons)>rangeMax) = [];
 nComparisons  = numel(comparisons); 
 
 %% Create a trial order for this session
@@ -595,7 +599,7 @@ while keepLooping
         end
     end
     
-    % Check if the experiment continues, otherwise quit without saving data.    
+    % Check if the experiment continues, otherwise quit without saving data.
     if keepLooping
         fprintf('Selected interval: %d\n',easySelectedResponse(iiTrial));
         % Give feedback if option is on.
@@ -603,15 +607,23 @@ while keepLooping
             if easySelectedResponse(iiTrial) == easyCorrectResponse(iiTrial)
                 sound(rightSound);
             else
-                sound(wrongSound);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % NOTE: testing only providing feedback that a response was entered 
+                
+                sound(rightSound);
+                
+                %sound(wrongSound);
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             end
         end
-        mglWaitSecs(params.ITI);        
+        mglWaitSecs(params.ITI);
     else
         easyquit = true;
         fprintf(2,'Quitting without saving any data.\n');
     end
-
+    
     % Check if end of experiment is reached.
     if iiTrial == nEasyTrials
         keepLooping = false;
@@ -786,7 +798,15 @@ if ~easyquit
                 if selectedResponse(iiTrial) == correctResponse(iiTrial)
                     sound(rightSound);
                 else
-                    sound(wrongSound);
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    % NOTE: testing only providing feedback that a response was entered 
+                
+                    sound(rightSound);
+                
+                    %sound(wrongSound);
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 end
             end
             mglWaitSecs(params.ITI);
