@@ -22,6 +22,8 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
 %   'subjectName'    : (string)  Name of subject (default: 'test')
+%   'rangeMin'       : (scalar)  Defines the minimum value of the range of comparisons to use for this subject (default: 4)
+%   'rangeMax'       : (scalar)  Defines the maximum value of the range of comparisons to use for this subject (default: 20)
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
@@ -33,11 +35,14 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
 %   07/05/21  amn  Edits based on pilot tests
 %   07/19/21  amn  Edits for main experiment 
+%   07/26/21  amn  Added optional inputs to define range of comparisons
 
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment100', @ischar);
 parser.addParameter('subjectName', 'test', @ischar);
+parser.addParameter('rangeMin', 4, @isscalar);
+parser.addParameter('rangeMax', 20, @isscalar);
 parser.addParameter('nIterations', 14, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
@@ -48,6 +53,8 @@ parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
 subjectName    = parser.Results.subjectName;
+rangeMin       = parser.Results.rangeMin;
+rangeMax       = parser.Results.rangeMax;
 nIterations    = parser.Results.nIterations;
 controlSignal  = parser.Results.controlSignal;
 option1Key     = parser.Results.option1Key;
@@ -78,6 +85,24 @@ if strcmpi(str1,'N')
     fprintf(2,'Enter the correct subject name below\n');
     subjectName = input('Enter here (without quotes): ','s');
     fprintf(2,'The subject name has been updated to: %s\n', subjectName);
+end
+
+% Ask user if the value of 'rangeMin' is correct.
+fprintf(2,'The smallest comparison value tested will be: %d\n', rangeMin);
+str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
+if strcmpi(str1,'N')
+    fprintf(2,'Enter the correct smallest comparison value below\n');
+    rangeMin = str2double(input('Enter here: ','s'));
+    fprintf(2,'The smallest comparison value has been updated to: %d\n', rangeMin);
+end
+
+% Ask user if the value of rangeMax' is correct.
+fprintf(2,'The largest comparison value tested will be: %d\n', rangeMax);
+str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
+if strcmpi(str1,'N')
+    fprintf(2,'Enter the correct largest comparison value below\n');
+    rangeMax = str2double(input('Enter here: ','s'));
+    fprintf(2,'The largest comparison value has been updated to: %d\n', rangeMax);
 end
 
 %% Set paths to folders
@@ -138,6 +163,7 @@ imageNames = {fileInfo(:).name}';
 % CONDITION   : Per condition, 1 center position.
 %               Per trial, a pseudorandom change position is compared to the center position.
 %               5 (change left) + 5 (change right) + 1 (no change) = 11 comparisons per condition.
+%               (range of comparisons defined by 'rangeMin' and 'rangeMax')
 %
 % COMPARISON  : Per comparison, center position presented randomly in either 1st/2nd interval.
 %
