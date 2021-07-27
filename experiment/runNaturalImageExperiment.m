@@ -125,9 +125,15 @@ end
 
 %% Set up experiment parameters
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: testing only providing feedback that a response was entered 
+
 % Specify feedback sounds.
 rightSound = sin(2*pi*(1:1000)/10)/10;
 wrongSound = rand(1,1000).*ceil(sin(2*pi*(1:1000)/10))/10;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set acquisition status.
 acquisitionStatus = 0;
@@ -145,13 +151,24 @@ params.ITI          = 0.00; % seconds
 params.stimDuration = 0.25; % seconds
 params.option1Key = option1Key;
 params.option2Key = option2Key;
-params.nBlocks = 16; % number of blocks/image for mask
 
 %% Get image info
 %
 % Get info about the images in the image folder.
 fileInfo = dir([pathToFolder '/*.mat']);
 
+% Load the maskPool file (which includes the mask number of blocks and 
+% number of pixels per block), then remove from fileInfo.
+imageNamesAll = {fileInfo(:).name}';
+maskPoolFile  = contains(imageNamesAll,'maskPool');
+maskPoolLoad  = fullfile(pathToFolder,imageNamesAll{maskPoolFile});
+temp = load(maskPoolLoad,'maskPool','nBlocks','blockPixels'); 
+maskPool    = temp.maskPool; 
+nBlocks     = temp.nBlocks;
+blockPixels = temp.blockPixels;
+clear temp;
+fileInfo(maskPoolFile) = [];
+    
 % Get the number of images in the folder.
 nImages = numel(fileInfo);
 
@@ -407,6 +424,35 @@ reactionTimeStart = cell(nTrials,1);
 % (to calculate observer reaction time per trial).
 reactionTimeEnd = cell(nTrials,1);
 
+%% Create mask pool from all included images such that all masks are drawn from the same distribution
+%
+% The maskPool for included images will be based on a precalculated mask 
+% pool that took the average intensity (for each RGB channel) per block for
+% each image. Later, for each mask, each mask block will be randomly drawn
+% from one of the quantized images in the maskPool. Thus, the masks will
+% have the same basic luminance and color as the images.
+
+% Determine what images are included in this experiment.
+nNoiseAmounts = numel(unique(imageNoiseAmount1))-1;
+niImages = nConditions*nComparisons + (nNoiseLevels-1)*nConditions*nComparisons*nNoiseAmounts;
+iImages = nan(niImages,1);
+row = 1;
+for ii = 1:nNoiseLevels
+    for iii = 1:nConditions
+        for jj = 1:nComparisons
+            imagePool = find(imageNoiseLevel==noiseLevels(ii) & ...
+                imageCondition==conditions(iii) & ...
+                imageComparison==comparisons(jj));
+            iImages(row:row+numel(imagePool)-1) = imagePool;
+            row = row+numel(imagePool);
+        end
+    end
+end
+                
+% Create the maskPool based on the included images.
+iImages = sort(iImages);
+maskPool = maskPool(:,:,:,iImages);
+
 %% Begin task
 
 % Note start time of experiment now.
@@ -477,8 +523,8 @@ while keepLooping
     image2 = image2(end:-1:1,:,:);
 
     % Create masks.
-    mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-    mask2 = MakeBlockMask(image1,image2,params.nBlocks);
+    mask1 = MakeBlockMask(maskPool,nBlocks,blockPixels);
+    mask2 = MakeBlockMask(maskPool,nBlocks,blockPixels);
     
     % Write the images into the window and disable.
     win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
@@ -657,8 +703,8 @@ if ~easyquit
         image2 = image2(end:-1:1,:,:);
         
         % Create masks.
-        mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-        mask2 = MakeBlockMask(image1,image2,params.nBlocks);
+        mask1 = MakeBlockMask(maskPool,nBlocks,blockPixels);
+        mask2 = MakeBlockMask(maskPool,nBlocks,blockPixels);
         
         % Write the images into the window and disable.
         win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
@@ -1172,34 +1218,18 @@ end
 
 %% Create mask for interstimulus interval
 %
-% Take the average intensity per block for each image, then randomly draw
-% each block from one image or the other. Thus, the mask will have the same
-% basic luminance and color as the images.
-function mask = MakeBlockMask(image1,image2,nBlocks)
+% Per mask block, randomly draw one of the quantized images in the maskPool
+% and use the corresponding average intensity block from that quantized image.
 
-% The number of blocks must evenly divide the number of image pixels.
-nPixels = size(image1,1);
-if rem(nPixels,nBlocks)~=0
-    error('params.nBlocks must evenly divide the number of image pixels.');
-end
-
-% Calculate the number of pixels per block.
-blockPixels = nPixels/nBlocks;
-
-% Per mask block, randomly draw an average intensity block from one image or the other.
-mask = zeros(size(image1));
+function mask = MakeBlockMask(maskPool,nBlocks,blockPixels)
+mask = zeros(nBlocks*blockPixels,nBlocks*blockPixels);
 for ii = 1:nBlocks
     for jj = 1:nBlocks
         for kk = 1:3
-            if CoinFlip(1,0.5)
-                theBlock = image1((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
-                blockRGB = mean(theBlock(:));
-                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
-            else
-                theBlock = image2((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
-                blockRGB = mean(theBlock(:));
-                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
-            end
+            % Randomly select one of the quantized images.
+            this = randi(size(maskPool,4));
+            blockRGB = maskPool(ii,jj,kk,this);
+            mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
         end
     end
 end
