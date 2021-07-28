@@ -1250,11 +1250,10 @@ for ii = 1:nBlocks
         for kk = 1:3
             if CoinFlip(1,0.5)
                 blockRGB = maskPool(ii,jj,kk,maskIdx1);
-                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
             else
                 blockRGB = maskPool(ii,jj,kk,maskIdx2);
-                mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
             end
+            mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
         end
     end
 end
