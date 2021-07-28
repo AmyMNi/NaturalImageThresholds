@@ -1240,7 +1240,6 @@ function mask = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels)
 % Get number of blocks used to create the quantized images in the maskPool.
 nBlocks = size(maskPool,1);
 
-
 % Calculate the mask size (number of blocks * number of pixels per block).
 maskSize = nBlocks * blockPixels;
 
