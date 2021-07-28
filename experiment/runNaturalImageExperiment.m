@@ -407,6 +407,68 @@ reactionTimeStart = cell(nTrials,1);
 % (to calculate observer reaction time per trial).
 reactionTimeEnd = cell(nTrials,1);
 
+%% Create mask pool from NoiseLevel0 images only (to be used for all noise levels)
+%
+% For each NoiseLevel0 image, take the average intensity (for each RGB 
+% channel) per image block. Thus, the masks will have the same basic 
+% luminance and color as the images.
+
+%Get the number of blocks/image for the mask.
+nBlocks = params.nBlocks;
+
+% Load one image to get image size.
+file1 = fullfile(pathToFolder,imageNames{1});
+temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+imageSize = size(image1,1);
+
+% The number of blocks must evenly divide the number of image pixels.
+nPixels = imageSize;
+if rem(nPixels,nBlocks)~=0
+    error('params.nBlocks must evenly divide the number of image pixels.');
+end
+
+% Calculate the number of pixels per block.
+blockPixels = nPixels/nBlocks;
+
+% Set up matrices with mask pool info.
+nMaskImages    = nConditions*nComparisons;
+maskCondition  = nan(nMaskImages,1);
+maskComparison = nan(nMaskImages,1);
+maskPool       = nan(nBlocks,nBlocks,3,nMaskImages);
+
+% Analyze each NoiseLevel0 image.
+page = 1;
+for ii = 1:nConditions
+    for jj = 1:nComparisons
+        imageThis = imageNoiseLevel==0 & ...
+            imageCondition==conditions(ii) & ...
+            imageComparison==comparisons(jj);
+        
+        % Load the image.
+        file1 = fullfile(pathToFolder,imageNames{imageThis});
+        temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+        
+        % Flip image.
+        image1 = image1(end:-1:1,:,:);
+        
+        % Take the average intensity (for each RGB channel) per block.
+        for bii = 1:nBlocks
+            for bjj = 1:nBlocks
+                for kk = 1:3
+                    theBlock = image1((bii-1)*blockPixels+1:bii*blockPixels,(bjj-1)*blockPixels+1:bjj*blockPixels,kk);
+                    blockRGB = mean(theBlock(:));
+                    maskPool(bii,bjj,kk,page) = blockRGB;
+                end
+            end
+        end
+        
+        % Save other mask pool info.
+        maskCondition(page)  = conditions(ii);
+        maskComparison(page) = comparisons(jj);
+        page = page+1;
+    end
+end
+
 %% Begin task
 
 % Note start time of experiment now.
@@ -477,8 +539,14 @@ while keepLooping
     image2 = image2(end:-1:1,:,:);
 
     % Create masks.
-    mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-    mask2 = MakeBlockMask(image1,image2,params.nBlocks);
+    image1condition  = imageCondition(idx1);
+    image2condition  = imageCondition(idx2);
+    image1comparison = imageComparison(idx1);
+    image2comparison = imageComparison(idx2);
+    maskIdx1 = find(maskCondition==image1condition & maskComparison==image1comparison);
+    maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
+    mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+    mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
     
     % Write the images into the window and disable.
     win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
@@ -649,9 +717,15 @@ if ~easyquit
         image2 = image2(end:-1:1,:,:);
         
         % Create masks.
-        mask1 = MakeBlockMask(image1,image2,params.nBlocks);
-        mask2 = MakeBlockMask(image1,image2,params.nBlocks);
-        
+        image1condition  = imageCondition(idx1);
+        image2condition  = imageCondition(idx2);
+        image1comparison = imageComparison(idx1);
+        image2comparison = imageComparison(idx2);
+        maskIdx1 = find(maskCondition==image1condition & maskComparison==image1comparison);
+        maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
+        mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+        mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+     
         % Write the images into the window and disable.
         win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
         win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
@@ -1156,32 +1230,30 @@ end
 
 %% Create mask for interstimulus interval
 %
-% Take the average intensity per block for each image, then randomly draw
-% each block from one image or the other. Thus, the mask will have the same
-% basic luminance and color as the images.
-function mask = MakeBlockMask(image1,image2,nBlocks)
+% Get 2 quantized images (average intensity calculated per block) from the
+% maskPool based on the first 2 inputs (mask pool indices). Per mask block,
+% randomly draw an average intensity block from one quantized image or the
+% other.
 
-% The number of blocks must evenly divide the number of image pixels.
-nPixels = size(image1,1);
-if rem(nPixels,nBlocks)~=0
-    error('params.nBlocks must evenly divide the number of image pixels.');
-end
+function mask = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels)
 
-% Calculate the number of pixels per block.
-blockPixels = nPixels/nBlocks;
+% Get number of blocks used to create the quantized images in the maskPool.
+nBlocks = size(maskPool,1);
 
-% Per mask block, randomly draw an average intensity block from one image or the other.
-mask = zeros(size(image1));
+
+% Calculate the mask size (number of blocks * number of pixels per block).
+maskSize = nBlocks * blockPixels;
+
+% Create mask.
+mask = zeros(maskSize,maskSize,3);
 for ii = 1:nBlocks
     for jj = 1:nBlocks
         for kk = 1:3
             if CoinFlip(1,0.5)
-                theBlock = image1((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
-                blockRGB = mean(theBlock(:));
+                blockRGB = maskPool(ii,jj,kk,maskIdx1);
                 mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
             else
-                theBlock = image2((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk);
-                blockRGB = mean(theBlock(:));
+                blockRGB = maskPool(ii,jj,kk,maskIdx2);
                 mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
             end
         end
