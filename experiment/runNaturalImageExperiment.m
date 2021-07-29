@@ -572,9 +572,9 @@ while keepLooping
     % NOTE: currently testing presenting each image at a random location
     % NOTE: not currently using mask
     
-    % Per image location, drawing a maximum of +/- 1 cm in both x- and y-dimensions.
-    image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
-    image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
+    % Per image location, drawing a maximum of +/- 1 cm in the y-dimension.
+    image1Loc = [0 -1+(1+1)*rand];
+    image2Loc = [0 -1+(1+1)*rand];
     
     win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
     win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
@@ -795,9 +795,9 @@ if ~easyquit
         % NOTE: currently testing presenting each image at a random location
         % NOTE: not currently using mask
         
-        % Per image location, drawing a maximum of +/- 1 cm in both x- and y-dimensions.
-        image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
-        image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
+        % Per image location, drawing a maximum of +/- 1 cm in the y-dimension.
+        image1Loc = [0 -1+(1+1)*rand];
+        image2Loc = [0 -1+(1+1)*rand];
     
         win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
         win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
