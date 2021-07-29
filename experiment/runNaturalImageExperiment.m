@@ -572,9 +572,9 @@ while keepLooping
     % NOTE: currently testing presenting each image at a random location
     % NOTE: not currently using mask
     
-    % Per image location, drawing a maximum of +/- 1 cm in the y-dimension.
-    image1Loc = [0 -1+(1+1)*rand];
-    image2Loc = [0 -1+(1+1)*rand];
+    % Per image location, drawing a maximum of +/- 1 cm in the x- and y-dimensions.
+    image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
+    image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
     
     win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
     win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
@@ -795,9 +795,9 @@ if ~easyquit
         % NOTE: currently testing presenting each image at a random location
         % NOTE: not currently using mask
         
-        % Per image location, drawing a maximum of +/- 1 cm in the y-dimension.
-        image1Loc = [0 -1+(1+1)*rand];
-        image2Loc = [0 -1+(1+1)*rand];
+        % Per image location, drawing a maximum of +/- 1 cm in the x- and y-dimensions.
+        image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
+        image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
     
         win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
         win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
@@ -1235,13 +1235,28 @@ try
     % Open the display.
     win.open;
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE: modified text for random stimulus positions
+    
+    % Add instructions text.
+    win.addText('Within the scene only, compared to the 1st banana, is the 2nd banana to the left or right?', ...
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 70, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'instructions'); % Identifier for the object
+    
+    %{
     % Add instructions text.
     win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'instructions'); % Identifier for the object
-    
+    %}
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
     % Add key option text.
     key1 = params.option1Key;
     key2 = params.option2Key;
