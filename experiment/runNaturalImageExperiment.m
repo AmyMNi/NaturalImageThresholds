@@ -418,10 +418,6 @@ reactionTimeEnd = cell(nTrials,1);
 % channel) per image block. Thus, the masks will have the same basic 
 % luminance and color as the images.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: not currently using mask
-%{
 %Get the number of blocks/image for the mask.
 nBlocks = params.nBlocks;
 
@@ -477,9 +473,6 @@ for ii = 1:nConditions
         page = page+1;
     end
 end
-%}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Begin task
 
@@ -550,10 +543,6 @@ while keepLooping
     image1 = image1(end:-1:1,:,:);
     image2 = image2(end:-1:1,:,:);
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: not currently using mask
-    %{
     % Create masks.
     image1condition  = imageCondition(idx1);
     image2condition  = imageCondition(idx2);
@@ -563,20 +552,20 @@ while keepLooping
     maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
     mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
     mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
-    %}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % NOTE: currently testing presenting each image at a random location
-    % NOTE: not currently using mask
     
-    % Per image location, drawing a maximum of +/- 1 cm in the x- and y-dimensions.
-    image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
-    image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
+    % Per image and mask location, drawing a maximum of +/- 1 cm in the y-dimension.
+    image1Loc = [0 -1+(1+1)*rand];
+    mask1Loc  = [0 -1+(1+1)*rand];
+    mask2Loc  = [0 -1+(1+1)*rand];
+    image2Loc = [0 -1+(1+1)*rand];
     
     win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
+    win.addImage(mask1Loc,  params.image1Size, mask1,  'Name', 'mask1');
+    win.addImage(mask2Loc,  params.image1Size, mask2,  'Name', 'mask2');
     win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
     
     %{
@@ -589,15 +578,8 @@ while keepLooping
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     win.disableObject('image1');
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: not currently using mask
-    %{
     win.disableObject('mask1');
     win.disableObject('mask2');
-    %}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     win.disableObject('image2');
     
     % Enable 1st image and draw.
@@ -608,17 +590,6 @@ while keepLooping
     mglWaitSecs(params.stimDuration);
     win.disableObject('image1');
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: not currently using mask
-    
-    %TEMPORARILY REPLACING MASK WITH:
-    win.draw;
-    
-    % Wait for ISI.
-    mglWaitSecs(params.ISI);
-    
-    %{
     % Enable 1st mask and draw.
     win.enableObject('mask1');
     win.draw;
@@ -634,9 +605,6 @@ while keepLooping
     % Wait for ISI.
     mglWaitSecs(params.ISI);
     win.disableObject('mask2');
-    %}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % Enable 2nd image and draw.
     win.enableObject('image2');
@@ -772,10 +740,6 @@ if ~easyquit
         image1 = image1(end:-1:1,:,:);
         image2 = image2(end:-1:1,:,:);
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: not currently using mask
-        %{
         % Create masks.
         image1condition  = imageCondition(idx1);
         image2condition  = imageCondition(idx2);
@@ -785,21 +749,20 @@ if ~easyquit
         maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
         mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
         mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
-        %}
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-        
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % NOTE: currently testing presenting each image at a random location
-        % NOTE: not currently using mask
         
-        % Per image location, drawing a maximum of +/- 1 cm in the x- and y-dimensions.
-        image1Loc = [-1+(1+1)*rand -1+(1+1)*rand];
-        image2Loc = [-1+(1+1)*rand -1+(1+1)*rand];
-    
+        % Per image and mask location, drawing a maximum of +/- 1 cm in the y-dimension.
+        image1Loc = [0 -1+(1+1)*rand];
+        mask1Loc  = [0 -1+(1+1)*rand];
+        mask2Loc  = [0 -1+(1+1)*rand];
+        image2Loc = [0 -1+(1+1)*rand];
+        
         win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(mask1Loc,  params.image1Size, mask1,  'Name', 'mask1');
+        win.addImage(mask2Loc,  params.image1Size, mask2,  'Name', 'mask2');
         win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
         
         %{
@@ -812,15 +775,8 @@ if ~easyquit
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         win.disableObject('image1');
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: not currently using mask
-        %{
         win.disableObject('mask1');
         win.disableObject('mask2');
-        %}
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         win.disableObject('image2');
         
         % Enable 1st image and draw.
@@ -830,18 +786,7 @@ if ~easyquit
         % Wait for stimulus duration.
         mglWaitSecs(params.stimDuration);
         win.disableObject('image1');
-             
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: not currently using mask
     
-        %TEMPORARILY REPLACING MASK WITH:
-        win.draw;
-    
-        % Wait for ISI.
-        mglWaitSecs(params.ISI);
-    
-        %{
         % Enable 1st mask and draw.
         win.enableObject('mask1');
         win.draw;
@@ -857,9 +802,6 @@ if ~easyquit
         % Wait for ISI.
         mglWaitSecs(params.ISI);
         win.disableObject('mask2');
-        %}
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         % Enable 2nd image and draw.
         win.enableObject('image2');
@@ -1235,28 +1177,13 @@ try
     % Open the display.
     win.open;
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: modified text for random stimulus positions
-    
-    % Add instructions text.
-    win.addText('Within the scene only, compared to the 1st banana, is the 2nd banana to the left or right?', ...
-        'Center', [0 8], ... % Where to center the text (x,y)
-        'FontSize', 70, ... % Font size
-        'Color', params.textColor, ... % RGB color
-        'Name', 'instructions'); % Identifier for the object
-    
-    %{
     % Add instructions text.
     win.addText('Compared to the 1st banana, is the 2nd banana to the left or right?', ...
         'Center', [0 8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
         'Name', 'instructions'); % Identifier for the object
-    %}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
+
     % Add key option text.
     key1 = params.option1Key;
     key2 = params.option2Key;
@@ -1356,10 +1283,6 @@ end
 % randomly draw an average intensity block from one quantized image or the
 % other.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: not currently using mask
-%{
 function mask = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels)
 
 % Get number of blocks used to create the quantized images in the maskPool.
@@ -1383,8 +1306,5 @@ for ii = 1:nBlocks
     end
 end
 end
-%}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% End
