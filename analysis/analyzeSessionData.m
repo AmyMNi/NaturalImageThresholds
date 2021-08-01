@@ -257,8 +257,8 @@ end
 
 %% Convert comparison amounts from mm to degrees of visual angle for plotting
 
-monitorDistance   = 75; %cm
-monitorDistancemm = monitorDistance*10;
+monitorDistance   = 1.2; % meters (distance of the scene in iset3d)
+monitorDistancemm = monitorDistance*1000; % convert to mm
 comparisonsDeg    = atand(comparisons/monitorDistancemm);
 
 %% Plot performance for all conditions combined, for each noise level
