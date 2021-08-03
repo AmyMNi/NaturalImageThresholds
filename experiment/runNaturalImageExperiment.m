@@ -2,28 +2,16 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %runNaturalImageExperiment
 %
 % Usage:
-%   runNaturalImageExperiment('experimentName', 'Experiment100', ...
-%                             'subjectName', 'test');
+%   runNaturalImageExperiment('experimentName','Experiment100','subjectName','test');
 %
 % Description:
 %   Run the natural image psychophysics experiment given the specified
 %   experiment folder. Save the experimental parameters and psychophysical 
 %   responses (struct 'data') in the specified output folder.
 %
-% Notes:
-%   1) Run experiment on calibrated 27-in NEC MultiSync PA271 monitor
-%   2) Center observer's eyes horizontal and vertically using chin and forehead rest
-%   3) Set monitor distance to 75 cm
-%   4) Have observer dark adapt in the dark room for 5 min
-%   5) Instruct observers to:
-%      a) Keep eyes centered on the screen
-%      b) Press firmly on the gamepad buttons
-%
 % Optional parameters/values:
 %   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
 %   'subjectName'    : (string)  Name of subject (default: 'test')
-%   'rangeMin'       : (scalar)  Defines the minimum value of the range of comparisons to use for this subject (default: 4)
-%   'rangeMax'       : (scalar)  Defines the maximum value of the range of comparisons to use for this subject (default: 20)
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
 %   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
@@ -35,14 +23,12 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
 %   07/05/21  amn  Edits based on pilot tests
 %   07/19/21  amn  Edits for main experiment 
-%   07/26/21  amn  Added optional inputs to define range of comparisons
+%   08/03/21  amn  Final edits
 
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment100', @ischar);
 parser.addParameter('subjectName', 'test', @ischar);
-parser.addParameter('rangeMin', 4, @isscalar);
-parser.addParameter('rangeMax', 20, @isscalar);
 parser.addParameter('nIterations', 14, @isscalar);
 parser.addParameter('controlSignal', 'gamePad', @ischar);
 parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
@@ -53,8 +39,6 @@ parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
 subjectName    = parser.Results.subjectName;
-rangeMin       = parser.Results.rangeMin;
-rangeMax       = parser.Results.rangeMax;
 nIterations    = parser.Results.nIterations;
 controlSignal  = parser.Results.controlSignal;
 option1Key     = parser.Results.option1Key;
@@ -85,24 +69,6 @@ if strcmpi(str1,'N')
     fprintf(2,'Enter the correct subject name below\n');
     subjectName = input('Enter here (without quotes): ','s');
     fprintf(2,'The subject name has been updated to: %s\n', subjectName);
-end
-
-% Ask user if the value of 'rangeMin' is correct.
-fprintf(2,'The smallest comparison value tested will be: %d\n', rangeMin);
-str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
-if strcmpi(str1,'N')
-    fprintf(2,'Enter the correct smallest comparison value below (4 or 8)\n');
-    rangeMin = str2double(input('Enter here: ','s'));
-    fprintf(2,'The smallest comparison value has been updated to: %d\n', rangeMin);
-end
-
-% Ask user if the value of rangeMax' is correct.
-fprintf(2,'The largest comparison value tested will be: %d\n', rangeMax);
-str1 = input('Is this correct? Enter Y if Yes, N if No: ','s');
-if strcmpi(str1,'N')
-    fprintf(2,'Enter the correct largest comparison value below (20 or 24)\n');
-    rangeMax = str2double(input('Enter here: ','s'));
-    fprintf(2,'The largest comparison value has been updated to: %d\n', rangeMax);
 end
 
 %% Set paths to folders
@@ -136,13 +102,8 @@ acquisitionStatus = 0;
 params.screenDimsCm = [59.67 33.57]; % cm
 params.bgColor      = [128 128 128]/255; % to match electrophysiology task
 params.textColor    = [0.6 0.2 0.2];
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: currently testing presenting each image at a random location
 params.image1Loc  = [0 0];
 params.image2Loc  = [0 0];
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 params.image1Size = [10.54 10.54]; % monitor distance=75cm: scene 8 deg vis angle (target 4 deg)
 params.image2Size = [10.54 10.54];
 params.ISI          = 0.40; % seconds
@@ -237,10 +198,6 @@ nNoiseLevels  = numel(noiseLevels);
 conditions    = unique(imageCondition);
 nConditions   = numel(conditions);
 comparisons   = unique(imageComparison);
-
-% Update comparison range based on user inputs.
-comparisons(abs(comparisons)<rangeMin & comparisons~=0) = [];
-comparisons(abs(comparisons)>rangeMax) = [];
 nComparisons  = numel(comparisons); 
 
 %% Create a trial order for this session
@@ -502,13 +459,29 @@ win.enableObject('keyOptions');
 win.enableObject('startText');
 win.draw;
 
-%% Wait for key press (any) to begin task
-key = [];
+%% Wait for key press ('A') to begin task
+key =[];
 while isempty(key)
+    % Get user response from keyboard.
     if strcmp(controlSignal, 'keyboard')
         key = mglGetKeyEvent;
+        if ~isempty(key)
+            switch key.charCode
+                case {'a'}
+                otherwise
+                    key = [];
+            end
+        end
+    % Get user response from gamePad.
     else
         key = gamePad.getKeyEvent();
+        if ~isempty(key)
+            switch key.charCode
+                case {'GP:A'}
+                otherwise
+                    key = [];
+            end
+        end
     end
 end
 
@@ -553,30 +526,11 @@ while keepLooping
     mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
     mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: currently testing presenting each image at a random location
-    
-    % Per image and mask location, drawing a maximum of +/- 1 cm in the y-dimension.
-    image1Loc = [0 -1+(1+1)*rand];
-    mask1Loc  = [0 -1+(1+1)*rand];
-    mask2Loc  = [0 -1+(1+1)*rand];
-    image2Loc = [0 -1+(1+1)*rand];
-    
-    win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
-    win.addImage(mask1Loc,  params.image1Size, mask1,  'Name', 'mask1');
-    win.addImage(mask2Loc,  params.image1Size, mask2,  'Name', 'mask2');
-    win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
-    
-    %{
     % Write the images into the window and disable.
     win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
     win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
-    win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
+    win.addImage(params.image2Loc, params.image2Size, mask2,  'Name', 'mask2');
     win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
-    %}
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     win.disableObject('image1');
     win.disableObject('mask1');
     win.disableObject('mask2');
@@ -750,30 +704,11 @@ if ~easyquit
         mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
         mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % NOTE: currently testing presenting each image at a random location
-        
-        % Per image and mask location, drawing a maximum of +/- 1 cm in the y-dimension.
-        image1Loc = [0 -1+(1+1)*rand];
-        mask1Loc  = [0 -1+(1+1)*rand];
-        mask2Loc  = [0 -1+(1+1)*rand];
-        image2Loc = [0 -1+(1+1)*rand];
-        
-        win.addImage(image1Loc, params.image1Size, image1, 'Name', 'image1');
-        win.addImage(mask1Loc,  params.image1Size, mask1,  'Name', 'mask1');
-        win.addImage(mask2Loc,  params.image1Size, mask2,  'Name', 'mask2');
-        win.addImage(image2Loc, params.image2Size, image2, 'Name', 'image2');
-        
-        %{
         % Write the images into the window and disable.
         win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
         win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
-        win.addImage(params.image1Loc, params.image1Size, mask2,  'Name', 'mask2');
+        win.addImage(params.image2Loc, params.image2Size, mask2,  'Name', 'mask2');
         win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
-        %}
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         win.disableObject('image1');
         win.disableObject('mask1');
         win.disableObject('mask2');
@@ -1108,13 +1043,8 @@ if saveData
     data.screenDimsCm = params.screenDimsCm;
     data.bgColor      = params.bgColor;
     data.textColor    = params.textColor;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % NOTE: currently testing presenting each image at a random location
     data.image1Loc    = params.image1Loc;
     data.image2Loc    = params.image2Loc;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     data.image1Size   = params.image1Size;
     data.image2Size   = params.image2Size;
     data.ISI          = params.ISI;
@@ -1198,7 +1128,7 @@ try
         'Name', 'keyOptions'); % Identifier for the object
 
     % Add start text.
-    win.addText('Hit any button to start.', ... % Text to display
+    win.addText('Hit the ''A'' button to start.', ... % Text to display
         'Center', [0 -8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
