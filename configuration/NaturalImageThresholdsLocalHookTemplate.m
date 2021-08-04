@@ -46,6 +46,14 @@ end
 BaseDir = fullfile(baseDir,'CNST_materials',theProject);
 setpref(theProject,'BaseDir',BaseDir);
 
+%% Set base directory for project data (Write access for experimental computers only)
+BaseDirData = fullfile(baseDir,'CNST_data',theProject);
+setpref(theProject,'BaseDirData',BaseDirData);
+
+%% Set base directory for project analysis
+BaseDirAnalysis = fullfile(baseDir,'CNST_analysis',theProject);
+setpref(theProject,'BaseDirAnalysis',BaseDirAnalysis);
+
 %% Calibration folder/file
 setpref(theProject,'CalDataFolder',fullfile(BaseDir,'CalibrationData'));
 setpref('BrainardLabToolbox','CalDataFolder',fullfile(BaseDir,'CalibrationData'));
