@@ -534,7 +534,7 @@ win.enableObject('keyOptions');
 win.enableObject('startText');
 win.draw;
 
-%% Wait for key press ('A') to begin task
+%% Wait for key press ('2') to begin task (this is the 'A' button on the Boston gamepad)
 key =[];
 while isempty(key)
     % Get user response from keyboard.
@@ -542,7 +542,7 @@ while isempty(key)
         key = mglGetKeyEvent;
         if ~isempty(key)
             switch key.charCode
-                case {'a'}
+                case {'2'}
                 otherwise
                     key = [];
             end
@@ -552,7 +552,7 @@ while isempty(key)
         key = gamePad.getKeyEvent();
         if ~isempty(key)
             switch key.charCode
-                case {'GP:A'}
+                case {'GP:2'}
                 otherwise
                     key = [];
             end
@@ -1295,7 +1295,7 @@ try
         'Name', 'keyOptions'); % Identifier for the object
 
     % Add start text.
-    win.addText('Hit the ''A'' button to start.', ... % Text to display
+    win.addText('Hit the ''2'' button to start.', ... % Text to display
         'Center', [0 -8], ... % Where to center the text (x,y)
         'FontSize', 75, ... % Font size
         'Color', params.textColor, ... % RGB color
