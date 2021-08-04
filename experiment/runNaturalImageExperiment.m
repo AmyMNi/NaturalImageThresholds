@@ -78,10 +78,10 @@ end
 str1 = input('Is this the participant''s first session? Enter Y if Yes, N if No: ','s');
 if strcmpi(str1,'Y')
     isFirstSession = true;
-    fprintf(2,'Because this is the first session, warmup trials will be run\n');
+    fprintf(2,'Because this is the first session, warmup trials will be run.\n');
 elseif strcmpi(str1,'N')
     isFirstSession = false;
-    fprintf(2,'Warmup trials will not be run\n');
+    fprintf(2,'Warmup trials will not be run.\n');
 end
 
 %% Set paths to folders
