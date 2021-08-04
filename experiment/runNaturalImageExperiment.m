@@ -534,7 +534,7 @@ win.enableObject('keyOptions');
 win.enableObject('startText');
 win.draw;
 
-%% Wait for key press ('2') to begin task (this is the 'A' button on the Boston gamepad)
+%% Wait for key press ('2') to begin task (this is the 'GP:A' button on the gamepad)
 key =[];
 while isempty(key)
     % Get user response from keyboard.
@@ -552,7 +552,10 @@ while isempty(key)
         key = gamePad.getKeyEvent();
         if ~isempty(key)
             switch key.charCode
-                case {'GP:2'}
+                 % The instructions will request that the participant press
+                 % the '2' button, because this button has the '2' symbol
+                 % on the Philly gamepad.
+                case {'GP:A'}
                 otherwise
                     key = [];
             end
