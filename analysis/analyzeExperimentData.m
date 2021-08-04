@@ -39,7 +39,7 @@ projectName = 'NaturalImageThresholds';
 
 % Set path to data folder.
 subjectFolder = sprintf('%s%s','subject',subjectName);
-pathToFolder  = fullfile(getpref(projectName,'BaseDir'),experimentName, ...
+pathToFolder  = fullfile(getpref(projectName,'BaseDirAnalysis'),experimentName, ...
                         'PsychophysicalDataAnalysis',subjectFolder);
 
 % Set path to the file to save.

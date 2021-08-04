@@ -96,11 +96,9 @@ else
     pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBs');
 end
 
-% Set path to output folder.
-pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'PsychophysicalData');
-if ~exist(pathToOutput, 'dir')
-    mkdir(pathToOutput);
-end
+% Set path to output folder (only experimental computers have Write access
+% to this data folder).
+pathToOutput = fullfile(getpref(projectName,'BaseDirData'),experimentName,'PsychophysicalData');
 
 %% Set up experiment parameters
 %
@@ -1243,6 +1241,11 @@ if saveData
     data.selectedResponse     = selectedResponse;
     data.reactionTimeStart    = reactionTimeStart;
     data.reactionTimeEnd      = reactionTimeEnd;
+    
+    % Create output folder if it doesn't exist.
+    if ~exist(pathToOutput, 'dir')
+        mkdir(pathToOutput);
+    end
 
     % Set path to specific output folder where data will be saved.
     pathToOutputFolder = fullfile(pathToOutput,sprintf('%s%s','subject',subjectName));

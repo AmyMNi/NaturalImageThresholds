@@ -40,14 +40,14 @@ saveData       = parser.Results.saveData;
 % Specify project name.
 projectName = 'NaturalImageThresholds';
 
-% Set path to data file.
+% Set path to data file (only experimental computers have Write access).
 subjectFolder = sprintf('%s%s','subject',subjectName);
 dataFile      = sprintf('%s%s_%d.mat','data',subjectName,sessionNumber);
-pathToFile    = fullfile(getpref(projectName,'BaseDir'),experimentName, ...
+pathToFile    = fullfile(getpref(projectName,'BaseDirData'),experimentName, ...
                         'PsychophysicalData',subjectFolder,dataFile);
 
 % Set path to output folder.
-pathToOutput = fullfile(getpref(projectName,'BaseDir'), ...
+pathToOutput = fullfile(getpref(projectName,'BaseDirAnalysis'), ...
                         experimentName,'PsychophysicalDataAnalysis');
 if ~exist(pathToOutput, 'dir')
     mkdir(pathToOutput);
