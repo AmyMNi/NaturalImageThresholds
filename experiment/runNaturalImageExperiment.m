@@ -18,6 +18,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
 %   'giveFeedback'   : (logical) Give feedback if option is on (default: true)
 %   'isDemo'         : (logical) Data won't be saved if on (default: false)
+%   'isFirstSession' : (logical) Warmup trials will be run if on (default: true)
 %
 % History:
 %   06/07/21  amn  Adapted from BrainardLab/VirtualWorldPsychophysics
@@ -35,6 +36,7 @@ parser.addParameter('option1Key', 'GP:UpperLeftTrigger', @ischar);
 parser.addParameter('option2Key', 'GP:UpperRightTrigger', @ischar);
 parser.addParameter('giveFeedback', true, @islogical);
 parser.addParameter('isDemo', false, @islogical);
+parser.addParameter('isFirstSession', true, @islogical);
 parser.parse(varargin{:});
 
 experimentName = parser.Results.experimentName;
@@ -45,6 +47,7 @@ option1Key     = parser.Results.option1Key;
 option2Key     = parser.Results.option2Key;
 giveFeedback   = parser.Results.giveFeedback;
 isDemo         = parser.Results.isDemo;
+isFirstSession = parser.Results.isFirstSession;
 
 % Give warning that experiment will not run if 'nIterations' is an odd number.
 if rem(nIterations,2)==1
@@ -69,6 +72,16 @@ if strcmpi(str1,'N')
     fprintf(2,'Enter the correct subject name below\n');
     subjectName = input('Enter here (without quotes): ','s');
     fprintf(2,'The subject name has been updated to: %s\n', subjectName);
+end
+
+% Ask user to input 'isFirstSession' value.
+str1 = input('Is this the participant''s first session? Enter Y if Yes, N if No: ','s');
+if strcmpi(str1,'Y')
+    isFirstSession = true;
+    fprintf(2,'Because this is the first session, warmup trials will be run\n');
+elseif strcmpi(str1,'N')
+    isFirstSession = false;
+    fprintf(2,'Warmup trials will not be run\n');
 end
 
 %% Set paths to folders
@@ -307,33 +320,83 @@ for jj = 1:numel(allRuns)
     srow = srow+nTrialsRun;
 end
 
-%% Create a trial order for the easy trials
-nEasyTrials = 4;
+%% List the easy trials
+%
+% The practice trials and the first third of the warmup trials will be
+% selected randomly from this list of easy trials.
+% The easy trials will all be from NoiseLevel0.
 
 % Preallocate matrix of trial order.
+nEasyTrials = nConditions*2*2;
 easyTrialOrder = nan(nEasyTrials,2);
 trow = 1;
 
-% Create an ordered list of image index comparisons for easy comparisons.
+% Create a list of image index comparisons for easy comparisons.
 for jjj = 1:nConditions
     centerpos = conditions(jjj);
     centerIdx = find(imageComparison==0 & imageCondition==centerpos & ...
                 imageNoiseLevel==0);
     compIdx1  = find(imageComparison==comparisons(1) & imageCondition==centerpos & ...
                 imageNoiseLevel==0);
-    thisIndices = [centerIdx compIdx1];
-    easyTrialOrder(trow,:) = thisIndices(randperm(2));
+    easyTrialOrder(trow,:) = [centerIdx compIdx1];
+    trow = trow+1;
+    easyTrialOrder(trow,:) = [compIdx1 centerIdx];
     trow = trow+1;
     compIdx2  = find(imageComparison==comparisons(end) & imageCondition==centerpos & ...
                 imageNoiseLevel==0);
-    thisIndices = [centerIdx compIdx2];
-    easyTrialOrder(trow,:) = thisIndices(randperm(2));
+    easyTrialOrder(trow,:) = [centerIdx compIdx2];
+    trow = trow+1;
+    easyTrialOrder(trow,:) = [compIdx2 centerIdx];
     trow = trow+1;
 end
 
-% Randomize easy trial order.
-easyTrialOrder = easyTrialOrder(randperm(nEasyTrials),:);
-        
+%% Create a trial order for the warmup trials
+%
+% If this is the participant's first session, warmup trials will be run.
+% The first third of the warmup trials will be selected randomly from the
+% easy trials, the second third will be selected randomly from medium
+% difficulty trials, and the final third will be selected randomly from the
+% full list of trials.
+% The warmup trials will all be from NoiseLevel0.
+
+if isFirstSession
+    % Preallocate matrix of trial order.
+    nWarmupTrials = 30; %must be divisible by 3
+    warmupTrialOrder = nan(nWarmupTrials,2);
+    trow = 1;
+    
+    % Start warmup trials with randomly selected easy trials.
+    for ii = 1:nWarmupTrials/3
+        warmupTrialOrder(trow,:) = easyTrialOrder(randi(size(easyTrialOrder,1)),:);
+        trow = trow+1;
+    end
+    
+    % Randomly select medium difficulty trials.
+    medComp = comparisons([2:3 end-2:end-1]);
+    for ii = 1:nWarmupTrials/3
+        centerpos = conditions(randi(nConditions));
+        centerIdx = find(imageComparison==0 & imageCondition==centerpos & ...
+            imageNoiseLevel==0);
+        compIdx   = find(imageComparison==medComp(randi(numel(medComp))) & imageCondition==centerpos & ...
+            imageNoiseLevel==0);
+        thisIndices = [centerIdx compIdx];
+        warmupTrialOrder(trow,:) = thisIndices(randperm(2));
+        trow = trow+1;
+    end
+    
+    % Randomly select trials from the full list of trials.
+    for ii = 1:nWarmupTrials/3
+        centerpos = conditions(randi(nConditions));
+        centerIdx = find(imageComparison==0 & imageCondition==centerpos & ...
+            imageNoiseLevel==0);
+        compIdx   = find(imageComparison==comparisons(randi(nComparisons)) & imageCondition==centerpos & ...
+            imageNoiseLevel==0);
+        thisIndices = [centerIdx compIdx];
+        warmupTrialOrder(trow,:) = thisIndices(randperm(2));
+        trow = trow+1;
+    end
+end
+
 %% Calculate the correct response for each trial
 %
 % Get comparison amount per image index.
@@ -355,11 +418,23 @@ easyCorrectResponse(easyTrialDiff <0) = 1;
 easyCorrectResponse(easyTrialDiff >0) = 2;
 easyCorrectResponse(easyTrialDiff==0) = randi(2);
 
+%% Calculate the correct response for each warmup trial
+if isFirstSession
+    warmupTrialOrderComparison = imageComparison(warmupTrialOrder);
+    warmupTrialDiff = diff(warmupTrialOrderComparison,1,2);
+    warmupCorrectResponse = nan(nWarmupTrials,1);
+    warmupCorrectResponse(warmupTrialDiff <0) = 1;
+    warmupCorrectResponse(warmupTrialDiff >0) = 2;
+    warmupCorrectResponse(warmupTrialDiff==0) = randi(2);
+end
+
 %% Set up vectors to keep track of trial info
 %
 % Set up vector for subject response per trial.
-selectedResponse     = nan(nTrials,1);
-easySelectedResponse = nan(nEasyTrials,1);
+selectedResponse       = nan(nTrials,1);
+if isFirstSession
+    warmupSelectedResponse = nan(nWarmupTrials,1);
+end
 
 % Set up cell array for second stimulus start time per trial
 % (to calculate observer reaction time per trial).
@@ -453,7 +528,7 @@ else
     gamePad = [];
 end
 
-%% Enable fixation and start text
+%% Enable start text
 win.enableObject('instructions');
 win.enableObject('keyOptions');
 win.enableObject('startText');
@@ -491,185 +566,252 @@ win.disableObject('keyOptions');
 win.disableObject('startText');
 win.draw;
 
-%% Run easy trials: per trial, present images and wait for key press response
+%% Run warmup trials: per trial, present images and wait for key press response
 %
-% Run 5 easy trials to acclimate the subject. The data will not be saved.
+% If this is the first session, run warmup trials so participant can practice. The data will not be saved.
 saveData    = 0;
 keepLooping = 1;
 iiTrial     = 0;
-easyquit    = false;
+warmupquit  = false;
 
-while keepLooping
-    iiTrial = iiTrial + 1; %trial iteration
+if isFirstSession
     
-    % Get image index for 1st interval and for 2nd interval.
-    idx1 = easyTrialOrder(iiTrial,1);
-    idx2 = easyTrialOrder(iiTrial,2);
-    
-    % Get RGB image for 1st interval and for 2nd interval.
-    file1 = fullfile(pathToFolder,imageNames{idx1});
-    file2 = fullfile(pathToFolder,imageNames{idx2});
-    temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
-    temp = load(file2,'RGBImage'); image2 = temp.RGBImage; clear temp;
-    
-    % Flip images.
-    image1 = image1(end:-1:1,:,:);
-    image2 = image2(end:-1:1,:,:);
-    
-    % Create masks.
-    image1condition  = imageCondition(idx1);
-    image2condition  = imageCondition(idx2);
-    image1comparison = imageComparison(idx1);
-    image2comparison = imageComparison(idx2);
-    maskIdx1 = find(maskCondition==image1condition & maskComparison==image1comparison);
-    maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
-    mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
-    mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
-    
-    % Write the images into the window and disable.
-    win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
-    win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
-    win.addImage(params.image2Loc, params.image2Size, mask2,  'Name', 'mask2');
-    win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
-    win.disableObject('image1');
-    win.disableObject('mask1');
-    win.disableObject('mask2');
-    win.disableObject('image2');
-    
-    % Enable 1st image and draw.
-    win.enableObject('image1');
+    % Display warmup text and wait for a key press to begin warmup trials.
+    win.enableObject('warmupText');
     win.draw;
-    
-    % Wait for stimulus duration.
-    mglWaitSecs(params.stimDuration);
-    win.disableObject('image1');
-    
-    % Enable 1st mask and draw.
-    win.enableObject('mask1');
-    win.draw;
-    
-    % Wait for ISI.
-    mglWaitSecs(params.ISI);
-    win.disableObject('mask1');
-    
-    % Enable 2nd mask and draw.
-    win.enableObject('mask2');
-    win.draw;
-    
-    % Wait for ISI.
-    mglWaitSecs(params.ISI);
-    win.disableObject('mask2');
-    
-    % Enable 2nd image and draw.
-    win.enableObject('image2');
-    win.draw;
-    
-    % Wait for stimulus duration.
-    mglWaitSecs(params.stimDuration);
-    win.disableObject('image2');
-    win.draw;
-
-    % Wait for key press response.
     FlushEvents;
-    key =[];
-    while isempty(key)
-        % Get user response from keyboard.
-        if strcmp(controlSignal, 'keyboard')
+    % Wait for key press.
+    if strcmp(controlSignal, 'keyboard')
+        key = [];
+        while isempty(key)
             key = mglGetKeyEvent;
-            if ~isempty(key)
-                switch key.charCode
-                    case {option1Key,option2Key}
-                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
-                    case {'q'}
-                        fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response \n');
-                        key2 = [];
-                        while isempty(key2)
-                            key2 = mglGetKeyEvent;
-                            if ~isempty(key2)
-                                switch key2.charCode
-                                    case {option1Key,option2Key}
-                                        easySelectedResponse(iiTrial) = getUserResponse(params,key2);
-                                    case {'y'}
-                                        keepLooping = false;
-                                    otherwise
-                                        key2 = [];
-                                end
-                            end
-                        end
-                    otherwise
-                        key = [];
-                end
-            end
-        % Get user response from gamePad.
-        else
-            key = gamePad.getKeyEvent();
-            if ~isempty(key)
-                switch key.charCode
-                    case {option1Key,option2Key}
-                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
-                    otherwise
-                        key = [];
-                end
-            end
-            pressedKeyboard = mglGetKeyEvent;
-            if ~isempty(pressedKeyboard)
-                switch pressedKeyboard.charCode
-                    case {'q'}
-                        fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
-                        key2 = [];
-                        keyG = [];
-                        FlushEvents;
-                        while isempty(key2) && isempty(keyG)
-                            key2 = mglGetKeyEvent;
-                            keyG = gamePad.getKeyEvent();
-                            if ~isempty(key2)
-                                switch key2.charCode
-                                    case {'y'}
-                                        keepLooping = false;
-                                        key = 0; % set key = 0 in order to exit this loop
-                                    otherwise
-                                        key2 = [];
-                                end
-                            elseif ~isempty(keyG)
-                                switch keyG.charCode
-                                    case {option1Key,option2Key}
-                                        key = keyG;
-                                        easySelectedResponse(iiTrial) = getUserResponse(params,key);
-                                    otherwise
-                                        keyG = [];
-                                end
-                            end
-                        end
-                end
-            end
         end
-    end
-    
-    % Check if the experiment continues, otherwise quit without saving data.
-    if keepLooping
-        fprintf('Selected interval: %d\n',easySelectedResponse(iiTrial));
-        % Give feedback if option is on.
-        if giveFeedback
-            if easySelectedResponse(iiTrial) == easyCorrectResponse(iiTrial)
-                sound(rightSound);
-            else
-                sound(wrongSound);
-            end
-        end
-        mglWaitSecs(params.ITI);
     else
-        easyquit = true;
-        fprintf(2,'Quitting without saving any data.\n');
+        key = [];
+        while isempty(key)
+            key = gamePad.getKeyEvent();
+        end
+    end
+    win.disableObject('warmupText');
+    win.draw;
+    mglWaitSecs(params.ITI);
+    % Reset the keyboard queue.
+    mglGetKeyEvent;
+    
+    while keepLooping
+        iiTrial = iiTrial + 1; %trial iteration
+        
+        % Get image index for 1st interval and for 2nd interval.
+        idx1 = warmupTrialOrder(iiTrial,1);
+        idx2 = warmupTrialOrder(iiTrial,2);
+        
+        % Get RGB image for 1st interval and for 2nd interval.
+        file1 = fullfile(pathToFolder,imageNames{idx1});
+        file2 = fullfile(pathToFolder,imageNames{idx2});
+        temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+        temp = load(file2,'RGBImage'); image2 = temp.RGBImage; clear temp;
+        
+        % Flip images.
+        image1 = image1(end:-1:1,:,:);
+        image2 = image2(end:-1:1,:,:);
+        
+        % Create masks.
+        image1condition  = imageCondition(idx1);
+        image2condition  = imageCondition(idx2);
+        image1comparison = imageComparison(idx1);
+        image2comparison = imageComparison(idx2);
+        maskIdx1 = find(maskCondition==image1condition & maskComparison==image1comparison);
+        maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
+        mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+        mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+        
+        % Write the images into the window and disable.
+        win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+        win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
+        win.addImage(params.image2Loc, params.image2Size, mask2,  'Name', 'mask2');
+        win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+        win.disableObject('image1');
+        win.disableObject('mask1');
+        win.disableObject('mask2');
+        win.disableObject('image2');
+        
+        % Enable 1st image and draw.
+        win.enableObject('image1');
+        win.draw;
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image1');
+        
+        % Enable 1st mask and draw.
+        win.enableObject('mask1');
+        win.draw;
+        
+        % Wait for ISI.
+        mglWaitSecs(params.ISI);
+        win.disableObject('mask1');
+        
+        % Enable 2nd mask and draw.
+        win.enableObject('mask2');
+        win.draw;
+        
+        % Wait for ISI.
+        mglWaitSecs(params.ISI);
+        win.disableObject('mask2');
+        
+        % Enable 2nd image and draw.
+        win.enableObject('image2');
+        win.draw;
+        
+        % Wait for stimulus duration.
+        mglWaitSecs(params.stimDuration);
+        win.disableObject('image2');
+        win.draw;
+        
+        % Wait for key press response.
+        FlushEvents;
+        key =[];
+        while isempty(key)
+            % Get user response from keyboard.
+            if strcmp(controlSignal, 'keyboard')
+                key = mglGetKeyEvent;
+                if ~isempty(key)
+                    switch key.charCode
+                        case {option1Key,option2Key}
+                            warmupSelectedResponse(iiTrial) = getUserResponse(params,key);
+                        case {'q'}
+                            fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response \n');
+                            key2 = [];
+                            while isempty(key2)
+                                key2 = mglGetKeyEvent;
+                                if ~isempty(key2)
+                                    switch key2.charCode
+                                        case {option1Key,option2Key}
+                                            warmupSelectedResponse(iiTrial) = getUserResponse(params,key2);
+                                        case {'y'}
+                                            keepLooping = false;
+                                        otherwise
+                                            key2 = [];
+                                    end
+                                end
+                            end
+                        otherwise
+                            key = [];
+                    end
+                end
+                % Get user response from gamePad.
+            else
+                key = gamePad.getKeyEvent();
+                if ~isempty(key)
+                    switch key.charCode
+                        case {option1Key,option2Key}
+                            warmupSelectedResponse(iiTrial) = getUserResponse(params,key);
+                        otherwise
+                            key = [];
+                    end
+                end
+                pressedKeyboard = mglGetKeyEvent;
+                if ~isempty(pressedKeyboard)
+                    switch pressedKeyboard.charCode
+                        case {'q'}
+                            fprintf(2,'Do you want to quit? Type Y for Yes, otherwise give your response using gamepad \n');
+                            key2 = [];
+                            keyG = [];
+                            FlushEvents;
+                            while isempty(key2) && isempty(keyG)
+                                key2 = mglGetKeyEvent;
+                                keyG = gamePad.getKeyEvent();
+                                if ~isempty(key2)
+                                    switch key2.charCode
+                                        case {'y'}
+                                            keepLooping = false;
+                                            key = 0; % set key = 0 in order to exit this loop
+                                        otherwise
+                                            key2 = [];
+                                    end
+                                elseif ~isempty(keyG)
+                                    switch keyG.charCode
+                                        case {option1Key,option2Key}
+                                            key = keyG;
+                                            warmupSelectedResponse(iiTrial) = getUserResponse(params,key);
+                                        otherwise
+                                            keyG = [];
+                                    end
+                                end
+                            end
+                    end
+                end
+            end
+        end
+        
+        % Check if the experiment continues, otherwise quit without saving data.
+        if keepLooping
+            fprintf('Selected interval in warmup trial: %d\n',warmupSelectedResponse(iiTrial));
+            % Give feedback if option is on.
+            if giveFeedback
+                if warmupSelectedResponse(iiTrial) == warmupCorrectResponse(iiTrial)
+                    sound(rightSound);
+                else
+                    sound(wrongSound);
+                end
+            end
+            mglWaitSecs(params.ITI);
+        else
+            warmupquit = true;
+            fprintf(2,'Quitting without saving any data.\n');
+        end
+        
+        % Check if end of experiment is reached.
+        if iiTrial == nWarmupTrials
+            keepLooping = false;
+        end
     end
     
-    % Check if end of experiment is reached.
-    if iiTrial == nEasyTrials
-        keepLooping = false;
+    if ~warmupquit
+        % Display warmup end text and wait for a key press to proceed.
+        win.enableObject('warmupEndText');
+        win.draw;
+        FlushEvents;
+        % Wait for key press.
+        if strcmp(controlSignal, 'keyboard')
+            key = [];
+            while isempty(key)
+                key = mglGetKeyEvent;
+            end
+        else
+            key = [];
+            while isempty(key)
+                key = gamePad.getKeyEvent();
+            end
+        end
+        win.disableObject('warmupEndText');
+        win.draw;
+        mglWaitSecs(params.ITI);
+        % Reset the keyboard queue.
+        mglGetKeyEvent;
     end
 end
 
 %% Run experiment: per trial, present images and wait for key press response
-if ~easyquit
+if ~warmupquit
+    
+    % Run practice trials to start (data not saved).
+    nTrialsPractice     = 4; %number of practice trials to run
+    keepLoopingPractice = 1;
+    iiTrialPractice     = 0;
+    while keepLoopingPractice
+        iiTrialPractice = iiTrialPractice + 1; %practice trial iteration
+        PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                      imageComparison,maskCondition,maskComparison,maskPool, ...
+                      blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                      gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
+        
+        % Check if end of practice trials is reached.
+        if iiTrialPractice == nTrialsPractice
+            keepLoopingPractice = false;
+        end
+    end
+    
     % Reset the keyboard queue.
     mglGetKeyEvent;
     
@@ -876,6 +1018,11 @@ if ~easyquit
             win.disableObject('restOver');
             win.draw;
             mglWaitSecs(params.ITI);
+            % Run one practice trial (data not saved).
+            PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                          imageComparison,maskCondition,maskComparison,maskPool, ...
+                          blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                          gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
             % Reset the keyboard queue.
             mglGetKeyEvent;
         end
@@ -905,6 +1052,11 @@ if ~easyquit
             win.disableObject('restOver');
             win.draw;
             mglWaitSecs(params.ITI);
+            % Run one practice trial (data not saved).
+            PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                          imageComparison,maskCondition,maskComparison,maskPool, ...
+                          blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                          gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
             % Reset the keyboard queue.
             mglGetKeyEvent;
         end
@@ -934,6 +1086,11 @@ if ~easyquit
             win.disableObject('restOver');
             win.draw;
             mglWaitSecs(params.ITI);
+            % Run one practice trial (data not saved).
+            PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                          imageComparison,maskCondition,maskComparison,maskPool, ...
+                          blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                          gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
             % Reset the keyboard queue.
             mglGetKeyEvent;
         end
@@ -963,6 +1120,11 @@ if ~easyquit
             win.disableObject('restOver');
             win.draw;
             mglWaitSecs(params.ITI);
+            % Run one practice trial (data not saved).
+            PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                          imageComparison,maskCondition,maskComparison,maskPool, ...
+                          blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                          gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
             % Reset the keyboard queue.
             mglGetKeyEvent;
         end
@@ -992,6 +1154,11 @@ if ~easyquit
             win.disableObject('restOver');
             win.draw;
             mglWaitSecs(params.ITI);
+            % Run one practice trial (data not saved).
+            PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                          imageComparison,maskCondition,maskComparison,maskPool, ...
+                          blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                          gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound);
             % Reset the keyboard queue.
             mglGetKeyEvent;
         end
@@ -1134,6 +1301,20 @@ try
         'Color', params.textColor, ... % RGB color
         'Name', 'startText'); % Identifier for the object
 
+    % Add warmup start text.
+    win.addText('Today, you will start with some practice trials. Hit any button to continue.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'warmupText'); % Identifier for the object
+    
+    % Add warmup end text.
+    win.addText('Your practice trials are complete. Hit any button to begin the experiment.', ... % Text to display
+        'Center', [0 8], ... % Where to center the text (x,y)
+        'FontSize', 75, ... % Font size
+        'Color', params.textColor, ... % RGB color
+        'Name', 'warmupEndText'); % Identifier for the object
+    
     % Add text for when experiment is 1/6 over.
     win.addText('One sixth of trials complete. Take a minute to stand or stretch.', ... % Text to display
         'Center', [0 8], ... % Where to center the text (x,y)
@@ -1233,6 +1414,125 @@ for ii = 1:nBlocks
             end
             mask((ii-1)*blockPixels+1:ii*blockPixels,(jj-1)*blockPixels+1:jj*blockPixels,kk) = blockRGB;
         end
+    end
+end
+end
+
+%% Run a post-break practice trial
+%
+% Following each break, one practice trial is run. The practice trial is
+% selected randomly from the easy trials run at the start of the
+% experiment. The data from this practice trial are not saved.
+
+function PracticeTrial(easyTrialOrder,pathToFolder,imageNames,imageCondition, ...
+                       imageComparison,maskCondition,maskComparison,maskPool, ...
+                       blockPixels,win,controlSignal,option1Key,option2Key,params, ...
+                       gamePad,giveFeedback,easyCorrectResponse,rightSound,wrongSound)
+                   
+% Get image index for 1st interval and for 2nd interval.
+iiEasyTrial = randi(size(easyTrialOrder,1));
+idx1 = easyTrialOrder(iiEasyTrial,1);
+idx2 = easyTrialOrder(iiEasyTrial,2);
+
+% Get RGB image for 1st interval and for 2nd interval.
+file1 = fullfile(pathToFolder,imageNames{idx1});
+file2 = fullfile(pathToFolder,imageNames{idx2});
+temp = load(file1,'RGBImage'); image1 = temp.RGBImage; clear temp;
+temp = load(file2,'RGBImage'); image2 = temp.RGBImage; clear temp;
+
+% Flip images.
+image1 = image1(end:-1:1,:,:);
+image2 = image2(end:-1:1,:,:);
+
+% Create masks.
+image1condition  = imageCondition(idx1);
+image2condition  = imageCondition(idx2);
+image1comparison = imageComparison(idx1);
+image2comparison = imageComparison(idx2);
+maskIdx1 = find(maskCondition==image1condition & maskComparison==image1comparison);
+maskIdx2 = find(maskCondition==image2condition & maskComparison==image2comparison);
+mask1 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+mask2 = MakeBlockMask(maskIdx1,maskIdx2,maskPool,blockPixels);
+
+% Write the images into the window and disable.
+win.addImage(params.image1Loc, params.image1Size, image1, 'Name', 'image1');
+win.addImage(params.image1Loc, params.image1Size, mask1,  'Name', 'mask1');
+win.addImage(params.image2Loc, params.image2Size, mask2,  'Name', 'mask2');
+win.addImage(params.image2Loc, params.image2Size, image2, 'Name', 'image2');
+win.disableObject('image1');
+win.disableObject('mask1');
+win.disableObject('mask2');
+win.disableObject('image2');
+
+% Enable 1st image and draw.
+win.enableObject('image1');
+win.draw;
+
+% Wait for stimulus duration.
+mglWaitSecs(params.stimDuration);
+win.disableObject('image1');
+
+% Enable 1st mask and draw.
+win.enableObject('mask1');
+win.draw;
+
+% Wait for ISI.
+mglWaitSecs(params.ISI);
+win.disableObject('mask1');
+
+% Enable 2nd mask and draw.
+win.enableObject('mask2');
+win.draw;
+
+% Wait for ISI.
+mglWaitSecs(params.ISI);
+win.disableObject('mask2');
+
+% Enable 2nd image and draw.
+win.enableObject('image2');
+win.draw;
+
+% Wait for stimulus duration.
+mglWaitSecs(params.stimDuration);
+win.disableObject('image2');
+win.draw;
+
+% Wait for key press response.
+FlushEvents;
+key =[];
+while isempty(key)
+    % Get user response from keyboard.
+    if strcmp(controlSignal, 'keyboard')
+        key = mglGetKeyEvent;
+        if ~isempty(key)
+            switch key.charCode
+                case {option1Key,option2Key}
+                    practiceSelectedResponse = getUserResponse(params,key);
+                otherwise
+                    key = [];
+            end
+        end
+        % Get user response from gamePad.
+    else
+        key = gamePad.getKeyEvent();
+        if ~isempty(key)
+            switch key.charCode
+                case {option1Key,option2Key}
+                    practiceSelectedResponse = getUserResponse(params,key);
+                otherwise
+                    key = [];
+            end
+        end
+    end
+end
+
+fprintf('Selected interval in practice trial: %d\n',practiceSelectedResponse);
+% Give feedback if option is on.
+if giveFeedback
+    if practiceSelectedResponse == easyCorrectResponse(iiEasyTrial)
+        sound(rightSound);
+    else
+        sound(wrongSound);
     end
 end
 end
