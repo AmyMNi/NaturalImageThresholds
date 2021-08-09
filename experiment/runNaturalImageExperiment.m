@@ -429,7 +429,7 @@ end
 %% Set up vectors to keep track of trial info
 %
 % Set up vector for subject response per trial.
-selectedResponse       = nan(nTrials,1);
+selectedResponse = nan(nTrials,1);
 if isFirstSession
     warmupSelectedResponse = nan(nWarmupTrials,1);
 end
