@@ -188,8 +188,8 @@ if plotFigures
         threshold(nn) = thresholdthis;
     end
     % Plot parameters.
-    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName, ...
-        ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''});
+    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName, ...
+        ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''},'Interpreter','none');
     legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Proportion chose comparison as rightward');
@@ -262,9 +262,9 @@ if plotFigures
         row = row+1;  
     end
     % Plot parameters.
-    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
         ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
-        ' threshold2=(',threshold(4),',',threshold(5),')'),''});
+        ' threshold2=(',threshold(4),',',threshold(5),')'),''},'Interpreter','none');
     legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit', ...
         'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
@@ -336,12 +336,11 @@ if plotFigures
     [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosLARGE,OutOfNumLARGE);
     plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
     threshold(row) = thresholdthis;
-    row = row+1;
 
     % Plot parameters.
-    title({sprintf('%s%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
         ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
-        ' threshold2=(',threshold(3),',',threshold(4),')'),''});
+        ' threshold2=(',threshold(3),',',threshold(4),')'),''},'Interpreter','none');
     legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
         'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
@@ -375,15 +374,9 @@ if plotFigures
         meanRT(nn) = round(nanmean(reactionTimeAll));
     end
     % Plot parameters.
-    if nNoiseLevels==2
-        title({sprintf('%s%s%s%d%s%d',experimentName,subjectName, ...
-            ': mean0=',meanRT(1),' mean1=',meanRT(2)),''});
-        legend('Noise0 data','Noise1 data','Location','northwest')
-    elseif nNoiseLevels==3
-        title({sprintf('%s%s%s%d%s%d%s%d',experimentName,subjectName, ...
-            ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''});
-        legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
-    end
+    title({sprintf('%s_%s%s%d%s%d%s%d',experimentName,subjectName, ...
+        ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''},'Interpreter','none');
+    legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Reaction time (ms)');
     axis([-Inf Inf -Inf Inf]);
