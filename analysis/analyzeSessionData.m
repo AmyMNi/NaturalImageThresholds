@@ -264,6 +264,7 @@ colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
 % Plot all noise levels.
 threshold = nan(nNoiseLevels,1);
+pse       = nan(nNoiseLevels,1);
 if plotFigures
     figure; hold on;
     for nn = 1:nNoiseLevels
@@ -285,13 +286,15 @@ if plotFigures
         plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
         
         % Plot psychometric function fit.
-        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+        [xx,FittedCurve,thresholdthis,psethis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
         plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
+        pse(nn) = psethis;
     end
     % Plot parameters.
     title({sprintf('%s_%s_%d%s%0.2f%s%0.2f%s%0.2f',experimentName,subjectName,sessionNumber, ...
-        ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)),''},'Interpreter','none');
+        ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)), ...
+        sprintf('%s%0.2f%s%0.2f%s%0.2f','pse0=',pse(1),' pse1=',pse(2),' pse2=',pse(3))},'Interpreter','none');
     legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit','Noise2 data','Noise2 fit','Location','northwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Proportion chose comparison as rightward');
@@ -507,10 +510,10 @@ if plotFigures
     % Plot parameters.
     title({sprintf('%s_%s_%d%s%d%s%d%s%d',experimentName,subjectName,sessionNumber, ...
         ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''},'Interpreter','none');
-    legend('Noise0 data','Noise1 data','Noise2 data','Location','northwest')
+    legend('Noise0 data','Noise1 data','Noise2 data','Location','southwest')
     xlabel(sprintf('Comparison offset rightward (deg)'));
     ylabel('Reaction time (ms)');
-    axis([-Inf Inf -Inf Inf]);
+    axis([-Inf Inf 0 Inf]);
     set(gca,'tickdir','out');
     set(gca,'XTick',comparisonsDeg);
     set(gca,'XTickLabel',comparisonsDeg);
