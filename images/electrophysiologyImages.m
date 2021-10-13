@@ -92,33 +92,6 @@ XYZCalFormat = T_xyz*radianceEnergyCalFormat*S(2);
 
 %% Convert XYZ to sRGB primary values
 %
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Scale into gamut
-%
-% Nothing in our rendering pipeline guarantees that the maximum
-% intensity of the image is within the gamut of the monitor.  We
-% could address this by scaling the illumination intensity of
-% the light source to bring the maximum primary RGB value down
-% lower than 1, or we can scale at this stage. 
-%
-% When we do the experiment, we have to be careful to scale all
-% of the images the same way, so it may be cleaner to scale the
-% intensity of the light source in the rendering, and then throw
-% an error at this stage if the intensity is out of gamut.
-
-
-% Convert all your images to the sRGBPrimary format without any scaling or truncation,
-% and then find one common scale factor that brings the max value across all of them to 1.  
-
-% You then scale all of the sRGBPrimary values by that scale factor, 
-% so that all of the images are in the range [0 1] on a common scaling. 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 % Same general issues with scaling as above confront us here
 sRGBPrimaryCalFormat = XYZToSRGBPrimary(XYZCalFormat);
 maxPrimaryValue = max(sRGBPrimaryCalFormat(:));
@@ -135,31 +108,11 @@ if (any(sRGBPrimaryCalFormatScaled(:) < 0))
 end
 sRGBPrimaryCalFormatScaled(sRGBPrimaryCalFormatScaled < 0) = 0;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: not gamma correcting (gamma correction will happen on the
-% electrophysiology machine.
-
+% Convert a calibration format image back to a real image.
 sRGBImage = CalFormatToImage(sRGBPrimaryCalFormatScaled,nX,nY);
 if showSRGB
     figure; imshow(sRGBImage);
     title('sRGB rendering');
 end
-
-% To gamma correct:
-%{
-% Gamma correct according to sRGB standard and display
-% The gamma corrected values are in range 0-255, assuming 8
-% bit display.  Putting the uint8() in the call to imshow()
-% tells that routine to expect 0-255 input.
-sRGBCalFormat = SRGBGammaCorrect(sRGBPrimaryCalFormatScaled,0);
-sRGBImage = CalFormatToImage(sRGBCalFormat,nX,nY);
-if showSRGB
-    figure; imshow(uint8(sRGBImage));
-    title('sRGB rendering');
-end
-%}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% End

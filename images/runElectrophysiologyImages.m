@@ -7,7 +7,7 @@ function runElectrophysiologyImages(varargin)
 % Description:
 %   For each ISET3d scene in the specified folder, convert the ISET3d 
 %   image to an sRGB image (not gamma corrected) for the Natural Image 
-%   Thresholds electrophysiology experiment. Save each RGB image in the 
+%   Thresholds electrophysiology experiment. Save each sRGB image in the 
 %   specified output folder.
 %
 % Optional parameter/value:
