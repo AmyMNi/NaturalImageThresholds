@@ -2,7 +2,7 @@ function [RGBImage,sRGBImage] = renderISET3dHyperspectral(scene,cal,varargin)
 % renderISET3dHyperspectral
 %
 % Usage:
-%   renderISET3dHyperspectral(scene,varargin)
+%   renderISET3dHyperspectral(scene,cal)
 %
 % Description:
 %   Read in a rendered recipe, extract the hyperspectral image data, 

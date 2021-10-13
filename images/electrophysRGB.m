@@ -1,32 +1,36 @@
-function sRGBImage = electrophysSRGB(scene,varargin)
-% electrophysSRGB
+function RGBImage = electrophysRGB(scene,cal,varargin)
+% electrophysRGB
 %
 % Usage:
-%   electrophysSRGB(scene)
+%   electrophysRGB(scene,cal)
 %
 % Description:
-%   Read in a rendered recipe and convert to a (nongamma-corrected) sRGB
-%   image for the Natural Image Thresholds electrophysiology experiment.
+%   Read in a rendered recipe, extract the hyperspectral image data, 
+%   compute LMS cone excitations, and use PTB routines to go from there to
+%   a (nongamma-corrected) metameric RGB image for the Natural Image
+%   Thresholds electrophysiology experiment.
 %   Adapted from t_renderISET3dHyperspectral:
 %   https://github.com/isetbio/ISET3DProjects/tree/main/renderISET3dHyperspectral
 %
 % Inputs:
 %   scene : (struct) ISET3d scene info
+%   cal   : (struct) Calibration file for the electrophysiology experimental machine
 %
 % Optional parameters/values:
-%   'showSRGB' : (logical) Whether to display the sRGBImage (default: false)
+%   'showRGB'  : (logical) Whether to display the RGBImage  (default: false)
 %
 % History:
 %   06/05/21  dhb  Wrote it.
-%   10/12/21  amn  Edits to t_renderISET3dHyperspectral.
+%   10/13/21  amn  Edits to t_renderISET3dHyperspectral.
 
 %% Parse the inputs
 parser = inputParser();
 parser.addRequired('scene',@(x)(isstruct(x)));
-parser.addParameter('showSRGB',false,@islogical);
-parser.parse(scene,varargin{:});
+parser.addRequired('cal',@(x)(isstruct(x)));
+parser.addParameter('showRGB',false,@islogical);
+parser.parse(scene,cal,varargin{:});
 
-showSRGB = parser.Results.showSRGB;
+showRGB  = parser.Results.showRGB;
 
 %% Get the hyperspectral image data out of the scene
 %
@@ -69,50 +73,49 @@ if (max(abs(LMSExcitationsCalFormatChk(:) - LMSExcitationsCalFormat(:))) > 1e-12
     error('Energy/quanta conversion glitch somewhere');
 end
 
-%% Render sRGB versions of the rendered image
-%
-% sRGB is sort of a generic monitor standard.  Having sRGB
-% versions of images is useful for talks and papers, where 
-% you don't really know what device will be used to show it
-% and thus using a standard is as good a guess as anything.
-%
-% Notice that the image comes out looking achromatic here. 
-% sRGB is closer to most modern LCD monitors than the monitor
-% described by that old calibration file.
-%
-% sRGB is based on the CIE XYZ color matching functions, so
-% first step is to go from Radiance to XYZ.  And first step
-% to do that is get the color matching functions.  The magic
-% 683 makes the units of Y cd/m2 when we specificy radiance
-% as Watts/sr-m2-nm and take the wavelength delta properly
-% into account in the summation over wavelength
-load T_xyz1931
-T_xyz = 683*SplineCmf(S_xyz1931,T_xyz1931,S);
-XYZCalFormat = T_xyz*radianceEnergyCalFormat*S(2);
+%% Initialize the sensor color space for use in calibration
+cal = SetSensorColorSpace(cal,T_energy,S);
 
-%% Convert XYZ to sRGB primary values
+%% Go from LMS to device primary space
+rgbCalFormat = SensorToPrimary(cal,LMSExcitationsCalFormat);
+
+%% Scale into gamut
 %
-% Same general issues with scaling as above confront us here
-sRGBPrimaryCalFormat = XYZToSRGBPrimary(XYZCalFormat);
-maxPrimaryValue = max(sRGBPrimaryCalFormat(:));
+% Nothing in our rendering pipeline guarantees that the maximum
+% intensity of the image is within the gamut of the monitor.  We
+% could address this by scaling the illumination intensity of
+% the light source to bring the maximum primary RGB value down
+% lower than 1, or we can scale at this stage. 
+%
+% When we do the experiment, we have to be careful to scale all
+% of the images the same way, so it may be cleaner to scale the
+% intensity of the light source in the rendering, and then throw
+% an error at this stage if the intensity is out of gamut.
 headroomFactor = 1;
+maxPrimaryValue = max(rgbCalFormat(:));
 if (maxPrimaryValue > headroomFactor)
-    fprintf('Warning: Maximum sRGB primary intensity of %0.2g exceeds desired max of %0.2g\n',maxPrimaryValue,headroomFactor);
+    fprintf('Warning: Maximum primary intensity of %0.2g exceeds desired max of %0.2g\n',maxPrimaryValue,headroomFactor);
 end
-sRGBPrimaryCalFormatScaled = headroomFactor*sRGBPrimaryCalFormat/maxPrimaryValue;
+rgbCalFormatScaled = headroomFactor*rgbCalFormat/maxPrimaryValue;
 
-if (any(sRGBPrimaryCalFormatScaled(:) < 0))
-    fprintf('Warning: some sRGB primary values in rendered image are negative.\n');
+% It's also possible to get negative rgb values.  This happens
+% if the saturation of one of the rendered pixels exceeds
+% what the monitor gamut can display.  Not much to do here 
+% except truncate to positive, and perhaps let the user know.
+if (any(rgbCalFormatScaled(:) < 0))
+    fprintf('Warning: some primary values in rendered rgb image are negative.\n');
     fprintf('\tWorth looking into how many and by how much\n');
     fprintf('\tThis routine simply truncates such values to 0\n');
 end
-sRGBPrimaryCalFormatScaled(sRGBPrimaryCalFormatScaled < 0) = 0;
+rgbCalFormatScaled(rgbCalFormatScaled < 0) = 0;
 
-% Convert a calibration format image back to a real image.
-sRGBImage = CalFormatToImage(sRGBPrimaryCalFormatScaled,nX,nY);
-if showSRGB
-    figure; imshow(sRGBImage);
-    title('sRGB rendering');
+%% Convert back to an image
+RGBImage = CalFormatToImage(rgbCalFormatScaled,nX,nY);
+
+%% Display
+if showRGB
+    figure; imshow(RGBImage);
+    title('Calibrated RGB rendering');
 end
 
 %% End
