@@ -28,21 +28,29 @@ experimentName = parser.Results.experimentName;
 % Specify project name.
 projectName = 'NaturalImageThresholds';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Set to desktop.
+pathToFolder = fullfile('/Users','amy','Desktop','scenes');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%{
 % Set path to input folder.
 pathToFolder = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageScenesElectrophys');
+%}
 
-%% Set path to calibration file and load
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: set to correct calibration file for electrophysiology setup
+%% Set path to electrophysiology setup calibration file, and load file
+%
+% PittVPixx.mat is a calibration file based on the electrophysiological experiment setup.
+% It was created using CalFileXYZNoGamma (in the Calibration folder of BrainardLabToolbox).
 
 % Set path to calibration folder.
 calDir = getpref(projectName,'CalDataFolder');
 
-% Set path to calibration file.
-% (set for the local experiment machine by the project local hook file).
-calFile = getpref(projectName,'CalDataFile');
+% Set calibration file name.
+calFile = 'PittVPixx';
 
 % Load calibration file.
 cal = LoadCalFile(calFile,[],calDir);
@@ -51,16 +59,25 @@ if (isempty(cal))
 end
 fprintf('Using calibration done by %s on %s\n', ...
     cal.describe.who,cal.describe.date);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Set path to output folder
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Set to desktop.
+pathToOutput = fullfile('/Users','amy','Desktop','scenesSRGB');
+
+%{
 pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageSRGBsElectrophys');
 
 % Create output folder if it doesn't exist.
 if ~exist(pathToOutput, 'dir')
     mkdir(pathToOutput);
 end
+%}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Get names of all scene files in the input folder
 %
