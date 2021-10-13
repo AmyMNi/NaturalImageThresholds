@@ -83,7 +83,7 @@ for ii = 1:length(fileInfo)
         temp = load(fileToLoad,'theImage'); theImage = temp.theImage; clear temp;
         
         % Convert this ISET3d scene to a metameric RGB image.
-        RGBImage = electrophysRGB(theImage,cal,'showRGB',true);
+        RGBImage = electrophysRGB(theImage,cal,'showRGB',false);
         
         % Save the RGB image in the output folder.
         theImage = RGBImage;

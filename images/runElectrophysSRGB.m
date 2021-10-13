@@ -81,7 +81,7 @@ for ii = 1:length(fileInfo)
         temp = load(fileToLoad,'theImage'); theImage = temp.theImage; clear temp;
 
         % Convert this ISET3d scene to an sRGB image.
-        sRGBImage = electrophysSRGB(theImage,'showSRGB',true);
+        sRGBImage = electrophysSRGB(theImage,'showSRGB',false);
         
         % Save the sRGB image in the output folder.
         theImage = sRGBImage;
