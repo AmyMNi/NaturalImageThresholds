@@ -118,4 +118,15 @@ if showRGB
     title('Calibrated RGB rendering');
 end
 
+%% No gamma correction
+%
+% Gamma correction is not performed here, and will be performed prior to
+% stimulus presentation during the electrophysiological experiment.
+% To view the images with an approximation of gamma correction:
+
+%{
+RGBImageGammaCorrectApprox = RGBImage .^ 0.5;
+figure; imshow(RGBImageGammaCorrectApprox);
+%}
+
 %% End
