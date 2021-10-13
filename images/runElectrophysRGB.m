@@ -66,10 +66,10 @@ fprintf('Using calibration done by %s on %s\n', ...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set to desktop.
-pathToOutput = fullfile('/Users','amy','Desktop','scenesSRGB');
+pathToOutput = fullfile('/Users','amy','Desktop','scenesRGB');
 
 %{
-pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageSRGBsElectrophys');
+pathToOutput = fullfile(getpref(projectName,'BaseDir'),experimentName,'ImageRGBsElectrophys');
 
 % Create output folder if it doesn't exist.
 if ~exist(pathToOutput, 'dir')
