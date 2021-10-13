@@ -1,8 +1,8 @@
-function sRGBImage = electrophysiologyImages(scene,varargin)
-% electrophysiologyImages
+function sRGBImage = electrophysSRGB(scene,varargin)
+% electrophysSRGB
 %
 % Usage:
-%   electrophysiologyImages(scene,varargin)
+%   electrophysSRGB(scene,varargin)
 %
 % Description:
 %   Read in a rendered recipe and convert to an sRGB image (not gamma 
