@@ -39,3 +39,4 @@ xq1 = xquar(1);
 xq3 = xquar(3);
 x(x>(xq3+xTukey) | x<(xq1-xTukey)) = nan; %outlier exclusion
 x = reshape(x,sizex);
+end

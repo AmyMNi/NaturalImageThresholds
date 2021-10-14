@@ -225,16 +225,71 @@ numDepths    = numel(depths);
 
 %% Calculate specific decoder performance for central object (banana) position
 %
-% Calculate for each combination of positions, averaged across all rotation/depth combos.
-%   column 1: per decoder, performance
-%   column 2: per decoder, distance between the two positions discriminated
-specificDecoder = nan(numRotations*numDepths*nchoosek(numPositions,2),2);
+% Calculate decoder performance for each combination of positions.
+% First calculate the number of position combinations.
+numPositionCombos = nchoosek(numPositions,2)+numPositions;
 
-% Calculate decoder performance.
+% Decoder performance vectors.
+specificPositionV1 = nan(numRotations*numDepths*numPositionCombos,1);
+specificPositionV4 = nan(numRotations*numDepths*numPositionCombos,1);
+
+% Decoder info matrix:
+%   column 1: per decoder, 1st of the two positions being discriminated
+%   column 2: per decoder, 2nd of the two positions being discriminated
+%   column 3: per decoder, difference between two positions being discriminated
+%   column 4: per decoder, rotation of the background objects
+%   column 5: per decoder, depth of the background objects
+specificPositionInfo = nan(numRotations*numDepths*numPositionCombos,4);
+
+% Calculate decoder performance for each brain area.
+row = 0;
 for rr = 1:numRotations
+    rotationThis = rotations(rr);
+    
     for dd = 1:numDepths
+        depthThis = depths(dd);
+        
         for ii = 1:numPositions
-            for jj = ii+1:numPositions
+            positionThis1 = positions(ii);
+                
+            for jj = ii:numPositions
+                positionThis2 = positions(jj);
+                
+                % Fill in the information for this decoder discrimination.
+                row = row+1;
+                specificPositionInfo(row,1) = positionThis1;
+                specificPositionInfo(row,2) = positionThis2;
+                specificPositionInfo(row,3) = abs(positionThis1-positionThis2);
+                specificPositionInfo(row,4) = rotationThis;
+                specificPositionInfo(row,5) = depthThis;
+
+                % Get neuronal responses for this rotation & depth, for 1st position.
+                stimIdx1 = imageRotation==rotationThis & ...
+                           imageDepth   ==depthThis & ...
+                           imagePosition==positionThis1;
+                V1respThis1 = V1respInc(stimIdx1,:);
+                V4respThis1 = V4respInc(stimIdx1,:);
+                
+                % Get neuronal responses for this rotation & depth, for 2nd position.
+                stimIdx2 = imageRotation==rotationThis & ...
+                           imageDepth   ==depthThis & ...
+                           imagePosition==positionThis2;
+                V1respThis2 = V1respInc(stimIdx2,:);
+                V4respThis2 = V4respInc(stimIdx2,:);
+                
+                % Calculate specific decoder performance discriminating these 2 positions.
+                % For V1:
+                try
+                    [~,pcV1] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
+                catch
+                    fprintf(2,'Could not calculate decoder performance for V1 decoder row %d\n',row);
+                    pcV1 = nan;
+                end
+                
+                
+                
+                
+                
                 
             end
         end
