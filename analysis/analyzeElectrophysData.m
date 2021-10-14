@@ -2,31 +2,45 @@ function dataAnalysis = analyzeElectrophysData(varargin)
 %analyzeElectrophysData
 %
 % Usage:
-%   dataAnalysis = analyzeElectrophysData('dataDate','211013','dataSet',1)
+%   dataAnalysis = analyzeElectrophysData('dataDate','211013','imageSet',1)
 %
 % Description:
-%   Analyze electrophysiological data from a single data collection session.
+%   Analyze electrophysiological data from a single Sdata collection session.
 %   Save the results in the specified output folder.
 %
 % Optional parameters/values:
 %   'dataDate'    : (string)  Electrophys data file name (default: '211013')
-%   'dataSet'     : (scalar)  Image set presented (default: 1)
+%   'imageSet'    : (scalar)  Image set presented (default: 1)
 %   'plotFigures' : (logical) Plot figures if option is on (default: true)
 %   'saveData'    : (logical) Save data if option is on (default: true)
 %
 % History:
 %   10/13/21  amn  Wrote it.
 
+%% Record of electrophys data file name & corresponding image set presented
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+% ('dataDate','211013','imageSet',1) : sRGB image set to test position/rotation/depth ranges
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('dataDate', '211013', @ischar);
-parser.addParameter('dataSet', 1, @isscalar);
+parser.addParameter('imageSet', 1, @isscalar);
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
 parser.parse(varargin{:});
 
 dataDate    = parser.Results.dataDate;
-dataSet     = parser.Results.dataSet;
+imageSet    = parser.Results.imageSet;
 plotFigures = parser.Results.plotFigures;
 saveData    = parser.Results.saveData;
 
@@ -45,7 +59,7 @@ dataFolder = fullfile('/Users','amy','Desktop','Brainard','Natural Image Thresho
 pathToDataFile = fullfile(dataFolder,sprintf('%sdata.mat',dataDate));
 
 % Set path to image info file.
-pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',dataSet));
+pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',imageSet));
 
 % Set path to output file.
 pathToOutput = fullfile(dataFolder,sprintf('%sanalysis.mat',dataDate));
