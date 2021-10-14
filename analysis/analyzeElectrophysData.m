@@ -79,7 +79,7 @@ temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
 
 % Data variables:
  
-% params : (struct 1 x num trials)
+% params : (struct 1 x num stimuli)
 %       set: for the Natural Image Thresholds experiment, set = 7
 %       num: number of the stimulus (to match to 'imgInfo' table with image info)
 %       x: position in pixels of the stimulus
@@ -99,22 +99,26 @@ temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
 %       column 1: array number (1 = V4, 2 = V1/V2, 3 = 7A)
 %       column 2: electrode number
    
-% resp : (num trials x 256 total electrodes) stimulus response (Hz)
+% resp : (num stimuli x 256 total electrodes) stimulus response (Hz)
 %       analysis window: stim onset + 50 ms to stim offset + 100 ms
 %       has a value of NaN when params.good = 0
     
-% resp_base : (num trials x 256 total electrodes) baseline response (Hz)
+% resp_base : (num stimuli x 256 total electrodes) baseline response (Hz)
 %       analysis window: stim onset - 100 ms to stim onset
 
 %% Exclude stimuli presented during incomplete trials (fixation broken)
+%
+% Exclude stimuli for which params.good = 0.
+excludeStim = ~[params.good];
+params   (excludeStim)   = [];
+resp     (excludeStim,:) = [];
+resp_base(excludeStim,:) = [];
 
-
-
-
-
-
-
-
+%% Analyze responses from specific brain areas
+%
+% Analyze only V4 array responses.
+v4resp = resp(:,eid(:,1)==1);
+stimNum = [params.num];
 
 
 
@@ -123,16 +127,6 @@ temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
 
 
 %% 
-
-% get rid of bad trials:
-badTrials = ~[params.good];
-params(badTrials) = [];
-resp(badTrials,:) = [];
-resp_base(badTrials,:) = [];
-
-% only V4 responses
-v4resp = resp(:,eid(:,1)==1);
-stimNum = [params.num];
 
 % EXAMPLE RASTER PLOT FOR EACH CHANNEL:
 % plot time on x-axis, plot channel number on y-axis
