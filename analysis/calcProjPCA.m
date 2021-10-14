@@ -4,13 +4,12 @@ function newvec = calcProjPCA(newdata,y,oldmean)
 % Usage:
 %   newvec = calcProjPCA(newdata,y,oldmean)
 %
-% Description: 
-%   Project neuronal responses onto the inputted principal components.
+% Description:
+%   Project neuronal responses onto the input eigenvectors.
 %
 % Inputs:
 %   newdata : (num neurons x num stimuli) neuronal responses to each stimulus
-%   y       : (num neurons x numvecs) of numvecs first eigenvectors of the
-%             correlation matrix
+%   y       : (num neurons x numvecs) of numvecs first eigenvectors
 %   oldmean : (num neurons x 1) the mean response per neuron
 %
 % Output:

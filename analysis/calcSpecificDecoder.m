@@ -43,9 +43,8 @@ predicted=nan(numStim,1);
 % Because the Matlab function 'classify' used to determine decoder
 % performance below requires that there are more training stimuli than
 % dimensions of the neuronal population response, perform PCA on the
-% neuronal population responses and analyze the number of dimensions that
-% is one less than the number of stimuli that will be used to train the 
-% decoder.
+% neuronal population responses and analyze a number of dimensions that is
+% less than the number of stimuli that will be used to train the decoder.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,7 +58,7 @@ predicted=nan(numStim,1);
 numStimTrain = numStim - 1;
 
 % Calculate the number of PCs (principal components) to analyze.
-numPC = numStimTrain - 1;
+numPC = numStimTrain - 2;
 
 % The number of PCs cannot exceed the number of neurons.
 if numPC > size(data,2)
@@ -77,20 +76,6 @@ end
 % Project responses onto the above PCs.
 dataPC = calcProjPCA(data',y,psi)';
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %% Per leave-one-out stimulus, calculate stimulus group predicted by the decoder.
 for ii=1:numStim
     if isfinite(group(ii))
@@ -101,7 +86,9 @@ for ii=1:numStim
         class = nan;
         try
             % Matlab function inputs: (sample,training,group)
-            class = classify(data(ii,:),data(this,:),group(this));
+            class = classify(dataPC(ii,:),dataPC(this,:),group(this));
+        catch
+            warning('classify function failed')
         end
         predicted(ii)=class; 
     end

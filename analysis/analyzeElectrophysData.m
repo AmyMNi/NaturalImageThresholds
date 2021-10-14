@@ -279,29 +279,15 @@ for rr = 1:numRotations
                 
                 % Calculate specific decoder proportion correct on discriminating these 2 positions.
                 [~,V1pc] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
-                
-                
-                
-        
-  
-
-                
-                
-                
-                
-
-                    
-
-                
-                
-                
-                
-                
-                
+                [~,V4pc] = calcSpecificDecoder([V4respThis1;V4respThis2],[zeros(size(V4respThis1,1),1);ones(size(V4respThis2,1),1)]);
+                specificPositionV1(row) = V1pc;
+                specificPositionV4(row) = V4pc; 
             end
         end
     end
 end
+
+%%
 
 
 
