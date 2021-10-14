@@ -112,7 +112,7 @@ temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
 % If not, print a warning.
 experimentSet = [params.set];
 if any(experimentSet~=7)
-    disp('test')
+    warning('The stimuli are not all from the Natural Image Thresholds project');
 end
 
 %% Exclude stimuli presented during incomplete trials (fixation broken)
@@ -126,22 +126,39 @@ resp_base(excludeStim,:) = [];
 % Number of included stimuli.
 numStim = numel(params);
 
-%% Get electrode numbers  specific brain areas
+%% Get electrode numbers for each brain area
 %
+% Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
+electrodeNumV1V2 = eid(eid(:,1)==2,2);
 
-% Get electrode numbers for V4 array.
+% Get electrode numbers for the V4 array (V4: array number 1).
+electrodeNumV4 = eid(eid(:,1)==1,2);
+
+%% Per stimulus, get image number and info
+%
+% Per stimulus, get image number to match to imgInfo table with image info.
+imageNum = [params.num]';
+
+% Convert imgInfo table to matrix.
+% columns:  imgNumber  bananaPosition  backgroundRotation  backgroundDepth
+imgInfo = table2array(imgInfo);
+
+% Per stimulus, get central object (banana) position.
+[~,indImageNum] = ismember(imageNum, imgInfo(:,1));
+imagePosition = imgInfo(indImageNum,2);
+
+% Per stimulus, get background object (branches & leaves) rotation.
+imageRotation = imgInfo(indImageNum,3);
+
+% Per stimulus, get background object (branches & leaves) depth.
+imageDepth = imgInfo(indImageNum,4);
+
+%% 
 
 % Analyze only V4 array responses.
 v4resp = resp(:,eid(:,1)==1);
 
 
-
-
-
-
-
-%% Stimulus number
-stimNum = [params.num];
 
 
 
