@@ -183,7 +183,7 @@ electrodeV1included = electrodeV1(electrodeV1included');
 electrodeV4included = electrodeV4(electrodeV4included');
 
 %% Get responses for each brain area, based on included electrodes
-%
+%         
 % Get included responses for V1/V2.
 V1respInc      = resp     (:,ismember(eid(:,2),electrodeV1included));
 V1resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV1included));
@@ -277,14 +277,21 @@ for rr = 1:numRotations
                 V1respThis2 = V1respInc(stimIdx2,:);
                 V4respThis2 = V4respInc(stimIdx2,:);
                 
-                % Calculate specific decoder performance discriminating these 2 positions.
-                % For V1:
-                try
-                    [~,pcV1] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
-                catch
-                    fprintf(2,'Could not calculate decoder performance for V1 decoder row %d\n',row);
-                    pcV1 = nan;
-                end
+                % Calculate specific decoder proportion correct on discriminating these 2 positions.
+                [~,V1pc] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
+                
+                
+                
+        
+  
+
+                
+                
+                
+                
+
+                    
+
                 
                 
                 
