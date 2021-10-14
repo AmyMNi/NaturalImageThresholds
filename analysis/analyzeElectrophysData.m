@@ -46,13 +46,13 @@ saveData    = parser.Results.saveData;
 
 %% Set paths to input and output files
 %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TO DO:
 % Data on Raptor. Example: ram/data/main/ivory/211013/ivory_map_211013-133559_dense.mat
 % Save data file in folder below. Example: 211013data.mat
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set path to data file.
 dataFolder = fullfile('/Users','amy','Desktop','Brainard','Natural Image Thresholds','Electrophys Data');
@@ -129,10 +129,61 @@ numStim = numel(params);
 %% Get electrode numbers for each brain area
 %
 % Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
-electrodeNumV1V2 = eid(eid(:,1)==2,2);
+electrodeV1 = eid(eid(:,1)==2,2);
 
 % Get electrode numbers for the V4 array (V4: array number 1).
-electrodeNumV4 = eid(eid(:,1)==1,2);
+electrodeV4 = eid(eid(:,1)==1,2);
+
+%% Get responses for each brain area
+%
+% Get responses for V1/V2.
+V1resp      = resp     (:,ismember(eid(:,2),electrodeV1));
+V1resp_base = resp_base(:,ismember(eid(:,2),electrodeV1));
+
+% Get responses for V4.
+V4resp      = resp     (:,ismember(eid(:,2),electrodeV4));
+V4resp_base = resp_base(:,ismember(eid(:,2),electrodeV4));
+
+%% Determine electrodes to include per brain area, based on stimulus-evoked firing rate
+%
+% Base electrode inclusion on the following criteria:
+%   stimulus-evoked firing rate statsig greater than baseline firing rate,
+%   minimum stimulus-evoked firing rate.
+frMin = 10; %Hz
+alphaLevel = .05;
+electrodeV1included = false(1,size(V1resp,2));
+electrodeV4included = false(1,size(V4resp,2));
+
+% Calculate included electrodes: V1.
+for ii = 1:size(V1resp,2)
+    % Two-sample one-tailed t-test.
+    h = ttest2(V1resp(:,ii), V1resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
+    if h==1 && nanmean(V1resp(:,ii)) > frMin
+        electrodeV1included(ii) = true;
+    end
+end
+
+% Calculate included electrodes: V4.
+for ii = 1:size(V4resp,2)
+    % Two-sample one-tailed t-test.
+    h = ttest2(V4resp(:,ii), V4resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
+    if h==1 && nanmean(V4resp(:,ii)) > frMin
+        electrodeV4included(ii) = true;
+    end
+end
+
+electrodeV1included = electrodeV1(electrodeV1included');
+electrodeV4included = electrodeV4(electrodeV4included');
+
+%% Get responses for each brain area, based on included electrodes
+%
+% Get included responses for V1/V2.
+V1respInc      = resp     (:,ismember(eid(:,2),electrodeV1included));
+V1resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV1included));
+
+% Get included responses for V4.
+V4respInc      = resp     (:,ismember(eid(:,2),electrodeV4included));
+V4resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV4included));
 
 %% Per stimulus, get image number and info
 %
@@ -153,35 +204,23 @@ imageRotation = imgInfo(indImageNum,3);
 % Per stimulus, get background object (branches & leaves) depth.
 imageDepth = imgInfo(indImageNum,4);
 
-%% 
-
-% Analyze only V4 array responses.
-v4resp = resp(:,eid(:,1)==1);
-
-
-
-
-
-
-
-
-
-
-
-
-
-%% Plot raster plot per electrode, one plot/stimulus
+%% Get unique positions, rotations, and depths
 %
-% Plot spike times on x-axis, plot electrode number on y-axis.
-% Press any key to plot each new stimulus plot.
-if plotFigures
-    for ii = 1:numStim
-        figure; hold on;
-        plot(params(ii).spikes(:,1), params(ii).spikes(:,2), 'k.')
-        hold off;
-        pause;
-    end
-end
+% Get all presented central object positions and background object rotations and depths.
+positions = unique(imagePosition);
+rotations = unique(imageRotation);
+depths    = unique(imageDepth);
+
+%% Calculate specific decoder performance for central object (banana) position
+%
+% Calculate for each combination of positions, averaged across all rotation/depth combos.
+
+
+
+
+
+
+
 
 
 
