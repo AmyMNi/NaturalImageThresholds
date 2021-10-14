@@ -100,8 +100,6 @@ total = numStim - sum(bad) - sum(isnan(predicted));
 pcor = correct/total;
 if pcor==0
     pcor = nan;
-elseif pcor<.5
-    pcor=1-pcor;
 end
 
 end

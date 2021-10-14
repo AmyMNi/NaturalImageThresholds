@@ -44,6 +44,9 @@ imageSet    = parser.Results.imageSet;
 plotFigures = parser.Results.plotFigures;
 saveData    = parser.Results.saveData;
 
+%% Create struct to hold all analysis results
+dataAnalysis = struct;
+
 %% Set paths to input and output files
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -63,6 +66,10 @@ pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',imageSet));
 
 % Set path to output file.
 pathToOutput = fullfile(dataFolder,sprintf('%sanalysis.mat',dataDate));
+
+% Save to analysis output struct.
+dataAnalysis.pathToDataFile = pathToDataFile;
+dataAnalysis.pathToDataInfo = pathToDataInfo;
 
 %% Load data
 %
@@ -126,6 +133,9 @@ resp_base(excludeStim,:) = [];
 % Number of included stimuli.
 numStim = numel(params);
 
+% Save to analysis output struct.
+dataAnalysis.numStim = numStim;
+
 %% Get electrode numbers for each brain area
 %
 % Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
@@ -133,6 +143,10 @@ electrodeV1 = eid(eid(:,1)==2,2);
 
 % Get electrode numbers for the V4 array (V4: array number 1).
 electrodeV4 = eid(eid(:,1)==1,2);
+
+% Save to analysis output struct.
+dataAnalysis.electrodeV1 = electrodeV1;
+dataAnalysis.electrodeV4 = electrodeV4;
 
 %% Get responses for each brain area
 %
@@ -150,6 +164,12 @@ V1resp_base = resp_base(:,ismember(eid(:,2),electrodeV1));
 % Get responses for V4.
 V4resp      = resp     (:,ismember(eid(:,2),electrodeV4));
 V4resp_base = resp_base(:,ismember(eid(:,2),electrodeV4));
+
+% Save to analysis output struct.
+dataAnalysis.V1resp = V1resp;
+dataAnalysis.V1resp_base = V1resp_base;
+dataAnalysis.V4resp = V4resp;
+dataAnalysis.V4resp_base = V4resp_base;
 
 %% Determine electrodes to include per brain area, based on stimulus-evoked firing rate
 %
@@ -182,6 +202,10 @@ end
 electrodeV1included = electrodeV1(electrodeV1included');
 electrodeV4included = electrodeV4(electrodeV4included');
 
+% Save to analysis output struct.
+dataAnalysis.electrodeV1included = electrodeV1included;
+dataAnalysis.electrodeV4included = electrodeV4included;
+
 %% Get responses for each brain area, based on included electrodes
 %         
 % Get included responses for V1/V2.
@@ -191,6 +215,12 @@ V1resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV1included));
 % Get included responses for V4.
 V4respInc      = resp     (:,ismember(eid(:,2),electrodeV4included));
 V4resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV4included));
+
+% Save to analysis output struct.
+dataAnalysis.V1respInc = V1respInc;
+dataAnalysis.V1resp_baseInc = V1resp_baseInc;
+dataAnalysis.V4respInc = V4respInc;
+dataAnalysis.V4resp_baseInc = V4resp_baseInc;
 
 %% Per stimulus, get image number and info
 %
@@ -211,6 +241,12 @@ imageRotation = imgInfo(indImageNum,3);
 % Per stimulus, get background object (branches & leaves) depth.
 imageDepth = imgInfo(indImageNum,4);
 
+% Save to analysis output struct.
+dataAnalysis.imageNum = imageNum;
+dataAnalysis.imagePosition = imagePosition;
+dataAnalysis.imageRotation = imageRotation;
+dataAnalysis.imageDepth = imageDepth;
+
 %% Get unique positions, rotations, and depths
 %
 % Get unique central object positions and background object rotations and depths.
@@ -223,11 +259,19 @@ numPositions = numel(positions);
 numRotations = numel(rotations);
 numDepths    = numel(depths);
 
-%% Calculate specific decoder performance for central object (banana) position
+% Save to analysis output struct.
+dataAnalysis.positions = positions;
+dataAnalysis.rotations = rotations;
+dataAnalysis.depths = depths;
+dataAnalysis.numPositions = numPositions;
+dataAnalysis.numRotations = numRotations;
+dataAnalysis.numDepths = numDepths;
+
+%% Calculate specific decoder performance for central object position
 %
 % Calculate decoder performance for each combination of positions.
 % First calculate the number of position combinations.
-numPositionCombos = nchoosek(numPositions,2)+numPositions;
+numPositionCombos = nchoosek(numPositions,2);
 
 % Decoder performance vectors.
 specificPositionV1 = nan(numRotations*numDepths*numPositionCombos,1);
@@ -252,7 +296,7 @@ for rr = 1:numRotations
         for ii = 1:numPositions
             positionThis1 = positions(ii);
                 
-            for jj = ii:numPositions
+            for jj = ii+1:numPositions
                 positionThis2 = positions(jj);
                 
                 % Fill in the information for this decoder discrimination.
@@ -287,38 +331,63 @@ for rr = 1:numRotations
     end
 end
 
-%%
+% Save to analysis output struct.
+dataAnalysis.specificPositionInfo = specificPositionInfo;
+dataAnalysis.specificPositionV1 = specificPositionV1;
+dataAnalysis.specificPositionV4 = specificPositionV4;
 
+%% Calculate the mean performance for specific decoders of position, per size of discriminated position difference
+%
+% Separate the specific decoders into groups based on the size of their 
+% discriminated position difference, then calculate the mean decoder 
+% performance per group.
 
+% Get the unique values of the difference between the two positions
+% discriminated by the decoders.
+uniquePositionDiff = unique(specificPositionInfo(:,3));
 
+% Calculate mean decoder performance per group.
+specificPositionV1mean = nan(numel(uniquePositionDiff),1);
+specificPositionV4mean = nan(numel(uniquePositionDiff),1);
+for ii = 1:numel(uniquePositionDiff)
+    positionDiffThis = uniquePositionDiff(ii);
+    
+    % Get performances of decoders that discriminated this position difference.
+    V1this = specificPositionV1(specificPositionInfo(:,3)==positionDiffThis);
+    V4this = specificPositionV4(specificPositionInfo(:,3)==positionDiffThis);
+    
+    % Calculate mean decoder performance.
+    specificPositionV1mean(ii,1) = nanmean(V1this);
+    specificPositionV4mean(ii,1) = nanmean(V4this);
+end
 
+% Save to analysis output struct.
+dataAnalysis.uniquePositionDiff = uniquePositionDiff;
+dataAnalysis.specificPositionV1mean = specificPositionV1mean;
+dataAnalysis.specificPositionV4mean = specificPositionV4mean;
 
-
-
-
-
-
-
-
+%% Plot the mean performance for specific decoders of position, per size of discriminated position difference
+%
+% Plot the size of discriminated position difference on the x-axis
+% and the mean decoder proportion correct on the y-axis.
+if plotFigures
+    figure; hold on; axis square;
+    plot(uniquePositionDiff, specificPositionV1mean, '.-m');
+    plot(uniquePositionDiff, specificPositionV4mean, '.-b');
+    % Plot parameters.
+    title('Specific decoder performance for position');
+    legend('V1','V4');
+    xlabel('Difference between discriminated positions');
+    ylabel('Proportion correct');
+    axis([-Inf Inf 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',uniquePositionDiff);
+    set(gca,'XTickLabel',uniquePositionDiff);
+    box off; hold off;
+end
 
 %% Save data analysis results
-%
-% Create struct to hold all analysis results.
 if saveData
-    dataAnalysis = struct;
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    dataAnalysis.specificDecoder = specificDecoder;
-    
     save(pathToOutput,'dataAnalysis');
     fprintf('\nData was saved in:\n%s\n', pathToOutput);
 end
