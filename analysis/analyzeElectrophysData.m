@@ -106,6 +106,15 @@ temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
 % resp_base : (num stimuli x 256 total electrodes) baseline response (Hz)
 %       analysis window: stim onset - 100 ms to stim onset
 
+%% Check that all of the stimuli were from the Natural Image Thresholds experiment
+%
+% Make sure that all params.set values = 7 (the Natural Image Thresholds images).
+% If not, print a warning.
+experimentSet = [params.set];
+if any(experimentSet~=7)
+    disp('test')
+end
+
 %% Exclude stimuli presented during incomplete trials (fixation broken)
 %
 % Exclude stimuli for which params.good = 0.
@@ -114,10 +123,24 @@ params   (excludeStim)   = [];
 resp     (excludeStim,:) = [];
 resp_base(excludeStim,:) = [];
 
-%% Analyze responses from specific brain areas
+% Number of included stimuli.
+numStim = numel(params);
+
+%% Get electrode numbers  specific brain areas
 %
+
+% Get electrode numbers for V4 array.
+
 % Analyze only V4 array responses.
 v4resp = resp(:,eid(:,1)==1);
+
+
+
+
+
+
+
+%% Stimulus number
 stimNum = [params.num];
 
 
@@ -126,11 +149,25 @@ stimNum = [params.num];
 
 
 
-%% 
 
-% EXAMPLE RASTER PLOT FOR EACH CHANNEL:
-% plot time on x-axis, plot channel number on y-axis
-plot(params(1).spikes(:,1), params(1).spikes(:,2), 'k.')
+
+
+
+%% Plot raster plot per electrode, one plot/stimulus
+%
+% Plot spike times on x-axis, plot electrode number on y-axis.
+% Press any key to plot each new stimulus plot.
+if plotFigures
+    for ii = 1:numStim
+        figure; hold on;
+        plot(params(ii).spikes(:,1), params(ii).spikes(:,2), 'k.')
+        hold off;
+        pause;
+    end
+end
+
+
+
 
 
 
