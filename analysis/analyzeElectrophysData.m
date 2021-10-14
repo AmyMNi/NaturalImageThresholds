@@ -136,6 +136,13 @@ electrodeV4 = eid(eid(:,1)==1,2);
 
 %% Get responses for each brain area
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NOTE: responses currently based on same analysis period
+%       for both V1/V2 and V4 (50-350 ms)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Get responses for V1/V2.
 V1resp      = resp     (:,ismember(eid(:,2),electrodeV1));
 V1resp_base = resp_base(:,ismember(eid(:,2),electrodeV1));
@@ -206,15 +213,33 @@ imageDepth = imgInfo(indImageNum,4);
 
 %% Get unique positions, rotations, and depths
 %
-% Get all presented central object positions and background object rotations and depths.
+% Get unique central object positions and background object rotations and depths.
 positions = unique(imagePosition);
 rotations = unique(imageRotation);
 depths    = unique(imageDepth);
 
+% Calculate number of unique positions, rotations, and depths.
+numPositions = numel(positions);
+numRotations = numel(rotations);
+numDepths    = numel(depths);
+
 %% Calculate specific decoder performance for central object (banana) position
 %
 % Calculate for each combination of positions, averaged across all rotation/depth combos.
+%   column 1: per decoder, performance
+%   column 2: per decoder, distance between the two positions discriminated
+specificDecoder = nan(numRotations*numDepths*nchoosek(numPositions,2),2);
 
+% Calculate decoder performance.
+for rr = 1:numRotations
+    for dd = 1:numDepths
+        for ii = 1:numPositions
+            for jj = ii+1:numPositions
+                
+            end
+        end
+    end
+end
 
 
 
@@ -229,11 +254,26 @@ depths    = unique(imageDepth);
 
 
 %% Save data analysis results
-
+%
+% Create struct to hold all analysis results.
 if saveData
-    % Save dataAnalysis struct.
+    dataAnalysis = struct;
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    dataAnalysis.specificDecoder = specificDecoder;
+    
     save(pathToOutput,'dataAnalysis');
     fprintf('\nData was saved in:\n%s\n', pathToOutput);
 end
+
 end
 %% End
