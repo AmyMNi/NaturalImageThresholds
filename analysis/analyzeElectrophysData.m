@@ -2,14 +2,14 @@ function dataAnalysis = analyzeElectrophysData(varargin)
 %analyzeElectrophysData
 %
 % Usage:
-%   dataAnalysis = analyzeElectrophysData('dataDate','211013','imageSet',1)
+%   dataAnalysis = analyzeElectrophysData('dataName','211013','imageSet',1)
 %
 % Description:
 %   Analyze electrophysiological data from a single Sdata collection session.
 %   Save the results in the specified output folder.
 %
 % Optional parameters/values:
-%   'dataDate'    : (string)  Electrophys data file name (default: '211013')
+%   'dataName'    : (string)  Electrophys data file name (default: '211013-133559data')
 %   'imageSet'    : (scalar)  Image set presented (default: 1)
 %   'plotFigures' : (logical) Plot figures if option is on (default: true)
 %   'saveData'    : (logical) Save data if option is on (default: true)
@@ -24,8 +24,14 @@ function dataAnalysis = analyzeElectrophysData(varargin)
 
 
 
-% ('dataDate','211013','imageSet',1) : sRGB image set to test position/rotation/depth ranges
-% ('dataDate','211014','imageSet',2) : RGB image set to test position/rotation/depth ranges
+
+
+% ('dataName','211013-133559data','imageSet',1) :sRGB image set, 2 iterations/stim
+% ('dataName','211014-153026data','imageSet',2) : RGB image set, 5 iterations/stim
+% ('dataName','211015-155409data','imageSet',2) : RGB image set, 4 iterations/stim
+% ('dataName','211015-160308data','imageSet',3) : RGB image set, 4 iterations/stim
+
+
 
 
 
@@ -34,13 +40,13 @@ function dataAnalysis = analyzeElectrophysData(varargin)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addParameter('dataDate', '211013', @ischar);
+parser.addParameter('dataName', '211013-133559data', @ischar);
 parser.addParameter('imageSet', 1, @isscalar);
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
 parser.parse(varargin{:});
 
-dataDate    = parser.Results.dataDate;
+dataName    = parser.Results.dataName;
 imageSet    = parser.Results.imageSet;
 plotFigures = parser.Results.plotFigures;
 saveData    = parser.Results.saveData;
@@ -54,19 +60,19 @@ dataAnalysis = struct;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TO DO:
 % Data on Raptor. Example: Ram/data/main/ivory/211013/ivory_map_211013-133559_dense.mat
-% Save data file in folder below. Example: 211013data.mat
+% Save data file in folder below. Example: 211013-133559data.mat
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set path to data file.
 dataFolder = fullfile('/Users','amy','Desktop','Brainard','Natural Image Thresholds','Electrophys Data');
-pathToDataFile = fullfile(dataFolder,sprintf('%sdata.mat',dataDate));
+pathToDataFile = fullfile(dataFolder,sprintf('%s.mat',dataName));
 
 % Set path to image info file.
 pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',imageSet));
 
 % Set path to output file.
-pathToOutput = fullfile(dataFolder,sprintf('%sanalysis.mat',dataDate));
+pathToOutput = fullfile(dataFolder,sprintf('%sAnalysis.mat',dataName));
 
 % Save to analysis output struct.
 dataAnalysis.pathToDataFile = pathToDataFile;
