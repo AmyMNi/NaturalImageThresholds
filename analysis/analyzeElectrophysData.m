@@ -294,7 +294,7 @@ if plotFigures
     legend('V1','V4');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([min(uniquePositionDiff)-3 max(uniquePositionDiff)+3 0 1]);
+    axis([min(uniquePositionDiff)-8 max(uniquePositionDiff)+8 0 1]);
     set(gca,'tickdir','out');
     set(gca,'XTick',uniquePositionDiff);
     set(gca,'XTickLabel',uniquePositionDiff);
@@ -336,7 +336,7 @@ if plotFigures
     legend('V1','V4');
     xlabel('Difference between discriminated rotations');
     ylabel('Proportion correct');
-    axis([min(uniqueRotationDiff)-5 max(uniqueRotationDiff)+5 0 1]);
+    axis([min(uniqueRotationDiff)-6 max(uniqueRotationDiff)+6 0 1]);
     set(gca,'tickdir','out');
     set(gca,'XTick',uniqueRotationDiff);
     set(gca,'XTickLabel',uniqueRotationDiff);
@@ -378,7 +378,7 @@ if plotFigures
     legend('V1','V4');
     xlabel('Difference between discriminated depths');
     ylabel('Proportion correct');
-    axis([min(uniqueDepthDiff)-50 max(uniqueDepthDiff)+50 0 1]);
+    axis([min(uniqueDepthDiff)-63 max(uniqueDepthDiff)+63 0 1]);
     set(gca,'tickdir','out');
     set(gca,'XTick',uniqueDepthDiff);
     set(gca,'XTickLabel',uniqueDepthDiff);
