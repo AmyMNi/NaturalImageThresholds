@@ -274,14 +274,15 @@ dataAnalysis.specificPositionV4 = specificPositionV4;
 %% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniquePositionDiff,specificPositionV1mean,specificPositionV4mean] = helperDecoderMean(diffBetweenPositionValues,specificPositionV1,specificPositionV4);
+[uniquePositionDiff,specificPositionV1mean,specificPositionV4mean,specificPositionV1sem,specificPositionV4sem] = helperDecoderMean...
+    (diffBetweenPositionValues,specificPositionV1,specificPositionV4);
 
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    plot(uniquePositionDiff, specificPositionV1mean, '.-m');
-    plot(uniquePositionDiff, specificPositionV4mean, '.-b');
+    errorbar(uniquePositionDiff, specificPositionV1mean, specificPositionV1sem, '.-m');
+    errorbar(uniquePositionDiff, specificPositionV4mean, specificPositionV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for POSITION');
     legend('V1','V4');
@@ -298,6 +299,8 @@ end
 dataAnalysis.uniquePositionDiff = uniquePositionDiff;
 dataAnalysis.specificPositionV1mean = specificPositionV1mean;
 dataAnalysis.specificPositionV4mean = specificPositionV4mean;
+dataAnalysis.specificPositionV1sem = specificPositionV1sem;
+dataAnalysis.specificPositionV4sem = specificPositionV4sem;
 
 %% Calculate specific decoder performance for background object ROTATION
 %
@@ -313,14 +316,15 @@ dataAnalysis.specificRotationV4 = specificRotationV4;
 %% Plot the mean performance for specific decoders of ROTATION, per size of discriminated ROTATION difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniqueRotationDiff,specificRotationV1mean,specificRotationV4mean] = helperDecoderMean(diffBetweenRotationValues,specificRotationV1,specificRotationV4);
+[uniqueRotationDiff,specificRotationV1mean,specificRotationV4mean,specificRotationV1sem,specificRotationV4sem] = helperDecoderMean...
+    (diffBetweenRotationValues,specificRotationV1,specificRotationV4);
 
 % Plot the size of discriminated rotation difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    plot(uniqueRotationDiff, specificRotationV1mean, '.-m');
-    plot(uniqueRotationDiff, specificRotationV4mean, '.-b');
+    errorbar(uniqueRotationDiff, specificRotationV1mean, specificRotationV1sem, '.-m');
+    errorbar(uniqueRotationDiff, specificRotationV4mean, specificRotationV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for ROTATION');
     legend('V1','V4');
@@ -337,6 +341,8 @@ end
 dataAnalysis.uniqueRotationDiff = uniqueRotationDiff;
 dataAnalysis.specificRotationV1mean = specificRotationV1mean;
 dataAnalysis.specificRotationV4mean = specificRotationV4mean;
+dataAnalysis.specificRotationV1sem = specificRotationV1sem;
+dataAnalysis.specificRotationV4sem = specificRotationV4sem;
 
 %% Calculate specific decoder performance for background object DEPTH
 %
@@ -352,14 +358,15 @@ dataAnalysis.specificDepthV4 = specificDepthV4;
 %% Plot the mean performance for specific decoders of DEPTH, per size of discriminated DEPTH difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniqueDepthDiff,specificDepthV1mean,specificDepthV4mean] = helperDecoderMean(diffBetweenDepthValues,specificDepthV1,specificDepthV4);
+[uniqueDepthDiff,specificDepthV1mean,specificDepthV4mean,specificDepthV1sem,specificDepthV4sem] = helperDecoderMean...
+    (diffBetweenDepthValues,specificDepthV1,specificDepthV4);
 
 % Plot the size of discriminated depth difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    plot(uniqueDepthDiff, specificDepthV1mean, '.-m');
-    plot(uniqueDepthDiff, specificDepthV4mean, '.-b');
+    errorbar(uniqueDepthDiff, specificDepthV1mean, specificDepthV1sem, '.-m');
+    errorbar(uniqueDepthDiff, specificDepthV4mean, specificDepthV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for DEPTH');
     legend('V1','V4');
@@ -376,6 +383,8 @@ end
 dataAnalysis.uniqueDepthDiff = uniqueDepthDiff;
 dataAnalysis.specificDepthV1mean = specificDepthV1mean;
 dataAnalysis.specificDepthV4mean = specificDepthV4mean;
+dataAnalysis.specificDepthV1sem = specificDepthV1sem;
+dataAnalysis.specificDepthV4sem = specificDepthV4sem;
 
 %% Save data analysis results
 if saveData
@@ -482,8 +491,10 @@ end
 %   valueDiff     : (num x 1) unique values of the size difference in the values discriminated by the decoder 
 %   decoderV1mean : (num x 1) for V1, mean decoder performance per size difference
 %   decoderV4mean : (num x 1) for V4, mean decoder performance per size difference
+%   decoderV1sem  : (num x 1) for V1, standard error of the mean (SEM) for mean decoder performance
+%   decoderV4sem  : (num x 1) for V4, standard error of the mean (SEM) for mean decoder performance
 
-function [valueDiff,decoderV1mean,decoderV4mean] = helperDecoderMean(diffBetweenValues,decoderV1,decoderV4)
+function [valueDiff,decoderV1mean,decoderV4mean,decoderV1sem,decoderV4sem] = helperDecoderMean(diffBetweenValues,decoderV1,decoderV4)
 % Get the unique values of the size difference in the values discriminated by the decoder.
 valueDiff = unique(diffBetweenValues);
 
@@ -500,6 +511,10 @@ for ii = 1:numel(valueDiff)
     % Calculate mean decoder performance for this size difference.
     decoderV1mean(ii,1) = nanmean(V1this);
     decoderV4mean(ii,1) = nanmean(V4this);
+    
+    % Calculate standard error of the mean (SEM).
+    decoderV1sem = nanstd(V1this) / sqrt(sum(~isnan(V1this)));
+    decoderV4sem = nanstd(V4this) / sqrt(sum(~isnan(V4this)));
 end
 end
 
