@@ -25,6 +25,7 @@ function dataAnalysis = analyzeElectrophysData(varargin)
 
 
 % ('dataDate','211013','imageSet',1) : sRGB image set to test position/rotation/depth ranges
+% ('dataDate','211014','imageSet',2) : RGB image set to test position/rotation/depth ranges
 
 
 
