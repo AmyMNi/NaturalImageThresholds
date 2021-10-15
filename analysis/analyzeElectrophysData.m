@@ -254,89 +254,24 @@ positions = unique(imagePosition);
 rotations = unique(imageRotation);
 depths    = unique(imageDepth);
 
-% Calculate number of unique positions, rotations, and depths.
-numPositions = numel(positions);
-numRotations = numel(rotations);
-numDepths    = numel(depths);
-
 % Save to analysis output struct.
 dataAnalysis.positions = positions;
 dataAnalysis.rotations = rotations;
 dataAnalysis.depths = depths;
-dataAnalysis.numPositions = numPositions;
-dataAnalysis.numRotations = numRotations;
-dataAnalysis.numDepths = numDepths;
 
 %% Calculate specific decoder performance for central object position
 %
 % Calculate decoder performance for each combination of positions.
-% First calculate the number of position combinations.
-numPositionCombos = nchoosek(numPositions,2);
-
-% Decoder performance vectors.
-specificPositionV1 = nan(numRotations*numDepths*numPositionCombos,1);
-specificPositionV4 = nan(numRotations*numDepths*numPositionCombos,1);
-
-% Decoder info matrix:
-%   column 1: per decoder, 1st of the two positions being discriminated
-%   column 2: per decoder, 2nd of the two positions being discriminated
-%   column 3: per decoder, difference between two positions being discriminated
-%   column 4: per decoder, rotation of the background objects
-%   column 5: per decoder, depth of the background objects
-specificPositionInfo = nan(numRotations*numDepths*numPositionCombos,4);
-
-% Calculate decoder performance for each brain area.
-row = 0;
-for rr = 1:numRotations
-    rotationThis = rotations(rr);
-    
-    for dd = 1:numDepths
-        depthThis = depths(dd);
-        
-        for ii = 1:numPositions
-            positionThis1 = positions(ii);
-                
-            for jj = ii+1:numPositions
-                positionThis2 = positions(jj);
-                
-                % Fill in the information for this decoder discrimination.
-                row = row+1;
-                specificPositionInfo(row,1) = positionThis1;
-                specificPositionInfo(row,2) = positionThis2;
-                specificPositionInfo(row,3) = abs(positionThis1-positionThis2);
-                specificPositionInfo(row,4) = rotationThis;
-                specificPositionInfo(row,5) = depthThis;
-
-                % Get neuronal responses for this rotation & depth, for 1st position.
-                stimIdx1 = imageRotation==rotationThis & ...
-                           imageDepth   ==depthThis & ...
-                           imagePosition==positionThis1;
-                V1respThis1 = V1respInc(stimIdx1,:);
-                V4respThis1 = V4respInc(stimIdx1,:);
-                
-                % Get neuronal responses for this rotation & depth, for 2nd position.
-                stimIdx2 = imageRotation==rotationThis & ...
-                           imageDepth   ==depthThis & ...
-                           imagePosition==positionThis2;
-                V1respThis2 = V1respInc(stimIdx2,:);
-                V4respThis2 = V4respInc(stimIdx2,:);
-                
-                % Calculate specific decoder proportion correct on discriminating these 2 positions.
-                [~,V1pc] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
-                [~,V4pc] = calcSpecificDecoder([V4respThis1;V4respThis2],[zeros(size(V4respThis1,1),1);ones(size(V4respThis2,1),1)]);
-                specificPositionV1(row) = V1pc;
-                specificPositionV4(row) = V4pc; 
-            end
-        end
-    end
-end
+[specificPositionV1,specificPositionV4,specificPositionInfo] = helperSpecificDecoder ...
+    (positions,rotations,depths,imagePosition,imageRotation,imageDepth,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.specificPositionInfo = specificPositionInfo;
 dataAnalysis.specificPositionV1 = specificPositionV1;
 dataAnalysis.specificPositionV4 = specificPositionV4;
+dataAnalysis.specificPositionInfo = specificPositionInfo;
 
-%% Calculate the mean performance for specific decoders of position, per size of discriminated position difference
+
+%% Plot the mean performance for specific decoders of position, per size of discriminated position difference
 %
 % Separate the specific decoders into groups based on the size of their 
 % discriminated position difference, then calculate the mean decoder 
@@ -361,13 +296,6 @@ for ii = 1:numel(uniquePositionDiff)
     specificPositionV4mean(ii,1) = nanmean(V4this);
 end
 
-% Save to analysis output struct.
-dataAnalysis.uniquePositionDiff = uniquePositionDiff;
-dataAnalysis.specificPositionV1mean = specificPositionV1mean;
-dataAnalysis.specificPositionV4mean = specificPositionV4mean;
-
-%% Plot the mean performance for specific decoders of position, per size of discriminated position difference
-%
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
@@ -379,12 +307,17 @@ if plotFigures
     legend('V1','V4');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([-Inf Inf 0 1]);
+    axis([min(uniquePositionDiff)-2 max(uniquePositionDiff)+2 0 1]);
     set(gca,'tickdir','out');
     set(gca,'XTick',uniquePositionDiff);
     set(gca,'XTickLabel',uniquePositionDiff);
     box off; hold off;
 end
+
+% Save to analysis output struct.
+dataAnalysis.uniquePositionDiff = uniquePositionDiff;
+dataAnalysis.specificPositionV1mean = specificPositionV1mean;
+dataAnalysis.specificPositionV4mean = specificPositionV4mean;
 
 %% Save data analysis results
 if saveData
@@ -393,4 +326,85 @@ if saveData
 end
 
 end
+
+%% Helper functions
+
+%% Helper function: Calculate specific decoder performance without noise
+%
+% Description:
+%   Calculate specific decoder performance for discriminating two values of a feature. 
+%   No task-irrelevant noise is included in the stimuli.
+%
+% Inputs:
+%   X      : (num values x 1) values of the feature to be discriminated
+%   Y      : (num values x 1) values of a first task-irrelevant feature
+%   Z      : (num values x 1) values of a second task-irrelevant feature
+%   imageX : (num stimuli x 1) Per stimulus, value of the feature to be discriminated
+%   imageY : (num stimuli x 1) Per stimulus, value of the first task-irrelevant feature
+%   imageZ : (num stimuli x 1) Per stimulus, value of the second task-irrelevant feature 
+%   V1resp : (num stimuli x num V1 neurons) Neuronal responses for V1
+%   V4resp : (num stimuli x num V4 neurons) Neuronal responses for V4
+%
+% Outputs:
+%   specificDecoderV1 : (num decoders tested x 1) for V1, proportion correct per decoder tested
+%   specificDecoderV4 : (num decoders tested x 1) for V4, proportion correct per decoder tested
+
+function [decoderV1,decoderV4,info] = helperSpecificDecoder(X,Y,Z,imageX,imageY,imageZ,V1resp,V4resp)
+    
+% Calculate the number of combinations of the feature to be discriminated.
+numCombos = nchoosek(numel(X),2);
+
+% Set up decoder performance vectors.
+decoderV1 = nan(numCombos*numel(Y)*numel(Z),1);
+decoderV4 = nan(numCombos*numel(Y)*numel(Z),1);
+
+% Set up vector of the difference between the two values discriminated, per decoder.
+info = nan(numCombos*numel(Y)*numel(Z),1);
+
+% Calculate proportion correct per decoder.
+row = 0;
+for yy = 1:numel(Y)
+    % Get a value of the first task-irrelevant feature.
+    Ythis = Y(yy);
+    
+    for zz = 1:numel(Z)
+        % Get a value of the second task-irrelevant feature.
+        Zthis = Z(zz);
+        
+        for ii = 1:numel(X)
+            % Get Value #1 of the task-relevant feature.
+            Xthis1 = X(ii);
+                
+            for jj = ii+1:numel(X)
+                % Get Value #2 of the task-relevant feature.
+                Xthis2 = X(jj);
+                
+                % Record the difference between the two values discriminated.
+                row = row+1;
+                info(row) = abs(Xthis1-Xthis2);
+
+                % Get the neuronal responses for Value #1 of the task-relevant
+                % feature, for this value of the first task-irrelevant feature and
+                % this value of the second task-irrelevant feature. 
+                stimIdx1 = imageX==Xthis1 & imageY==Ythis & imageZ==Zthis;  
+                V1respThis1 = V1resp(stimIdx1,:);
+                V4respThis1 = V4resp(stimIdx1,:);
+                
+                % Same as above but for Value #2 of the task-relevant feature.
+                stimIdx2 = imageX==Xthis2 & imageY==Ythis & imageZ==Zthis;  
+                V1respThis2 = V1resp(stimIdx2,:);
+                V4respThis2 = V4resp(stimIdx2,:);
+                
+                % Calculate decoder proportion correct on discriminating
+                % Value #1 from Value #2.
+                [~,V1pc] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
+                [~,V4pc] = calcSpecificDecoder([V4respThis1;V4respThis2],[zeros(size(V4respThis1,1),1);ones(size(V4respThis2,1),1)]);
+                decoderV1(row) = V1pc;
+                decoderV4(row) = V4pc;
+            end
+        end
+    end
+end
+end
+
 %% End
