@@ -498,9 +498,11 @@ function [valueDiff,decoderV1mean,decoderV4mean,decoderV1sem,decoderV4sem] = hel
 % Get the unique values of the size difference in the values discriminated by the decoder.
 valueDiff = unique(diffBetweenValues);
 
-% Calculate the mean decoder performance per group.
+% Calculate the mean and sem of the decoder performance per group.
 decoderV1mean = nan(numel(valueDiff),1);
 decoderV4mean = nan(numel(valueDiff),1);
+decoderV1sem  = nan(numel(valueDiff),1);
+decoderV4sem  = nan(numel(valueDiff),1);
 for ii = 1:numel(valueDiff)
     diffThis = valueDiff(ii);
     
@@ -513,8 +515,8 @@ for ii = 1:numel(valueDiff)
     decoderV4mean(ii,1) = nanmean(V4this);
     
     % Calculate standard error of the mean (SEM).
-    decoderV1sem = nanstd(V1this) / sqrt(sum(~isnan(V1this)));
-    decoderV4sem = nanstd(V4this) / sqrt(sum(~isnan(V4this)));
+    decoderV1sem(ii,1) = nanstd(V1this) / sqrt(sum(~isnan(V1this)));
+    decoderV4sem(ii,1) = nanstd(V4this) / sqrt(sum(~isnan(V4this)));
 end
 end
 
