@@ -386,6 +386,50 @@ dataAnalysis.specificDepthV4mean = specificDepthV4mean;
 dataAnalysis.specificDepthV1sem = specificDepthV1sem;
 dataAnalysis.specificDepthV4sem = specificDepthV4sem;
 
+%% Calculate specific decoder performance for central object POSITION with background object ROTATION included as noise
+%
+% Calculate decoder performance for each combination of positions,
+% for each value of depth.
+[diffBetweenPositionValues_NoiseRotation,specificPositionV1_NoiseRotation,specificPositionV4_NoiseRotation] = helperSpecificDecoderNoise1 ...
+    (positions,depths,imagePosition,imageDepth,V1respInc,V4respInc);
+
+% Save to analysis output struct.
+dataAnalysis.diffBetweenPositionValues_NoiseRotation = diffBetweenPositionValues_NoiseRotation;
+dataAnalysis.specificPositionV1_NoiseRotation = specificPositionV1_NoiseRotation;
+dataAnalysis.specificPositionV4_NoiseRotation = specificPositionV4_NoiseRotation;
+
+%% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference, with ROTATION noise
+%
+% Calculate the mean decoder performance per size difference in the discriminated values.
+[uniquePositionDiff_NoiseRotation,specificPositionV1mean_NoiseRotation,specificPositionV4mean_NoiseRotation,...
+ specificPositionV1sem_NoiseRotation,specificPositionV4sem_NoiseRotation] = helperDecoderMean...
+    (diffBetweenPositionValues_NoiseRotation,specificPositionV1_NoiseRotation,specificPositionV4_NoiseRotation);
+
+% Plot the size of discriminated position difference on the x-axis
+% and the mean decoder proportion correct on the y-axis.
+if plotFigures
+    figure; hold on; axis square;
+    errorbar(uniquePositionDiff_NoiseRotation, specificPositionV1mean_NoiseRotation, specificPositionV1sem_NoiseRotation, '.-m');
+    errorbar(uniquePositionDiff_NoiseRotation, specificPositionV4mean_NoiseRotation, specificPositionV4sem_NoiseRotation, '.-b');
+    % Plot parameters.
+    title('Specific decoder performance for POSITION with ROTATION noise');
+    legend('V1','V4');
+    xlabel('Difference between discriminated positions');
+    ylabel('Proportion correct');
+    axis([min(uniquePositionDiff_NoiseRotation)-3 max(uniquePositionDiff_NoiseRotation)+3 0 1]);
+    set(gca,'tickdir','out');
+    set(gca,'XTick',uniquePositionDiff_NoiseRotation);
+    set(gca,'XTickLabel',uniquePositionDiff_NoiseRotation);
+    box off; hold off;
+end
+
+% Save to analysis output struct.
+dataAnalysis.uniquePositionDiff_NoiseRotation = uniquePositionDiff_NoiseRotation;
+dataAnalysis.specificPositionV1mean_NoiseRotation = specificPositionV1mean_NoiseRotation;
+dataAnalysis.specificPositionV4mean_NoiseRotation = specificPositionV4mean_NoiseRotation;
+dataAnalysis.specificPositionV1sem_NoiseRotation = specificPositionV1sem_NoiseRotation;
+dataAnalysis.specificPositionV4sem_NoiseRotation = specificPositionV4sem_NoiseRotation;
+
 %% Save data analysis results
 if saveData
     save(pathToOutput,'dataAnalysis');
@@ -422,11 +466,10 @@ function [diffBetweenValues,decoderV1,decoderV4] = helperSpecificDecoder(X,Y,Z,i
 % Calculate the number of combinations of the feature to be discriminated.
 numCombos = nchoosek(numel(X),2);
 
-% Set up decoder performance vectors.
+% Set up vectors of decoder performance 
+% and of the difference between the two values discriminated, per decoder.
 decoderV1 = nan(numCombos*numel(Y)*numel(Z),1);
 decoderV4 = nan(numCombos*numel(Y)*numel(Z),1);
-
-% Set up vector of the difference between the two values discriminated, per decoder.
 diffBetweenValues = nan(numCombos*numel(Y)*numel(Z),1);
 
 % Calculate proportion correct per decoder.
@@ -470,6 +513,82 @@ for yy = 1:numel(Y)
                 decoderV1(row) = V1pc;
                 decoderV4(row) = V4pc;
             end
+        end
+    end
+end
+end
+
+%% Helper function: Calculate specific decoder performance with 1 task-irrelevant feature included as noise
+%
+% Description:
+%   Calculate specific decoder performance for discriminating two values of a feature. 
+%   One task-irrelevant feature is included as noise in the stimuli,
+%   while the other task-irrelevant feature is held constant and separate
+%   decoders are calculated for each value of this non-included feature.
+%
+% Inputs:
+%   noiseflg : (scalar) if noiseflg = 1 then 1 type of task-irrelevant noise is included, 
+%                       if noiseflg = 2 then 2 types of task-irrelevant noise are included
+%   X        : (num values x 1) values of the feature to be discriminated
+%   Y        : (num values x 1) values of the task-irrelevant feature that is NOT included as noise
+%   imageX   : (num stimuli x 1) per stimulus, value of the feature to be discriminated
+%   imageY   : (num stimuli x 1) per stimulus, value of the task-irrelevant feature that is NOT included as noise
+%   V1resp   : (num stimuli x num V1 neurons) neuronal responses for V1
+%   V4resp   : (num stimuli x num V4 neurons) neuronal responses for V4
+%
+% Outputs:
+%   diffBetweenValues : (num decoders tested x 1) difference between the two values discriminated per decoder
+%   decoderV1         : (num decoders tested x 1) for V1, proportion correct per decoder
+%   decoderV4         : (num decoders tested x 1) for V4, proportion correct per decoder
+
+function [diffBetweenValues,decoderV1,decoderV4] = helperSpecificDecoderNoise1(X,Y,imageX,imageY,V1resp,V4resp)
+    
+% Calculate the number of combinations of the feature to be discriminated.
+numCombos = nchoosek(numel(X),2);
+
+% Set up vectors of decoder performance 
+% and of the difference between the two values discriminated, per decoder.
+decoderV1         = nan(numCombos*numel(Y),1);
+decoderV4         = nan(numCombos*numel(Y),1);
+diffBetweenValues = nan(numCombos*numel(Y),1);
+
+% Calculate proportion correct per decoder.
+row = 0;
+for yy = 1:numel(Y)
+    % Get a value of the task-irrelevant feature that will NOT be included as noise,
+    % to calculate decoder performance at this value of this task-irrelevant feature.
+    Ythis = Y(yy);
+    
+    for ii = 1:numel(X)
+        % Get Value #1 of the task-relevant feature.
+        Xthis1 = X(ii);
+        
+        for jj = ii+1:numel(X)
+            % Get Value #2 of the task-relevant feature.
+            Xthis2 = X(jj);
+            
+            % Record the difference between the two values discriminated.
+            row = row+1;
+            diffBetweenValues(row) = abs(Xthis1-Xthis2);
+            
+            % Get the neuronal responses for Value #1 of the task-relevant
+            % feature, for this value of task-irrelevant feature that is
+            % NOT included as noise. 
+            stimIdx1 = imageX==Xthis1 & imageY==Ythis;
+            V1respThis1 = V1resp(stimIdx1,:);
+            V4respThis1 = V4resp(stimIdx1,:);
+            
+            % Same as above but for Value #2 of the task-relevant feature.
+            stimIdx2 = imageX==Xthis2 & imageY==Ythis;
+            V1respThis2 = V1resp(stimIdx2,:);
+            V4respThis2 = V4resp(stimIdx2,:);
+            
+            % Calculate decoder proportion correct on discriminating
+            % Value #1 from Value #2.
+            [~,V1pc] = calcSpecificDecoder([V1respThis1;V1respThis2],[zeros(size(V1respThis1,1),1);ones(size(V1respThis2,1),1)]);
+            [~,V4pc] = calcSpecificDecoder([V4respThis1;V4respThis2],[zeros(size(V4respThis1,1),1);ones(size(V4respThis2,1),1)]);
+            decoderV1(row) = V1pc;
+            decoderV4(row) = V4pc;
         end
     end
 end
