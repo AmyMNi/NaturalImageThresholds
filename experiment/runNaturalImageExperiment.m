@@ -10,7 +10,7 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   responses (struct 'data') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : char)     Name of experiment folder (default: 'Experiment100')
+%   'experimentName' : (char)    Name of experiment folder (default: 'Experiment100')
 %   'subjectName'    : (char)    Name of subject (default: 'test')
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
 %   'controlSignal'  : (char)    Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
