@@ -11,7 +11,7 @@ function runElectrophysSRGB(varargin)
 %   specified output folder.
 %
 % Optional parameter/value:
-%   'experimentName' : (string) Name of experiment folder (default: 'Experiment100')
+%   'experimentName' : (char) Name of experiment folder (default: 'Experiment100')
 % 
 % History:
 %   10/12/21  amn  Wrote it.

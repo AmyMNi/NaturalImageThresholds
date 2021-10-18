@@ -9,7 +9,7 @@ function changeFileNames(varargin)
 %   file with the revised name in a new folder.
 %
 % Optional parameter/value:
-%   'experimentName' : (string) Name of experiment folder (default: 'Experiment000')
+%   'experimentName' : (char) Name of experiment folder (default: 'Experiment000')
 % 
 % History: 
 %   06/26/21  amn  Wrote it.

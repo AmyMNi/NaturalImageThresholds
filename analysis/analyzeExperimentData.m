@@ -11,8 +11,8 @@ function data = analyzeExperimentData(varargin)
 %   'dataExperiment') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
-%   'subjectName'    : (string)  Name of subject (default: 'test')
+%   'experimentName' : (char)    Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (char)    Name of subject (default: 'test')
 %   'plotFigures'    : (logical) Plot figures if option is on (default: true)
 %   'saveData'       : (logical) Save data if option is on (default: true)
 %

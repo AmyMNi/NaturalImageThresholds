@@ -24,8 +24,8 @@ function [predicted,pcor,bad] = calcSpecificDecoder(data,group)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addRequired('data',@(data)(ismatrix(data)));
-parser.addRequired('group',@(group)(isvector(group)));
+parser.addRequired('data',@(x)(ismatrix(x)));
+parser.addRequired('group',@(x)(isvector(x)));
 parser.parse(data,group);
 
 data  = parser.Results.data;

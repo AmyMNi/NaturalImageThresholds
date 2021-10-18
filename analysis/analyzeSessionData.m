@@ -11,8 +11,8 @@ function data = analyzeSessionData(varargin)
 %   the results (struct 'data') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
-%   'subjectName'    : (string)  Name of subject (default: 'test')
+%   'experimentName' : (char)    Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (char)    Name of subject (default: 'test')
 %   'sessionNumber'  : (scalar)  Number of session (default: 1)
 %   'plotFigures'    : (logical) Plot figures if option is on (default: true)
 %   'saveData'       : (logical) Save data if option is on (default: true)

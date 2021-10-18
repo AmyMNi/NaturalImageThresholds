@@ -20,9 +20,9 @@ function newvec = calcProjPCA(newdata,y,oldmean)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addRequired('newdata',@(newdata)(ismatrix(newdata)));
-parser.addRequired('y',@(y)(ismatrix(y)));
-parser.addRequired('oldmean',@(oldmean)(isvector(oldmean)));
+parser.addRequired('newdata',@(x)(ismatrix(x)));
+parser.addRequired('y',@(x)(ismatrix(x)));
+parser.addRequired('oldmean',@(x)(isvector(x)));
 parser.parse(newdata,y,oldmean);
 
 newdata = parser.Results.newdata;

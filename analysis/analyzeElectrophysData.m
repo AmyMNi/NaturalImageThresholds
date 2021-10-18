@@ -1,270 +1,55 @@
-function dataAnalysis = analyzeElectrophysData(varargin)
+function dataAnalysis = analyzeElectrophysData(data,varargin)
 %analyzeElectrophysData
 %
 % Usage:
-%   dataAnalysis = analyzeElectrophysData('dataName','211013','imageSet',1)
+%   dataAnalysis = analyzeElectrophysData(data)
 %
 % Description:
-%   Analyze electrophysiological data from a single Sdata collection session.
-%   Save the results in the specified output folder.
+%   Analyze electrophysiological data from the inputted data struct.
+%   Save the results in the output struct, in the specified output folder.
+%
+% Input:
+%   'data' : (struct) Struct of data to be analyzed, created by combineElectrophysData.m
 %
 % Optional parameters/values:
-%   'dataName'    : (string)  Electrophys data file name (default: '211013-133559data')
-%   'imageSet'    : (scalar)  Image set presented (default: 1)
 %   'plotFigures' : (logical) Plot figures if option is on (default: true)
 %   'saveData'    : (logical) Save data if option is on (default: true)
 %
+% Output:
+%   'dataAnalysis' : (struct) data struct with additional analysis results
+%
 % History:
 %   10/13/21  amn  Wrote it.
-
-%% Record of electrophys data file name & corresponding image set presented
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-% ('dataName','211013-133559data','imageSet',1) :sRGB image set, 2 iterations/stim
-% ('dataName','211014-153026data','imageSet',2) : RGB image set, 5 iterations/stim
-% ('dataName','211015-155409data','imageSet',2) : RGB image set, 4 iterations/stim
-% ('dataName','211015-160308data','imageSet',3) : RGB image set, 4 iterations/stim
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   10/18/21  amn  Updated to work with runAnalyzeElectrophysData.m and
+%                  combineElectrophysData.m to analyze multiple data sets
 
 %% Parse the inputs
 parser = inputParser();
-parser.addParameter('dataName', '211013-133559data', @ischar);
-parser.addParameter('imageSet', 1, @isscalar);
+parser.addRequired('data',@(x)(isstruct(x)));
 parser.addParameter('plotFigures', true, @islogical);
 parser.addParameter('saveData', true, @islogical);
-parser.parse(varargin{:});
+parser.parse(data,varargin{:});
 
-dataName    = parser.Results.dataName;
-imageSet    = parser.Results.imageSet;
+data        = parser.Results.data;
 plotFigures = parser.Results.plotFigures;
 saveData    = parser.Results.saveData;
 
-%% Create struct to hold all analysis results
-dataAnalysis = struct;
+%% Set up new dataAnalysis struct
+dataAnalysis = data;
 
-%% Set paths to input and output files
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TO DO:
-% Data on Raptor. Example: Ram/data/main/ivory/211013/ivory_map_211013-133559_dense.mat
-% Save data file in folder below. Example: 211013-133559data.mat
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Get output file path
+pathToOutput = dataAnalysis.pathToOutput;
 
-% Set path to data file.
-dataFolder = fullfile('/Users','amy','Desktop','Brainard','Natural Image Thresholds','Electrophys Data');
-pathToDataFile = fullfile(dataFolder,sprintf('%s.mat',dataName));
+%% Get data variables
 
-% Set path to image info file.
-pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',imageSet));
-
-% Set path to output file.
-pathToOutput = fullfile(dataFolder,sprintf('%sAnalysis.mat',dataName));
-
-% Save to analysis output struct.
-dataAnalysis.pathToDataFile = pathToDataFile;
-dataAnalysis.pathToDataInfo = pathToDataInfo;
-
-%% Load data
-%
-% Load specified data file.
-temp = load(pathToDataFile,'params');    params    = temp.params;    clear temp;
-temp = load(pathToDataFile,'eid');       eid       = temp.eid;       clear temp;
-temp = load(pathToDataFile,'resp');      resp      = temp.resp;      clear temp;
-temp = load(pathToDataFile,'resp_base'); resp_base = temp.resp_base; clear temp;
-
-% Load specified image info file.
-temp = load(pathToDataInfo,'imgInfo');   imgInfo   = temp.imgInfo;   clear temp;
-
-%% Electrophys data organization
-
-% Data variables:
- 
-% params : (struct 1 x num stimuli)
-%       set: for the Natural Image Thresholds experiment, set = 7
-%       num: number of the stimulus (to match to 'imgInfo' table with image info)
-%       x: position in pixels of the stimulus
-%       y: position in pixels of the stimulus
-%       s: size in pixels of the stimulus
-%       good: 0 = exclude (broke fixation), 1 = include (trial was completed)
-%       lims_trial: not relevant to this experiment
-%       lims_stim: not relevant to this experiment
-%       eyes: position of eye in x and y coordinates in microvolts
-%           column 1: x position
-%           column 2: y position
-%       spikes: spike trains for a -100 from stim onset : +100 from stim offset
-%           column 1: spike times in milliseconds, indexed to 0 from the stimulus onset
-%           column 2: channel spike was on
-
-% eid : (256 total electrodes x 2 columns)
-%       column 1: array number (1 = V4, 2 = V1/V2, 3 = 7A)
-%       column 2: electrode number
-   
-% resp : (num stimuli x 256 total electrodes) stimulus response (Hz)
-%       analysis window: stim onset + 50 ms to stim offset + 100 ms
-%       has a value of NaN when params.good = 0
-    
-% resp_base : (num stimuli x 256 total electrodes) baseline response (Hz)
-%       analysis window: stim onset - 100 ms to stim onset
-
-%% Check that all of the stimuli were from the Natural Image Thresholds experiment
-%
-% Make sure that all params.set values = 7 (the Natural Image Thresholds images).
-% If not, print a warning.
-experimentSet = [params.set];
-if any(experimentSet~=7)
-    warning('The stimuli are not all from the Natural Image Thresholds project');
-end
-
-%% Exclude stimuli presented during incomplete trials (fixation broken)
-%
-% Exclude stimuli for which params.good = 0.
-excludeStim = ~[params.good];
-params   (excludeStim)   = [];
-resp     (excludeStim,:) = [];
-resp_base(excludeStim,:) = [];
-
-% Number of included stimuli.
-numStim = numel(params);
-
-% Save to analysis output struct.
-dataAnalysis.numStim = numStim;
-
-%% Get electrode numbers for each brain area
-%
-% Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
-electrodeV1 = eid(eid(:,1)==2,2);
-
-% Get electrode numbers for the V4 array (V4: array number 1).
-electrodeV4 = eid(eid(:,1)==1,2);
-
-% Save to analysis output struct.
-dataAnalysis.electrodeV1 = electrodeV1;
-dataAnalysis.electrodeV4 = electrodeV4;
-
-%% Get responses for each brain area
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: responses currently based on same analysis period
-%       for both V1/V2 and V4 (50-350 ms)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Get responses for V1/V2.
-V1resp      = resp     (:,ismember(eid(:,2),electrodeV1));
-V1resp_base = resp_base(:,ismember(eid(:,2),electrodeV1));
-
-% Get responses for V4.
-V4resp      = resp     (:,ismember(eid(:,2),electrodeV4));
-V4resp_base = resp_base(:,ismember(eid(:,2),electrodeV4));
-
-% Save to analysis output struct.
-dataAnalysis.V1resp = V1resp;
-dataAnalysis.V1resp_base = V1resp_base;
-dataAnalysis.V4resp = V4resp;
-dataAnalysis.V4resp_base = V4resp_base;
-
-%% Determine electrodes to include per brain area, based on stimulus-evoked firing rate
-%
-% Base electrode inclusion on the following criteria:
-%   stimulus-evoked firing rate statsig greater than baseline firing rate,
-%   minimum stimulus-evoked firing rate.
-frMin = 10; %Hz
-alphaLevel = .05;
-electrodeV1included = false(1,size(V1resp,2));
-electrodeV4included = false(1,size(V4resp,2));
-
-% Calculate included electrodes: V1.
-for ii = 1:size(V1resp,2)
-    % Two-sample one-tailed t-test.
-    h = ttest2(V1resp(:,ii), V1resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
-    if h==1 && nanmean(V1resp(:,ii)) > frMin
-        electrodeV1included(ii) = true;
-    end
-end
-
-% Calculate included electrodes: V4.
-for ii = 1:size(V4resp,2)
-    % Two-sample one-tailed t-test.
-    h = ttest2(V4resp(:,ii), V4resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
-    if h==1 && nanmean(V4resp(:,ii)) > frMin
-        electrodeV4included(ii) = true;
-    end
-end
-
-electrodeV1included = electrodeV1(electrodeV1included');
-electrodeV4included = electrodeV4(electrodeV4included');
-
-% Save to analysis output struct.
-dataAnalysis.electrodeV1included = electrodeV1included;
-dataAnalysis.electrodeV4included = electrodeV4included;
-
-%% Get responses for each brain area, based on included electrodes
-%         
-% Get included responses for V1/V2.
-V1respInc      = resp     (:,ismember(eid(:,2),electrodeV1included));
-V1resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV1included));
-
-% Get included responses for V4.
-V4respInc      = resp     (:,ismember(eid(:,2),electrodeV4included));
-V4resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV4included));
-
-% Save to analysis output struct.
-dataAnalysis.V1respInc = V1respInc;
-dataAnalysis.V1resp_baseInc = V1resp_baseInc;
-dataAnalysis.V4respInc = V4respInc;
-dataAnalysis.V4resp_baseInc = V4resp_baseInc;
-
-%% Per stimulus, get image number and info
-%
-% Per stimulus, get image number to match to imgInfo table with image info.
-imageNum = [params.num]';
-
-% Convert imgInfo table to matrix.
-% columns:  imgNumber  bananaPosition  backgroundRotation  backgroundDepth
-imgInfo = table2array(imgInfo);
-
-% Per stimulus, get central object (banana) position.
-[~,indImageNum] = ismember(imageNum, imgInfo(:,1));
-imagePosition = imgInfo(indImageNum,2);
-
-% Per stimulus, get background object (branches & leaves) rotation.
-imageRotation = imgInfo(indImageNum,3);
-
-% Per stimulus, get background object (branches & leaves) depth.
-imageDepth = imgInfo(indImageNum,4);
-
-% Save to analysis output struct.
-dataAnalysis.imageNum = imageNum;
-dataAnalysis.imagePosition = imagePosition;
-dataAnalysis.imageRotation = imageRotation;
-dataAnalysis.imageDepth = imageDepth;
-
-%% Get unique positions, rotations, and depths
-%
-% Get unique central object positions and background object rotations and depths.
-positions = unique(imagePosition);
-rotations = unique(imageRotation);
-depths    = unique(imageDepth);
-
-% Save to analysis output struct.
-dataAnalysis.positions = positions;
-dataAnalysis.rotations = rotations;
-dataAnalysis.depths = depths;
+positions     = dataAnalysis.positions;
+rotations     = dataAnalysis.rotations;
+depths        = dataAnalysis.depths;
+imagePosition = dataAnalysis.imagePosition;
+imageRotation = dataAnalysis.imageRotation;
+imageDepth    = dataAnalysis.imageDepth;
+V1respInc     = dataAnalysis.V1respInc;
+V4respInc     = dataAnalysis.V4respInc;
 
 %% Calculate specific decoder performance for central object POSITION
 %
@@ -526,7 +311,7 @@ dataAnalysis.specificPositionV4sem_NoiseRotationDepth = specificPositionV4sem_No
 %% Save data analysis results
 if saveData
     save(pathToOutput,'dataAnalysis');
-    fprintf('\nData was saved in:\n%s\n', pathToOutput);
+    fprintf('\ndataAnalysis was saved in:\n%s\n', pathToOutput);
 end
 
 end

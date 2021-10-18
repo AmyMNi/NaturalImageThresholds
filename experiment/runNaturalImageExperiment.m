@@ -10,12 +10,12 @@ function acquisitionStatus = runNaturalImageExperiment(varargin)
 %   responses (struct 'data') in the specified output folder.
 %
 % Optional parameters/values:
-%   'experimentName' : (string)  Name of experiment folder (default: 'Experiment100')
-%   'subjectName'    : (string)  Name of subject (default: 'test')
+%   'experimentName' : char)     Name of experiment folder (default: 'Experiment100')
+%   'subjectName'    : (char)    Name of subject (default: 'test')
 %   'nIterations'    : (scalar)  Number of iterations per image comparison *must be an even number (default: 14)
-%   'controlSignal'  : (string)  Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
-%   'option1Key'     : (string)  For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
-%   'option2Key'     : (string)  For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
+%   'controlSignal'  : (char)    Input method for user response (options: 'gamePad', 'keyboard') (default: 'gamePad')
+%   'option1Key'     : (char)    For gamePad either 'GP:UpperLeftTrigger'  or 'GP:X', for keyboard -> '1' (default: 'GP:UpperLeftTrigger')
+%   'option2Key'     : (char)    For gamePad either 'GP:UpperRightTrigger' or 'GP:A', for keyboard -> '2' (default: 'GP:UpperRightTrigger')
 %   'giveFeedback'   : (logical) Give feedback if option is on (default: true)
 %   'isDemo'         : (logical) Data won't be saved if on (default: false)
 %   'isFirstSession' : (logical) Warmup trials will be run if on (default: true)

@@ -10,7 +10,7 @@ function runRenderISET3dHyperspectral(varargin)
 %   output folder.
 %
 % Optional parameter/value:
-%   'experimentName' : (string) Name of experiment folder (default: 'Experiment100')
+%   'experimentName' : (char) Name of experiment folder (default: 'Experiment100')
 % 
 % History:
 %   06/07/21  amn  Wrote it.
