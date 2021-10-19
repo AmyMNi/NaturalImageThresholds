@@ -110,7 +110,14 @@ for dd = 1:numel(dataNames)
     
     % Check that the eid matrix from the last data set matches this one.
     if exist('eidLast','var')==1
-        fprintf(2,'Warning: the electrode order from %s does''t match the electrode order from the prior data set\n',nameThis);
+        if ~isequal(eid,eidLast)
+            fprintf(2,'Warning: the electrode order from %s does''t match the prior data set\n',nameThis);
+        end
+    else
+        % Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
+        electrodeV1 = eid(eid(:,1)==2,2);
+        % Get electrode numbers for the V4 array (V4: array number 1).
+        electrodeV4 = eid(eid(:,1)==1,2);
     end
 
     % Exclude stimuli presented during incomplete trials (fixation broken).
@@ -119,11 +126,6 @@ for dd = 1:numel(dataNames)
     resp     (excludeStim,:) = [];
     resp_base(excludeStim,:) = [];
     
-    % Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
-    electrodeV1 = eid(eid(:,1)==2,2);
-    % Get electrode numbers for the V4 array (V4: array number 1).
-    electrodeV4 = eid(eid(:,1)==1,2);
-     
     % Get responses for each brain area.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -211,14 +213,18 @@ V4resp_baseInc = V4resp_base(:,electrodeV4included);
 
 %% Set up data struct output
 %
+% Save data file names and folder.
+data.dataNames = dataNames;
+data.dataFolder = dataFolder;
+
 % Save the image info per stimulus.
 data.imagePosition = imagePosition;
 data.imageRotation = imageRotation;
 data.imageDepth = imageDepth;
 
 % Save the electrode number order for all of the electrodes.
-data.electrodeV1 = electrodeV1;
-data.electrodeV4 = electrodeV4;
+data.electrodeV1 = electrodeV1';
+data.electrodeV4 = electrodeV4';
 
 % Save the neuronal response matrices with all electrodes included.
 data.V1resp = V1resp;
@@ -227,8 +233,8 @@ data.V4resp = V4resp;
 data.V4resp_base = V4resp_base;
 
 % Save the electrode number order for the included electrodes.
-data.electrodeV1included = electrodeV1(electrodeV1included);
-data.electrodeV4included = electrodeV4(electrodeV4included);
+data.electrodeV1included = electrodeV1(electrodeV1included')';
+data.electrodeV4included = electrodeV4(electrodeV4included')';
 
 % Save the neuronal response matrices with only the included electrodes.
 data.V1respInc = V1respInc;
@@ -237,4 +243,5 @@ data.V4respInc = V4respInc;
 data.V4resp_baseInc = V4resp_baseInc;
 
 end
+
 %% End

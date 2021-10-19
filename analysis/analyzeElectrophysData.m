@@ -6,14 +6,14 @@ function dataAnalysis = analyzeElectrophysData(data,varargin)
 %
 % Description:
 %   Analyze electrophysiological data from the inputted data struct.
-%   Save the results in the output struct, in the specified output folder.
+%   Save the results in the output struct.
 %
 % Input:
-%   'data' : (struct) Struct of data to be analyzed, created by combineElectrophysData.m
+%   'data' : (struct) Struct of data to be analyzed, created in runAnalyzeElectrophysData.m
+%                     by combineElectrophysData.m
 %
 % Optional parameters/values:
 %   'plotFigures' : (logical) Plot figures if option is on (default: true)
-%   'saveData'    : (logical) Save data if option is on (default: true)
 %
 % Output:
 %   'dataAnalysis' : (struct) data struct with additional analysis results
@@ -25,20 +25,18 @@ function dataAnalysis = analyzeElectrophysData(data,varargin)
 
 %% Parse the inputs
 parser = inputParser();
-parser.addRequired('data',@(x)(isstruct(x)));
+parser.addRequired('data', @(x)(isstruct(x)));
 parser.addParameter('plotFigures', true, @islogical);
-parser.addParameter('saveData', true, @islogical);
 parser.parse(data,varargin{:});
 
 data        = parser.Results.data;
 plotFigures = parser.Results.plotFigures;
-saveData    = parser.Results.saveData;
 
 %% Set up new dataAnalysis struct
 dataAnalysis = data;
 
 %% Get output file path
-pathToOutput = dataAnalysis.pathToOutput;
+pathToOutput = dataAnalysis.dataFolder;
 
 %% Get data variables
 imagePosition = dataAnalysis.imagePosition;
@@ -47,7 +45,7 @@ imageDepth    = dataAnalysis.imageDepth;
 V1respInc     = dataAnalysis.V1respInc;
 V4respInc     = dataAnalysis.V4respInc;
 
-%% FOR COMBINED DATA: get unique positions, rotations, and depths
+%% Get unique positions, rotations, and depths
 %
 % Get unique central object positions and background object rotations and depths.
 positions = unique(imagePosition);
@@ -315,12 +313,6 @@ dataAnalysis.specificPositionV1mean_NoiseRotationDepth = specificPositionV1mean_
 dataAnalysis.specificPositionV4mean_NoiseRotationDepth = specificPositionV4mean_NoiseRotationDepth;
 dataAnalysis.specificPositionV1sem_NoiseRotationDepth = specificPositionV1sem_NoiseRotationDepth;
 dataAnalysis.specificPositionV4sem_NoiseRotationDepth = specificPositionV4sem_NoiseRotationDepth;
-
-%% Save data analysis results
-if saveData
-    save(pathToOutput,'dataAnalysis');
-    fprintf('\ndataAnalysis was saved in:\n%s\n', pathToOutput);
-end
 
 end
 
