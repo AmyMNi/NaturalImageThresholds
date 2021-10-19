@@ -27,16 +27,13 @@ parser.parse(dataNames,dataFolder);
 dataNames  = parser.Results.dataNames;
 dataFolder = parser.Results.dataFolder;
 
-%% Create struct to hold data
-data = struct;
-
 %% Electrophys data & image info organization
 
 % Electrophys data variables:
  
 % params : (struct 1 x num stimuli)
 %       set: for the Natural Image Thresholds experiment, set = 7
-%       num: number of the stimulus (to match to 'imgInfo' table with image info)
+%       num: number of the stimulus (to match to imgInfo table with image info)
 %       x: position in pixels of the stimulus
 %       y: position in pixels of the stimulus
 %       s: size in pixels of the stimulus
@@ -65,23 +62,35 @@ data = struct;
 % Image info variable:
 
 % imgInfo : (table num images x 4 columns)
-%       column 1: imgNumber
-%       column 2: bananaPosition
-%       column 3: backgroundRotation
-%       column 4: backgroundDepth
+%       column 1: imgNumber (image number to match to params.num)
+%       column 2: bananaPosition (central object position in iset3d mm compared to scene center)
+%       column 3: backgroundRotation (background objects rotation in degrees compared to original scene)
+%       column 4: backgroundDepth (background objects depth in mm compared to original scene)
+
+%% Create struct to hold data
+data = struct;
 
 %% Combine data from each data file
-for ii = 1:numel(dataNames)
+V1resp      = [];
+V1resp_base = [];
+V4resp      = [];
+V4resp_base = [];
+imagePosition = [];
+imageRotation = [];
+imageDepth    = [];
+
+% Get data from one data set at a time.
+for dd = 1:numel(dataNames)
 
     % Set path to data file.
-    nameThis = dataNames{ii};
+    nameThis = dataNames{dd};
     pathToDataFile = fullfile(dataFolder,nameThis);
     
     % Load specified data file.
-    temp = load(pathToDataFile,'params');    params    = temp.params;    clear temp;
-    temp = load(pathToDataFile,'eid');       eid       = temp.eid;       clear temp;
-    temp = load(pathToDataFile,'resp');      resp      = temp.resp;      clear temp;
-    temp = load(pathToDataFile,'resp_base'); resp_base = temp.resp_base; clear temp;
+    clear params;    temp = load(pathToDataFile,'params');    params    = temp.params;    clear temp;
+    clear eid;       temp = load(pathToDataFile,'eid');       eid       = temp.eid;       clear temp;
+    clear resp;      temp = load(pathToDataFile,'resp');      resp      = temp.resp;      clear temp;
+    clear resp_base; temp = load(pathToDataFile,'resp_base'); resp_base = temp.resp_base; clear temp;
     
     % Get image set name.
     p_   = strfind(nameThis,'_');
@@ -92,172 +101,140 @@ for ii = 1:numel(dataNames)
     pathToDataInfo = fullfile(dataFolder,sprintf('imgInfo_set%d.mat',imageSet));
     
     % Load specified image info file.
-    temp = load(pathToDataInfo,'imgInfo'); imgInfo = temp.imgInfo; clear temp;
+    clear imgInfo; temp = load(pathToDataInfo,'imgInfo'); imgInfo = temp.imgInfo; clear temp;
     
-
-
-
-    
-    
-    
-end
-
-%% Check that all of the stimuli were from the Natural Image Thresholds experiment
-%
-% Make sure that all params.set values = 7 (the Natural Image Thresholds images).
-% If not, print a warning.
-experimentSet = [params.set];
-if any(experimentSet~=7)
-    warning('The stimuli are not all from the Natural Image Thresholds project');
-end
-
-%% Exclude stimuli presented during incomplete trials (fixation broken)
-%
-% Exclude stimuli for which params.good = 0.
-excludeStim = ~[params.good];
-params   (excludeStim)   = [];
-resp     (excludeStim,:) = [];
-resp_base(excludeStim,:) = [];
-
-% Number of included stimuli.
-numStim = numel(params);
-
-% Save to analysis output struct.
-dataAnalysis.numStim = numStim;
-
-%% Get electrode numbers for each brain area
-%
-% Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
-electrodeV1 = eid(eid(:,1)==2,2);
-
-% Get electrode numbers for the V4 array (V4: array number 1).
-electrodeV4 = eid(eid(:,1)==1,2);
-
-% Save to analysis output struct.
-dataAnalysis.electrodeV1 = electrodeV1;
-dataAnalysis.electrodeV4 = electrodeV4;
-
-%% Get responses for each brain area
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NOTE: responses currently based on same analysis period
-%       for both V1/V2 and V4 (50-350 ms)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% Get responses for V1/V2.
-V1resp      = resp     (:,ismember(eid(:,2),electrodeV1));
-V1resp_base = resp_base(:,ismember(eid(:,2),electrodeV1));
-
-% Get responses for V4.
-V4resp      = resp     (:,ismember(eid(:,2),electrodeV4));
-V4resp_base = resp_base(:,ismember(eid(:,2),electrodeV4));
-
-% Save to analysis output struct.
-dataAnalysis.V1resp = V1resp;
-dataAnalysis.V1resp_base = V1resp_base;
-dataAnalysis.V4resp = V4resp;
-dataAnalysis.V4resp_base = V4resp_base;
-
-%% Determine electrodes to include per brain area, based on stimulus-evoked firing rate
-%
-% Base electrode inclusion on the following criteria:
-%   stimulus-evoked firing rate statsig greater than baseline firing rate,
-%   minimum stimulus-evoked firing rate.
-frMin = 10; %Hz
-alphaLevel = .05;
-electrodeV1included = false(1,size(V1resp,2));
-electrodeV4included = false(1,size(V4resp,2));
-
-% Calculate included electrodes: V1.
-for ii = 1:size(V1resp,2)
-    % Two-sample one-tailed t-test.
-    h = ttest2(V1resp(:,ii), V1resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
-    if h==1 && nanmean(V1resp(:,ii)) > frMin
-        electrodeV1included(ii) = true;
+    % Check that all of the stimuli were from the Natural Image Thresholds experiment.
+    if any([params.set] ~= 7)
+        fprintf(2,'Warning: not all stimuli from %s were from the Natural Image Thresholds project\n',nameThis);
     end
-end
-
-% Calculate included electrodes: V4.
-for ii = 1:size(V4resp,2)
-    % Two-sample one-tailed t-test.
-    h = ttest2(V4resp(:,ii), V4resp_base(:,ii), 'Tail', 'right', 'Alpha', alphaLevel);
-    if h==1 && nanmean(V4resp(:,ii)) > frMin
-        electrodeV4included(ii) = true;
+    
+    % Check that the eid matrix from the last data set matches this one.
+    if exist('eidLast','var')==1
+        fprintf(2,'Warning: the electrode order from %s does''t match the electrode order from the prior data set\n',nameThis);
     end
+
+    % Exclude stimuli presented during incomplete trials (fixation broken).
+    excludeStim = ~[params.good];
+    params   (excludeStim)   = [];
+    resp     (excludeStim,:) = [];
+    resp_base(excludeStim,:) = [];
+    
+    % Get electrode numbers for the V1/V2 array (V1/V2: array number 2).
+    electrodeV1 = eid(eid(:,1)==2,2);
+    % Get electrode numbers for the V4 array (V4: array number 1).
+    electrodeV4 = eid(eid(:,1)==1,2);
+     
+    % Get responses for each brain area.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % NOTE: based on the same time period for both V1/V2 and V4 (50-350 ms).
+    % NOTE: for different time periods, see params.spikes described above.
+    % Get responses for V1/V2.
+    V1respThis      = resp     (:,ismember(eid(:,2),electrodeV1));
+    V1resp_baseThis = resp_base(:,ismember(eid(:,2),electrodeV1));
+    % Get responses for V4.
+    V4respThis      = resp     (:,ismember(eid(:,2),electrodeV4));
+    V4resp_baseThis = resp_base(:,ismember(eid(:,2),electrodeV4));
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % Determine included electrodes for this data set, based on the following criteria:
+    %   stimulus-evoked firing rate statsig greater than baseline firing rate, and
+    %   minimum stimulus-evoked firing rate.
+    % The electrodes included in the combined data will be determined below.
+    frMin = 10; %Hz
+    alphaLevel = .05;
+    % Calculate included electrodes: V1.
+    electrodeV1includedThis = false(1,size(V1respThis,2));
+    for ii = 1:size(V1respThis,2)
+        % Two-sample one-tailed t-test.
+        h = ttest2(V1respThis(:,ii),V1resp_baseThis(:,ii),'Tail','right','Alpha',alphaLevel);
+        if h==1 && nanmean(V1respThis(:,ii)) > frMin
+            electrodeV1includedThis(ii) = true;
+        end
+    end
+    % Calculate included electrodes: V4.
+    electrodeV4includedThis = false(1,size(V4respThis,2));
+    for ii = 1:size(V4respThis,2)
+        % Two-sample one-tailed t-test.
+        h = ttest2(V4respThis(:,ii),V4resp_baseThis(:,ii),'Tail','right','Alpha',alphaLevel);
+        if h==1 && nanmean(V4respThis(:,ii)) > frMin
+            electrodeV4includedThis(ii) = true;
+        end
+    end
+    
+    % Determine electrodes to includes across all combined data so far.
+    if exist('electrodeV1included','var')==1 && exist('electrodeV4included','var')==1
+        electrodeV1included = electrodeV1included & electrodeV1includedThis;
+        electrodeV4included = electrodeV4included & electrodeV4includedThis;
+    else
+        electrodeV1included = electrodeV1includedThis;
+        electrodeV4included = electrodeV4includedThis;
+    end
+    
+    % Convert imgInfo table to matrix.
+    % columns:  imgNumber  bananaPosition  backgroundRotation  backgroundDepth
+    imgInfo = table2array(imgInfo);
+    
+    % Per stimulus, get image number to match to imgInfo table with image info.
+    imageNum = [params.num]';
+    [~,indImageNum] = ismember(imageNum, imgInfo(:,1));
+    
+    % Per stimulus, get central object (banana) position.
+    imagePositionThis = imgInfo(indImageNum,2);
+    
+    % Per stimulus, get background object (branches & leaves) rotation.
+    imageRotationThis = imgInfo(indImageNum,3);
+    
+    % Per stimulus, get background object (branches & leaves) depth.
+    imageDepthThis = imgInfo(indImageNum,4);
+    
+    % Save eid matrix to compare to the next data set's eid matrix.
+    eidLast = eid;
+    
+    % Add this data set to the combined data.
+    V1resp      = [V1resp; V1respThis];
+    V1resp_base = [V1resp_base; V1resp_baseThis];
+    V4resp      = [V4resp; V4respThis];
+    V4resp_base = [V4resp_base; V4resp_baseThis];
+    imagePosition = [imagePosition; imagePositionThis];
+    imageRotation = [imageRotation; imageRotationThis];
+    imageDepth    = [imageDepth; imageDepthThis];
 end
 
-electrodeV1included = electrodeV1(electrodeV1included');
-electrodeV4included = electrodeV4(electrodeV4included');
+%% Get responses for electrodes included across combined data
+% These are the electrodes that were included in each of the data sets.
+V1respInc      = V1resp(:,electrodeV1included);
+V1resp_baseInc = V1resp_base(:,electrodeV1included);
+V4respInc      = V4resp(:,electrodeV4included);
+V4resp_baseInc = V4resp_base(:,electrodeV4included);
 
-% Save to analysis output struct.
-dataAnalysis.electrodeV1included = electrodeV1included;
-dataAnalysis.electrodeV4included = electrodeV4included;
-
-%% Get responses for each brain area, based on included electrodes
-%         
-% Get included responses for V1/V2.
-V1respInc      = resp     (:,ismember(eid(:,2),electrodeV1included));
-V1resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV1included));
-
-% Get included responses for V4.
-V4respInc      = resp     (:,ismember(eid(:,2),electrodeV4included));
-V4resp_baseInc = resp_base(:,ismember(eid(:,2),electrodeV4included));
-
-% Save to analysis output struct.
-dataAnalysis.V1respInc = V1respInc;
-dataAnalysis.V1resp_baseInc = V1resp_baseInc;
-dataAnalysis.V4respInc = V4respInc;
-dataAnalysis.V4resp_baseInc = V4resp_baseInc;
-
-%% Per stimulus, get image number and info
+%% Set up data struct output
 %
-% Per stimulus, get image number to match to imgInfo table with image info.
-imageNum = [params.num]';
+% Save the image info per stimulus.
+data.imagePosition = imagePosition;
+data.imageRotation = imageRotation;
+data.imageDepth = imageDepth;
 
-% Convert imgInfo table to matrix.
-% columns:  imgNumber  bananaPosition  backgroundRotation  backgroundDepth
-imgInfo = table2array(imgInfo);
+% Save the electrode number order for all of the electrodes.
+data.electrodeV1 = electrodeV1;
+data.electrodeV4 = electrodeV4;
 
-% Per stimulus, get central object (banana) position.
-[~,indImageNum] = ismember(imageNum, imgInfo(:,1));
-imagePosition = imgInfo(indImageNum,2);
+% Save the neuronal response matrices with all electrodes included.
+data.V1resp = V1resp;
+data.V1resp_base = V1resp_base;
+data.V4resp = V4resp;
+data.V4resp_base = V4resp_base;
 
-% Per stimulus, get background object (branches & leaves) rotation.
-imageRotation = imgInfo(indImageNum,3);
+% Save the electrode number order for the included electrodes.
+data.electrodeV1included = electrodeV1(electrodeV1included);
+data.electrodeV4included = electrodeV4(electrodeV4included);
 
-% Per stimulus, get background object (branches & leaves) depth.
-imageDepth = imgInfo(indImageNum,4);
-
-% Save to analysis output struct.
-dataAnalysis.imageNum = imageNum;
-dataAnalysis.imagePosition = imagePosition;
-dataAnalysis.imageRotation = imageRotation;
-dataAnalysis.imageDepth = imageDepth;
-
-%% Get unique positions, rotations, and depths
-%
-% Get unique central object positions and background object rotations and depths.
-positions = unique(imagePosition);
-rotations = unique(imageRotation);
-depths    = unique(imageDepth);
-
-% Save to analysis output struct.
-dataAnalysis.positions = positions;
-dataAnalysis.rotations = rotations;
-dataAnalysis.depths = depths;
-
-%% Save data struct
-if saveData
-    save(pathToOutput,'data');
-    fprintf('\ndata was saved in:\n%s\n', pathToOutput);
-end
+% Save the neuronal response matrices with only the included electrodes.
+data.V1respInc = V1respInc;
+data.V1resp_baseInc = V1resp_baseInc;
+data.V4respInc = V4respInc;
+data.V4resp_baseInc = V4resp_baseInc;
 
 end
-
-%% Helper functions
-
-%%
-
 %% End

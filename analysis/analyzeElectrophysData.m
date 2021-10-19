@@ -41,15 +41,23 @@ dataAnalysis = data;
 pathToOutput = dataAnalysis.pathToOutput;
 
 %% Get data variables
-
-positions     = dataAnalysis.positions;
-rotations     = dataAnalysis.rotations;
-depths        = dataAnalysis.depths;
 imagePosition = dataAnalysis.imagePosition;
 imageRotation = dataAnalysis.imageRotation;
 imageDepth    = dataAnalysis.imageDepth;
 V1respInc     = dataAnalysis.V1respInc;
 V4respInc     = dataAnalysis.V4respInc;
+
+%% FOR COMBINED DATA: get unique positions, rotations, and depths
+%
+% Get unique central object positions and background object rotations and depths.
+positions = unique(imagePosition);
+rotations = unique(imageRotation);
+depths    = unique(imageDepth);
+
+% Save to analysis output struct.
+dataAnalysis.positions = positions;
+dataAnalysis.rotations = rotations;
+dataAnalysis.depths = depths;
 
 %% Calculate specific decoder performance for central object POSITION
 %
