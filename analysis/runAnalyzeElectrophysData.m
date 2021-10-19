@@ -7,13 +7,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TO DO: compare single vs. combined
-
-% TO DO: electrode inclusion criteria
-
-% TO DO: decoders with different rot/dep for each of 2 pos
+% TO DO: stim numbers (PCs)
 
 % TO DO: general decoder
+
+% TO DO: electrode inclusion criteria
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -36,11 +34,15 @@
 % 211015-160308_set3.mat : RGB image set, 4 iterations/stim
 
 % 211016-150335_set3.mat : RGB image set, 4 iterations/stim
-% 211016-152640_set3.mat : RGB image set, 4 iterations/stim 
+% 211016-152640_set3.mat : RGB image set, 4 iterations/stim
 % 211016-161735_set3.mat : RGB image set, 3 iterations/stim
 
 % 211017-155234_set3.mat : RGB image set, 8 iterations/stim
 % 211017-164400_set3.mat : RGB image set, 3 iterations/stim
+
+% 211018-145436_set3.mat : RGB image set, 1 iterations/stim
+% 211018-153731_set3.mat : RGB image set, 1 iterations/stim
+% 211018-155308_set3.mat : RGB image set, 8 iterations/stim
 
 %% Select electrophysiological data sets to analyze
 
@@ -48,8 +50,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TO DO: select data sets below.
 dataNames = { ...
+            '211013-133559_set1.mat', ...
             '211014-153026_set2.mat', ...
-            '211015-155409_set2.mat'};
+            '211015-155409_set2.mat', ...
+            '211015-160308_set3.mat', ...
+            '211016-150335_set3.mat', ...
+            '211016-152640_set3.mat', ...
+            '211016-161735_set3.mat', ...
+            '211017-155234_set3.mat', ...
+            '211017-164400_set3.mat', ...
+            '211018-145436_set3.mat', ...
+            '211018-153731_set3.mat', ...
+            '211018-155308_set3.mat'};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
