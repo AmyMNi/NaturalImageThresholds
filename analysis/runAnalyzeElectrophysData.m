@@ -7,6 +7,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TO DO: check decode on noise alone
+
 % TO DO: stim numbers (PCs)
 
 % TO DO: general decoder
@@ -43,6 +45,9 @@
 % 211018-145436_set3.mat : RGB image set, 1 iterations/stim
 % 211018-153731_set3.mat : RGB image set, 1 iterations/stim
 % 211018-155308_set3.mat : RGB image set, 8 iterations/stim
+
+% 211019-140217_set3.mat : RGB image set, 1 iterations/stim
+% 211019-143159_set3.mat : RGB image set, 4 iterations/stim
 
 %% Select electrophysiological data sets to analyze
 
