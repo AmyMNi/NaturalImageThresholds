@@ -49,6 +49,8 @@
 % 211019-140217_set3.mat : RGB image set, 1 iterations/stim
 % 211019-143159_set3.mat : RGB image set, 4 iterations/stim
 
+% 211020-131825_set3.mat : RGB image set, 6 iterations/stim
+
 %% Select electrophysiological data sets to analyze
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
