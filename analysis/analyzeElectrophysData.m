@@ -35,9 +35,6 @@ plotFigures = parser.Results.plotFigures;
 %% Set up new dataAnalysis struct
 dataAnalysis = data;
 
-%% Get output file path
-pathToOutput = dataAnalysis.dataFolder;
-
 %% Get data variables
 imagePosition = dataAnalysis.imagePosition;
 imageRotation = dataAnalysis.imageRotation;
