@@ -57,6 +57,11 @@
 % 211022-172101_set3.mat : RGB image set, 4 iterations/stim, size 150
 
 % 211023-150204_set3.mat : RGB image set, 1 iterations/stim, size 120
+% 211023-150848_set3.mat : RGB image set, 4 iterations/stim, size 120
+
+% 211025-145458_set3.mat : RGB image set, 7 iterations/stim, size 120
+
+% 211026-141738_set3.mat : RGB image set, 6 iterations/stim, size 120
 
 %% Select electrophysiological data sets to analyze
 
@@ -81,7 +86,10 @@ dataNames = { ...
             '211022-170332_set3.mat', ...
             '211022-171307_set3.mat', ...
             '211022-172101_set3.mat', ...
-            '211023-150204_set3.mat'};
+            '211023-150204_set3.mat', ...
+            '211023-150848_set3.mat', ...
+            '211025-145458_set3.mat', ...
+            '211026-141738_set3.mat'};
 %}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
