@@ -79,6 +79,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Calculate the maximum intensity across all of the scene files
+maxIntensityAllScenes = runSetScale(pathToFolder,cal);
+
 %% Get names of all scene files in the input folder
 %
 % List .mat files in the folder.
@@ -100,7 +103,7 @@ for ii = 1:length(fileInfo)
         temp = load(fileToLoad,'theImage'); theImage = temp.theImage; clear temp;
         
         % Convert this ISET3d scene to a metameric RGB image.
-        RGBImage = electrophysRGB(theImage,cal,'showRGB',false);
+        RGBImage = electrophysRGB(theImage,cal,maxIntensityAllScenes,'showRGB',false);
         
         % Save the RGB image in the output folder.
         theImage = RGBImage;

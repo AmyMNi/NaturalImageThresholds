@@ -1,4 +1,4 @@
-function RGBImage = electrophysRGB(scene,cal,varargin)
+function RGBImage = electrophysRGB(scene,cal,maxIntensityAllScenes,varargin)
 % electrophysRGB
 %
 % Usage:
@@ -15,6 +15,7 @@ function RGBImage = electrophysRGB(scene,cal,varargin)
 % Inputs:
 %   scene : (struct) ISET3d scene info
 %   cal   : (struct) Calibration file for the electrophysiology experimental machine
+%   maxIntensityAllScenes : (scalar) Maximum intensity across all scenes
 %
 % Optional parameters/values:
 %   'showRGB'  : (logical) Whether to display the RGBImage  (default: false)
@@ -27,8 +28,9 @@ function RGBImage = electrophysRGB(scene,cal,varargin)
 parser = inputParser();
 parser.addRequired('scene',@(x)(isstruct(x)));
 parser.addRequired('cal',@(x)(isstruct(x)));
+parser.addRequired('maxIntensityAllScenes',@(x)(isscalar(x)));
 parser.addParameter('showRGB',false,@islogical);
-parser.parse(scene,cal,varargin{:});
+parser.parse(scene,cal,maxIntensityAllScenes,varargin{:});
 
 showRGB  = parser.Results.showRGB;
 
@@ -87,12 +89,10 @@ rgbCalFormat = SensorToPrimary(cal,LMSExcitationsCalFormat);
 % the light source to bring the maximum primary RGB value down
 % lower than 1, or we can scale at this stage. 
 %
-% When we do the experiment, we have to be careful to scale all
-% of the images the same way, so it may be cleaner to scale the
-% intensity of the light source in the rendering, and then throw
-% an error at this stage if the intensity is out of gamut.
+% Use the maxIntensityAllScenes input to scale all of the images by the
+% maximum intensity calculated across all of the scenes.
 headroomFactor = 1;
-maxPrimaryValue = max(rgbCalFormat(:));
+maxPrimaryValue = maxIntensityAllScenes;
 if (maxPrimaryValue > headroomFactor)
     fprintf('Warning: Maximum primary intensity of %0.2g exceeds desired max of %0.2g\n',maxPrimaryValue,headroomFactor);
 end
