@@ -56,6 +56,9 @@
 % params.set = 7 (set3) & params.set = 9 (set5: equivalent to set3 but with universal scale):
 % 211027-160930_set3.mat : RGB image sets, 4 iterations/stim, size 120
 
+% params.set = 9 (set5: equivalent to set3 but with universal scale):
+% 211028-132246_set5.mat : RGB image set, 12 iterations/stim, size 120
+
 %% Record of orthogonality experiment data file names
 
 % params.set = 8 (test image set 4)
@@ -94,12 +97,13 @@ dataNames = { ...
             '211023-150848_set3.mat', ...
             '211025-145458_set3.mat', ...
             '211026-141738_set3.mat', ...
-            '211027-160930_set3.mat'};
+            '211027-160930_set3.mat', ...
+            '211028-132246_set5.mat'};
 %}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Set path to data folder.
+%% Set path to data folder
 dataFolder = fullfile('/Users','amy','Desktop','Brainard','Natural Image Thresholds','Electrophys Data');
 
 %% Run combineElectrophysData.m to combine data sets selected above
