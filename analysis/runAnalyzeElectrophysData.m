@@ -53,8 +53,8 @@
 % 211025-145458_set3.mat : RGB image set, 7 iterations/stim, size 120
 % 211026-141738_set3.mat : RGB image set, 6 iterations/stim, size 120
 
-% params.set = 7 (image set 3) & params.set = 9 (image set 5 with universal scale):
-% 211027-160930_set3_set5.mat : RGB image sets, 4 iterations/stim, size 120
+% params.set = 7 (set3) & params.set = 9 (set5: equivalent to set3 but with universal scale):
+% 211027-160930_set3.mat : RGB image sets, 4 iterations/stim, size 120
 
 %% Record of orthogonality experiment data file names
 
@@ -94,7 +94,7 @@ dataNames = { ...
             '211023-150848_set3.mat', ...
             '211025-145458_set3.mat', ...
             '211026-141738_set3.mat', ...
-            '211027-160930_set3_set5.mat'};
+            '211027-160930_set3.mat'};
 %}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

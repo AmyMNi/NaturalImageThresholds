@@ -32,7 +32,7 @@ dataFolder = parser.Results.dataFolder;
 % Electrophys data variables:
  
 % params : (struct 1 x num stimuli)
-%       set: for the Natural Image Thresholds experiment, set = 7
+%       set: for the Natural Image Thresholds experiment, set = 7 or set = 9 
 %       num: number of the stimulus (to match to imgInfo table with image info)
 %       x: position in pixels of the stimulus
 %       y: position in pixels of the stimulus
@@ -104,7 +104,7 @@ for dd = 1:numel(dataNames)
     clear imgInfo; temp = load(pathToDataInfo,'imgInfo'); imgInfo = temp.imgInfo; clear temp;
     
     % Check that all of the stimuli were from the Natural Image Thresholds experiment.
-    if any([params.set] ~= 7)
+    if any(([params.set] == 7 | [params.set] == 9)==0)
         fprintf(2,'Warning: not all stimuli from %s were from the Natural Image Thresholds project\n',nameThis);
     end
     
@@ -125,7 +125,7 @@ for dd = 1:numel(dataNames)
     params   (excludeStim)   = [];
     resp     (excludeStim,:) = [];
     resp_base(excludeStim,:) = [];
-    
+
     % Get responses for each brain area.
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -164,7 +164,7 @@ for dd = 1:numel(dataNames)
             electrodeV4includedThis(ii) = true;
         end
     end
-    
+
     % Determine electrodes to includes across all combined data so far.
     if exist('electrodeV1included','var')==1 && exist('electrodeV4included','var')==1
         electrodeV1included = electrodeV1included & electrodeV1includedThis;
