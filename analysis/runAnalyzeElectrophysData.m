@@ -63,6 +63,29 @@
 
 % 211026-141738_set3.mat : RGB image set, 6 iterations/stim, size 120
 
+
+
+
+%{
+ALREADY DOWNLOADED:
+set 4:
+~20 reps ivory_map_211026-143833
+
+
+
+
+
+control 1:
+set 7 (with universal scaling off) vs set 9 (with universal scaling on)
+~4 reps ivory_map_211027-160930
+
+control 2 (set 10):
+pbrt colour with yellow, cyan, and blacked out bananas
+~20 reps ivory_map_211027-160722
+%}
+
+
+
 %% Select electrophysiological data sets to analyze
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
