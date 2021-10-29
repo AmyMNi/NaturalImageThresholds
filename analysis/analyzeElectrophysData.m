@@ -680,7 +680,7 @@ for yy = 1:numel(Y)
             % For each run of the decoder, select the above number of
             % stimuli for each value of the task-relevant feature
             % (randomly without replacement).
-            numRuns = 10;
+            numRuns = 50;
             V1pcAll = nan(numRuns,1);
             V4pcAll = nan(numRuns,1);
             for rr = 1:numRuns
@@ -828,7 +828,7 @@ for ii = 1:numel(X)
         % For each run of the decoder, select the above number of
         % stimuli for each value of the task-relevant feature
         % (randomly without replacement).
-        numRuns = 10;
+        numRuns = 50;
         V1pcAll = nan(numRuns,1);
         V4pcAll = nan(numRuns,1);
         for rr = 1:numRuns
