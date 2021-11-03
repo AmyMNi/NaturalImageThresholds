@@ -121,19 +121,4 @@ for ii = 1:numel(conditions)
     end
 end
 
-%%
-
-
-
-a1 = load('/img_8_1.mat');
-a2 = load('/img_8_2.mat');
-h = imshowpair(a1.theImage,a2.theImage,'diff');
-dimg = ~(h.CData>1);
-theImage = a1.theImage.*repmat(double(dimg),1,1,3);
-subplot(121); imshow(theImage)
-theImage = a2.theImage.*repmat(double(dimg),1,1,3);
-subplot(122); imshow(theImage)
-
-
-
 %% End

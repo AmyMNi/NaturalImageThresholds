@@ -3,24 +3,10 @@
 % History:
 %   10/18/21  amn  Wrote it.
 
-%% TO DO ITEMS
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TO DO: general decoder
-
-% TO DO: RGB set3 vs set5 ('runCompareLuminance.m')
-
-% TO DO: fix figure axes to match
-% TO DO: electrode inclusion criteria
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %% Record of electrophys data file names
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TO DO: update record below
 % Raptor data example: Ram/data/main/ivory/211013/ivory_map_211013-133559_dense.mat
 % Save file as name example: 211013-133559_set1.mat
 % Save in folder: /Users/amy/Desktop/Brainard/Natural Image Thresholds/Electrophys Data/
@@ -58,22 +44,10 @@
 % params.set = 9 (set5: equivalent to set3 but with universal scale):
 % 211028-132246_set5.mat : RGB image set, 12 iterations/stim, size 120
 
-%% Record of orthogonality experiment data file names
-
-% params.set = 8 (test image set 4)
-% 211026-143833_set4.mat : RGB image set, 20 iterations/stim, size 120
-
-% params.set = 10 (test image set 6 with universal scale)
-% 211027-160722_set6.mat : RGB image set, 20 iterations/stim, size 120
-
-% params.set = 11 (image set 11 with universal scale)
-%
-
 %% Select electrophysiological data sets to analyze
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TO DO: select data sets below.
 %{
 dataNames = { ...
             '211015-160308_set3.mat', ...
