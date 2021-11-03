@@ -57,11 +57,11 @@ dataAnalysis.depths = depths;
 %% Calculate specific decoder performance for central object POSITION
 %
 % Calculate decoder performance for each combination of positions.
-[diffBetweenPositionValues,specificPositionNumStim,specificPositionV1,specificPositionV4] = helperSpecificDecoder ...
+[specificDiffBetweenPositionValues,specificPositionNumStim,specificPositionV1,specificPositionV4] = helperSpecificDecoder ...
     (positions,rotations,depths,imagePosition,imageRotation,imageDepth,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenPositionValues = diffBetweenPositionValues;
+dataAnalysis.specificDiffBetweenPositionValues = specificDiffBetweenPositionValues;
 dataAnalysis.specificPositionNumStim   = specificPositionNumStim;
 dataAnalysis.specificPositionV1 = specificPositionV1;
 dataAnalysis.specificPositionV4 = specificPositionV4;
@@ -69,29 +69,29 @@ dataAnalysis.specificPositionV4 = specificPositionV4;
 %% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniquePositionDiff,specificPositionV1mean,specificPositionV4mean,specificPositionV1sem,specificPositionV4sem] = helperDecoderMean...
-    (diffBetweenPositionValues,specificPositionV1,specificPositionV4);
+[specificUniquePositionDiff,specificPositionV1mean,specificPositionV4mean,specificPositionV1sem,specificPositionV4sem] = helperDecoderMean...
+    (specificDiffBetweenPositionValues,specificPositionV1,specificPositionV4);
 
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniquePositionDiff, specificPositionV1mean, specificPositionV1sem, '.-m');
-    errorbar(uniquePositionDiff, specificPositionV4mean, specificPositionV4sem, '.-b');
+    errorbar(specificUniquePositionDiff, specificPositionV1mean, specificPositionV1sem, '.-m');
+    errorbar(specificUniquePositionDiff, specificPositionV4mean, specificPositionV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for POSITION');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([min(uniquePositionDiff)-5 max(uniquePositionDiff)+5 0 1]);
+    axis([min(specificUniquePositionDiff)-5 max(specificUniquePositionDiff)+5 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniquePositionDiff);
-    set(gca,'XTickLabel',uniquePositionDiff);
+    set(gca,'XTick',specificUniquePositionDiff);
+    set(gca,'XTickLabel',specificUniquePositionDiff);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniquePositionDiff = uniquePositionDiff;
+dataAnalysis.specificUniquePositionDiff = specificUniquePositionDiff;
 dataAnalysis.specificPositionV1mean = specificPositionV1mean;
 dataAnalysis.specificPositionV4mean = specificPositionV4mean;
 dataAnalysis.specificPositionV1sem = specificPositionV1sem;
@@ -100,11 +100,11 @@ dataAnalysis.specificPositionV4sem = specificPositionV4sem;
 %% Calculate specific decoder performance for background object ROTATION
 %
 % Calculate decoder performance for each combination of rotations.
-[diffBetweenRotationValues,specificRotationNumStim,specificRotationV1,specificRotationV4] = helperSpecificDecoder ...
+[specificDiffBetweenRotationValues,specificRotationNumStim,specificRotationV1,specificRotationV4] = helperSpecificDecoder ...
     (rotations,positions,depths,imageRotation,imagePosition,imageDepth,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenRotationValues = diffBetweenRotationValues;
+dataAnalysis.specificDiffBetweenRotationValues = specificDiffBetweenRotationValues;
 dataAnalysis.specificRotationNumStim   = specificRotationNumStim;
 dataAnalysis.specificRotationV1 = specificRotationV1;
 dataAnalysis.specificRotationV4 = specificRotationV4;
@@ -112,29 +112,29 @@ dataAnalysis.specificRotationV4 = specificRotationV4;
 %% Plot the mean performance for specific decoders of ROTATION, per size of discriminated ROTATION difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniqueRotationDiff,specificRotationV1mean,specificRotationV4mean,specificRotationV1sem,specificRotationV4sem] = helperDecoderMean...
-    (diffBetweenRotationValues,specificRotationV1,specificRotationV4);
+[specificUniqueRotationDiff,specificRotationV1mean,specificRotationV4mean,specificRotationV1sem,specificRotationV4sem] = helperDecoderMean...
+    (specificDiffBetweenRotationValues,specificRotationV1,specificRotationV4);
 
 % Plot the size of discriminated rotation difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniqueRotationDiff, specificRotationV1mean, specificRotationV1sem, '.-m');
-    errorbar(uniqueRotationDiff, specificRotationV4mean, specificRotationV4sem, '.-b');
+    errorbar(specificUniqueRotationDiff, specificRotationV1mean, specificRotationV1sem, '.-m');
+    errorbar(specificUniqueRotationDiff, specificRotationV4mean, specificRotationV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for ROTATION');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated rotations');
     ylabel('Proportion correct');
-    axis([min(uniqueRotationDiff)-5 max(uniqueRotationDiff)+5 0 1]);
+    axis([min(specificUniqueRotationDiff)-5 max(specificUniqueRotationDiff)+5 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniqueRotationDiff);
-    set(gca,'XTickLabel',uniqueRotationDiff);
+    set(gca,'XTick',specificUniqueRotationDiff);
+    set(gca,'XTickLabel',specificUniqueRotationDiff);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniqueRotationDiff = uniqueRotationDiff;
+dataAnalysis.specificUniqueRotationDiff = specificUniqueRotationDiff;
 dataAnalysis.specificRotationV1mean = specificRotationV1mean;
 dataAnalysis.specificRotationV4mean = specificRotationV4mean;
 dataAnalysis.specificRotationV1sem = specificRotationV1sem;
@@ -143,11 +143,11 @@ dataAnalysis.specificRotationV4sem = specificRotationV4sem;
 %% Calculate specific decoder performance for background object DEPTH
 %
 % Calculate decoder performance for each combination of depths.
-[diffBetweenDepthValues,specificDepthNumStim,specificDepthV1,specificDepthV4] = helperSpecificDecoder ...
+[specificDiffBetweenDepthValues,specificDepthNumStim,specificDepthV1,specificDepthV4] = helperSpecificDecoder ...
     (depths,positions,rotations,imageDepth,imagePosition,imageRotation,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenDepthValues = diffBetweenDepthValues;
+dataAnalysis.specificDiffBetweenDepthValues = specificDiffBetweenDepthValues;
 dataAnalysis.specificDepthNumStim   = specificDepthNumStim;
 dataAnalysis.specificDepthV1 = specificDepthV1;
 dataAnalysis.specificDepthV4 = specificDepthV4;
@@ -155,29 +155,29 @@ dataAnalysis.specificDepthV4 = specificDepthV4;
 %% Plot the mean performance for specific decoders of DEPTH, per size of discriminated DEPTH difference
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniqueDepthDiff,specificDepthV1mean,specificDepthV4mean,specificDepthV1sem,specificDepthV4sem] = helperDecoderMean...
-    (diffBetweenDepthValues,specificDepthV1,specificDepthV4);
+[specificUniqueDepthDiff,specificDepthV1mean,specificDepthV4mean,specificDepthV1sem,specificDepthV4sem] = helperDecoderMean...
+    (specificDiffBetweenDepthValues,specificDepthV1,specificDepthV4);
 
 % Plot the size of discriminated depth difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniqueDepthDiff, specificDepthV1mean, specificDepthV1sem, '.-m');
-    errorbar(uniqueDepthDiff, specificDepthV4mean, specificDepthV4sem, '.-b');
+    errorbar(specificUniqueDepthDiff, specificDepthV1mean, specificDepthV1sem, '.-m');
+    errorbar(specificUniqueDepthDiff, specificDepthV4mean, specificDepthV4sem, '.-b');
     % Plot parameters.
     title('Specific decoder performance for DEPTH');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated depths');
     ylabel('Proportion correct');
-    axis([min(uniqueDepthDiff)-50 max(uniqueDepthDiff)+50 0 1]);
+    axis([min(specificUniqueDepthDiff)-50 max(specificUniqueDepthDiff)+50 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniqueDepthDiff);
-    set(gca,'XTickLabel',uniqueDepthDiff);
+    set(gca,'XTick',specificUniqueDepthDiff);
+    set(gca,'XTickLabel',specificUniqueDepthDiff);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniqueDepthDiff = uniqueDepthDiff;
+dataAnalysis.specificUniqueDepthDiff = specificUniqueDepthDiff;
 dataAnalysis.specificDepthV1mean = specificDepthV1mean;
 dataAnalysis.specificDepthV4mean = specificDepthV4mean;
 dataAnalysis.specificDepthV1sem = specificDepthV1sem;
@@ -187,41 +187,41 @@ dataAnalysis.specificDepthV4sem = specificDepthV4sem;
 %
 % Calculate decoder performance for each combination of positions,
 % for each value of depth.
-[diffBetweenPositionValues_NoiseRotationMatched,specificPositionV1_NoiseRotationMatched,specificPositionV4_NoiseRotationMatched] = helperSpecificDecoderNoise1Matched ...
+[specificDiffBetweenPositionValues_NoiseRotationMatched,specificPositionV1_NoiseRotationMatched,specificPositionV4_NoiseRotationMatched] = helperSpecificDecoderNoise1Matched ...
     (positions,depths,imagePosition,imageDepth,specificPositionNumStim,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenPositionValues_NoiseRotationMatched = diffBetweenPositionValues_NoiseRotationMatched;
+dataAnalysis.specificDiffBetweenPositionValues_NoiseRotationMatched = specificDiffBetweenPositionValues_NoiseRotationMatched;
 dataAnalysis.specificPositionV1_NoiseRotationMatched = specificPositionV1_NoiseRotationMatched;
 dataAnalysis.specificPositionV4_NoiseRotationMatched = specificPositionV4_NoiseRotationMatched;
 
 %% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference, with ROTATION noise, with MATCHED stim numbers
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniquePositionDiff_NoiseRotationMatched,specificPositionV1mean_NoiseRotationMatched,specificPositionV4mean_NoiseRotationMatched,...
+[specificUniquePositionDiff_NoiseRotationMatched,specificPositionV1mean_NoiseRotationMatched,specificPositionV4mean_NoiseRotationMatched,...
  specificPositionV1sem_NoiseRotationMatched,specificPositionV4sem_NoiseRotationMatched] = helperDecoderMean...
-    (diffBetweenPositionValues_NoiseRotationMatched,specificPositionV1_NoiseRotationMatched,specificPositionV4_NoiseRotationMatched);
+    (specificDiffBetweenPositionValues_NoiseRotationMatched,specificPositionV1_NoiseRotationMatched,specificPositionV4_NoiseRotationMatched);
 
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniquePositionDiff_NoiseRotationMatched, specificPositionV1mean_NoiseRotationMatched, specificPositionV1sem_NoiseRotationMatched, '.-m');
-    errorbar(uniquePositionDiff_NoiseRotationMatched, specificPositionV4mean_NoiseRotationMatched, specificPositionV4sem_NoiseRotationMatched, '.-b');
+    errorbar(specificUniquePositionDiff_NoiseRotationMatched, specificPositionV1mean_NoiseRotationMatched, specificPositionV1sem_NoiseRotationMatched, '.-m');
+    errorbar(specificUniquePositionDiff_NoiseRotationMatched, specificPositionV4mean_NoiseRotationMatched, specificPositionV4sem_NoiseRotationMatched, '.-b');
     % Plot parameters.
     title('Specific decoder performance for POSITION with ROTATION noise, with MATCHED stim num');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([min(uniquePositionDiff_NoiseRotationMatched)-5 max(uniquePositionDiff_NoiseRotationMatched)+5 0 1]);
+    axis([min(specificUniquePositionDiff_NoiseRotationMatched)-5 max(specificUniquePositionDiff_NoiseRotationMatched)+5 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniquePositionDiff_NoiseRotationMatched);
-    set(gca,'XTickLabel',uniquePositionDiff_NoiseRotationMatched);
+    set(gca,'XTick',specificUniquePositionDiff_NoiseRotationMatched);
+    set(gca,'XTickLabel',specificUniquePositionDiff_NoiseRotationMatched);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniquePositionDiff_NoiseRotationMatched = uniquePositionDiff_NoiseRotationMatched;
+dataAnalysis.specificUniquePositionDiff_NoiseRotationMatched = specificUniquePositionDiff_NoiseRotationMatched;
 dataAnalysis.specificPositionV1mean_NoiseRotationMatched = specificPositionV1mean_NoiseRotationMatched;
 dataAnalysis.specificPositionV4mean_NoiseRotationMatched = specificPositionV4mean_NoiseRotationMatched;
 dataAnalysis.specificPositionV1sem_NoiseRotationMatched = specificPositionV1sem_NoiseRotationMatched;
@@ -231,41 +231,41 @@ dataAnalysis.specificPositionV4sem_NoiseRotationMatched = specificPositionV4sem_
 %
 % Calculate decoder performance for each combination of positions,
 % for each value of rotation.
-[diffBetweenPositionValues_NoiseDepthMatched,specificPositionV1_NoiseDepthMatched,specificPositionV4_NoiseDepthMatched] = helperSpecificDecoderNoise1Matched ...
+[specificDiffBetweenPositionValues_NoiseDepthMatched,specificPositionV1_NoiseDepthMatched,specificPositionV4_NoiseDepthMatched] = helperSpecificDecoderNoise1Matched ...
     (positions,rotations,imagePosition,imageRotation,specificPositionNumStim,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenPositionValues_NoiseDepthMatched = diffBetweenPositionValues_NoiseDepthMatched;
+dataAnalysis.specificDiffBetweenPositionValues_NoiseDepthMatched = specificDiffBetweenPositionValues_NoiseDepthMatched;
 dataAnalysis.specificPositionV1_NoiseDepthMatched = specificPositionV1_NoiseDepthMatched;
 dataAnalysis.specificPositionV4_NoiseDepthMatched = specificPositionV4_NoiseDepthMatched;
 
 %% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference, with DEPTH noise, with MATCHED stim numbers
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniquePositionDiff_NoiseDepthMatched,specificPositionV1mean_NoiseDepthMatched,specificPositionV4mean_NoiseDepthMatched,...
+[specificUniquePositionDiff_NoiseDepthMatched,specificPositionV1mean_NoiseDepthMatched,specificPositionV4mean_NoiseDepthMatched,...
  specificPositionV1sem_NoiseDepthMatched,specificPositionV4sem_NoiseDepthMatched] = helperDecoderMean...
-    (diffBetweenPositionValues_NoiseDepthMatched,specificPositionV1_NoiseDepthMatched,specificPositionV4_NoiseDepthMatched);
+    (specificDiffBetweenPositionValues_NoiseDepthMatched,specificPositionV1_NoiseDepthMatched,specificPositionV4_NoiseDepthMatched);
 
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniquePositionDiff_NoiseDepthMatched, specificPositionV1mean_NoiseDepthMatched, specificPositionV1sem_NoiseDepthMatched, '.-m');
-    errorbar(uniquePositionDiff_NoiseDepthMatched, specificPositionV4mean_NoiseDepthMatched, specificPositionV4sem_NoiseDepthMatched, '.-b');
+    errorbar(specificUniquePositionDiff_NoiseDepthMatched, specificPositionV1mean_NoiseDepthMatched, specificPositionV1sem_NoiseDepthMatched, '.-m');
+    errorbar(specificUniquePositionDiff_NoiseDepthMatched, specificPositionV4mean_NoiseDepthMatched, specificPositionV4sem_NoiseDepthMatched, '.-b');
     % Plot parameters.
     title('Specific decoder performance for POSITION with DEPTH noise, with MATCHED stim num');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([min(uniquePositionDiff_NoiseDepthMatched)-5 max(uniquePositionDiff_NoiseDepthMatched)+5 0 1]);
+    axis([min(specificUniquePositionDiff_NoiseDepthMatched)-5 max(specificUniquePositionDiff_NoiseDepthMatched)+5 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniquePositionDiff_NoiseDepthMatched);
-    set(gca,'XTickLabel',uniquePositionDiff_NoiseDepthMatched);
+    set(gca,'XTick',specificUniquePositionDiff_NoiseDepthMatched);
+    set(gca,'XTickLabel',specificUniquePositionDiff_NoiseDepthMatched);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniquePositionDiff_NoiseDepthMatched = uniquePositionDiff_NoiseDepthMatched;
+dataAnalysis.specificUniquePositionDiff_NoiseDepthMatched = specificUniquePositionDiff_NoiseDepthMatched;
 dataAnalysis.specificPositionV1mean_NoiseDepthMatched = specificPositionV1mean_NoiseDepthMatched;
 dataAnalysis.specificPositionV4mean_NoiseDepthMatched = specificPositionV4mean_NoiseDepthMatched;
 dataAnalysis.specificPositionV1sem_NoiseDepthMatched = specificPositionV1sem_NoiseDepthMatched;
@@ -274,41 +274,41 @@ dataAnalysis.specificPositionV4sem_NoiseDepthMatched = specificPositionV4sem_Noi
 %% Calculate specific decoder performance for central object POSITION with background object ROTATION and NOISE included as noise, with MATCHED stim numbers
 %
 % Calculate decoder performance for each combination of positions.
-[diffBetweenPositionValues_NoiseRotationDepthMatched,specificPositionV1_NoiseRotationDepthMatched,specificPositionV4_NoiseRotationDepthMatched] = helperSpecificDecoderNoise2Matched ...
+[specificDiffBetweenPositionValues_NoiseRotationDepthMatched,specificPositionV1_NoiseRotationDepthMatched,specificPositionV4_NoiseRotationDepthMatched] = helperSpecificDecoderNoise2Matched ...
     (positions,imagePosition,specificPositionNumStim,V1respInc,V4respInc);
 
 % Save to analysis output struct.
-dataAnalysis.diffBetweenPositionValues_NoiseRotationDepthMatched = diffBetweenPositionValues_NoiseRotationDepthMatched;
+dataAnalysis.specificDiffBetweenPositionValues_NoiseRotationDepthMatched = specificDiffBetweenPositionValues_NoiseRotationDepthMatched;
 dataAnalysis.specificPositionV1_NoiseRotationDepthMatched = specificPositionV1_NoiseRotationDepthMatched;
 dataAnalysis.specificPositionV4_NoiseRotationDepthMatched = specificPositionV4_NoiseRotationDepthMatched;
 
 %% Plot the mean performance for specific decoders of POSITION, per size of discriminated POSITION difference, with ROTATION and DEPTH noise, with MATCHED stim numbers
 %
 % Calculate the mean decoder performance per size difference in the discriminated values.
-[uniquePositionDiff_NoiseRotationDepthMatched,specificPositionV1mean_NoiseRotationDepthMatched,specificPositionV4mean_NoiseRotationDepthMatched,...
+[specificUniquePositionDiff_NoiseRotationDepthMatched,specificPositionV1mean_NoiseRotationDepthMatched,specificPositionV4mean_NoiseRotationDepthMatched,...
  specificPositionV1sem_NoiseRotationDepthMatched,specificPositionV4sem_NoiseRotationDepthMatched] = helperDecoderMean...
-    (diffBetweenPositionValues_NoiseRotationDepthMatched,specificPositionV1_NoiseRotationDepthMatched,specificPositionV4_NoiseRotationDepthMatched);
+    (specificDiffBetweenPositionValues_NoiseRotationDepthMatched,specificPositionV1_NoiseRotationDepthMatched,specificPositionV4_NoiseRotationDepthMatched);
 
 % Plot the size of discriminated position difference on the x-axis
 % and the mean decoder proportion correct on the y-axis.
 if plotFigures
     figure; hold on; axis square;
-    errorbar(uniquePositionDiff_NoiseRotationDepthMatched, specificPositionV1mean_NoiseRotationDepthMatched, specificPositionV1sem_NoiseRotationDepthMatched, '.-m');
-    errorbar(uniquePositionDiff_NoiseRotationDepthMatched, specificPositionV4mean_NoiseRotationDepthMatched, specificPositionV4sem_NoiseRotationDepthMatched, '.-b');
+    errorbar(specificUniquePositionDiff_NoiseRotationDepthMatched, specificPositionV1mean_NoiseRotationDepthMatched, specificPositionV1sem_NoiseRotationDepthMatched, '.-m');
+    errorbar(specificUniquePositionDiff_NoiseRotationDepthMatched, specificPositionV4mean_NoiseRotationDepthMatched, specificPositionV4sem_NoiseRotationDepthMatched, '.-b');
     % Plot parameters.
     title('Specific decoder performance for POSITION with ROTATION & DEPTH noise, with MATCHED stim num');
     legend('V1','V4','Location','NorthWest');
     xlabel('Difference between discriminated positions');
     ylabel('Proportion correct');
-    axis([min(uniquePositionDiff_NoiseRotationDepthMatched)-5 max(uniquePositionDiff_NoiseRotationDepthMatched)+5 0 1]);
+    axis([min(specificUniquePositionDiff_NoiseRotationDepthMatched)-5 max(specificUniquePositionDiff_NoiseRotationDepthMatched)+5 0 1]);
     set(gca,'tickdir','out');
-    set(gca,'XTick',uniquePositionDiff_NoiseRotationDepthMatched);
-    set(gca,'XTickLabel',uniquePositionDiff_NoiseRotationDepthMatched);
+    set(gca,'XTick',specificUniquePositionDiff_NoiseRotationDepthMatched);
+    set(gca,'XTickLabel',specificUniquePositionDiff_NoiseRotationDepthMatched);
     box off; hold off;
 end
 
 % Save to analysis output struct.
-dataAnalysis.uniquePositionDiff_NoiseRotationDepthMatched = uniquePositionDiff_NoiseRotationDepthMatched;
+dataAnalysis.specificUniquePositionDiff_NoiseRotationDepthMatched = specificUniquePositionDiff_NoiseRotationDepthMatched;
 dataAnalysis.specificPositionV1mean_NoiseRotationDepthMatched = specificPositionV1mean_NoiseRotationDepthMatched;
 dataAnalysis.specificPositionV4mean_NoiseRotationDepthMatched = specificPositionV4mean_NoiseRotationDepthMatched;
 dataAnalysis.specificPositionV1sem_NoiseRotationDepthMatched = specificPositionV1sem_NoiseRotationDepthMatched;
@@ -398,6 +398,51 @@ for yy = 1:numel(Y)
             end
         end
     end
+end
+end
+
+%% Helper function: Calculate mean decoder performance per size difference in discriminated values
+%
+% Description:
+%	Separate the decoders into groups based each decoder's difference in 
+%   size between the two discriminated values. Then calculate the mean
+%   decoder performance per group.
+%
+% Inputs:
+%   diffBetweenValues : (num decoders tested x 1) difference between the two values discriminated per decoder
+%   decoderV1         : (num decoders tested x 1) for V1, proportion correct per decoder
+%   decoderV4         : (num decoders tested x 1) for V4, proportion correct per decoder
+%
+% Outputs:
+%   valueDiff     : (num x 1) unique values of the size difference in the values discriminated by the decoder 
+%   decoderV1mean : (num x 1) for V1, mean decoder performance per size difference
+%   decoderV4mean : (num x 1) for V4, mean decoder performance per size difference
+%   decoderV1sem  : (num x 1) for V1, standard error of the mean (SEM) for mean decoder performance
+%   decoderV4sem  : (num x 1) for V4, standard error of the mean (SEM) for mean decoder performance
+
+function [valueDiff,decoderV1mean,decoderV4mean,decoderV1sem,decoderV4sem] = helperDecoderMean(diffBetweenValues,decoderV1,decoderV4)
+% Get the unique values of the size difference in the values discriminated by the decoder.
+valueDiff = unique(diffBetweenValues);
+
+% Calculate the mean and sem of the decoder performance per group.
+decoderV1mean = nan(numel(valueDiff),1);
+decoderV4mean = nan(numel(valueDiff),1);
+decoderV1sem  = nan(numel(valueDiff),1);
+decoderV4sem  = nan(numel(valueDiff),1);
+for ii = 1:numel(valueDiff)
+    diffThis = valueDiff(ii);
+    
+    % Get performances of decoders that discriminated this size difference.
+    V1this = decoderV1(diffBetweenValues==diffThis);
+    V4this = decoderV4(diffBetweenValues==diffThis);
+    
+    % Calculate mean decoder performance for this size difference.
+    decoderV1mean(ii,1) = nanmean(V1this);
+    decoderV4mean(ii,1) = nanmean(V4this);
+    
+    % Calculate standard error of the mean (SEM).
+    decoderV1sem(ii,1) = nanstd(V1this) / sqrt(sum(~isnan(V1this)));
+    decoderV4sem(ii,1) = nanstd(V4this) / sqrt(sum(~isnan(V4this)));
 end
 end
 
@@ -583,51 +628,6 @@ for ii = 1:numel(X)
         decoderV1(row) = nanmean(V1pcAll);
         decoderV4(row) = nanmean(V4pcAll);
     end
-end
-end
-
-%% Helper function: Calculate mean decoder performance per size difference in discriminated values
-%
-% Description:
-%	Separate the decoders into groups based each decoder's difference in 
-%   size between the two discriminated values. Then calculate the mean
-%   decoder performance per group.
-%
-% Inputs:
-%   diffBetweenValues : (num decoders tested x 1) difference between the two values discriminated per decoder
-%   decoderV1         : (num decoders tested x 1) for V1, proportion correct per decoder
-%   decoderV4         : (num decoders tested x 1) for V4, proportion correct per decoder
-%
-% Outputs:
-%   valueDiff     : (num x 1) unique values of the size difference in the values discriminated by the decoder 
-%   decoderV1mean : (num x 1) for V1, mean decoder performance per size difference
-%   decoderV4mean : (num x 1) for V4, mean decoder performance per size difference
-%   decoderV1sem  : (num x 1) for V1, standard error of the mean (SEM) for mean decoder performance
-%   decoderV4sem  : (num x 1) for V4, standard error of the mean (SEM) for mean decoder performance
-
-function [valueDiff,decoderV1mean,decoderV4mean,decoderV1sem,decoderV4sem] = helperDecoderMean(diffBetweenValues,decoderV1,decoderV4)
-% Get the unique values of the size difference in the values discriminated by the decoder.
-valueDiff = unique(diffBetweenValues);
-
-% Calculate the mean and sem of the decoder performance per group.
-decoderV1mean = nan(numel(valueDiff),1);
-decoderV4mean = nan(numel(valueDiff),1);
-decoderV1sem  = nan(numel(valueDiff),1);
-decoderV4sem  = nan(numel(valueDiff),1);
-for ii = 1:numel(valueDiff)
-    diffThis = valueDiff(ii);
-    
-    % Get performances of decoders that discriminated this size difference.
-    V1this = decoderV1(diffBetweenValues==diffThis);
-    V4this = decoderV4(diffBetweenValues==diffThis);
-    
-    % Calculate mean decoder performance for this size difference.
-    decoderV1mean(ii,1) = nanmean(V1this);
-    decoderV4mean(ii,1) = nanmean(V4this);
-    
-    % Calculate standard error of the mean (SEM).
-    decoderV1sem(ii,1) = nanstd(V1this) / sqrt(sum(~isnan(V1this)));
-    decoderV4sem(ii,1) = nanstd(V4this) / sqrt(sum(~isnan(V4this)));
 end
 end
 
