@@ -32,7 +32,7 @@ paramsFree = [1 1 1 1];
 searchGrid = [mean(x) 1/(max(x)-min(x)) 0 0];
 
 % Set up lapse limits.
-lapseLimits   = [0 0.05];
+lapseLimits = [0 0.05];
 
 % Set up standard options for Palamedes search.
 options = PAL_minimize('options');
