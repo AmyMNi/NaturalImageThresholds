@@ -1,4 +1,4 @@
-function runCompareLuminance(varargin)
+function [meanLuminance,luminanceNoiseLevel0,luminanceNoiseLevel1,luminanceNoiseLevel2] = runCompareLuminance(varargin)
 %runCompareLuminance
 %
 % Usage:
@@ -78,7 +78,6 @@ end
 % Get the unique image values.
 conditions  = unique(imageCondition);
 comparisons = unique(imageComparison);
-noiseLevels = unique(imageNoiseLevel);
 
 %% Calculate the mean luminance per image
 meanLuminance = nan(nImages,1);
