@@ -74,7 +74,16 @@ nConditions  = numel(conditions);
 nComparisons = numel(comparisons);
 
 %% Save performance data from each session
+row = 1;
 for ii = 1:length(fileInfo)
+    
+    % Exclude session for specified participant (see CM session notes for
+    % details).
+    if strcmp(subjectName,'CNSN_0009')
+        if ii==3 || ii==5
+            continue
+        end
+    end
     
     % Specify the .mat file for a session.
     fileToLoad = fullfile(pathToFolder,fileInfo(ii).name);
@@ -155,28 +164,29 @@ for ii = 1:length(fileInfo)
         reactionTimeAllLARGE2 = nanmean(reactionTimeLARGE2,2);
         
         % Store data.
-        dataExperiment.performance.(noiseLevelName).NumPos      (:,ii) = NumPosAll;
-        dataExperiment.performance.(noiseLevelName).OutOfNum    (:,ii) = OutOfNumAll;
-        dataExperiment.performance.(noiseLevelName).reactionTime(:,ii) = reactionTimeAll;
-        dataExperiment.performance.(noiseLevelName).NumPosZERO1       (:,ii) = NumPosAllZERO1;
-        dataExperiment.performance.(noiseLevelName).OutOfNumZERO1     (:,ii) = OutOfNumAllZERO1;
-        dataExperiment.performance.(noiseLevelName).reactionTimeZERO1 (:,ii) = reactionTimeAllZERO1;
-        dataExperiment.performance.(noiseLevelName).NumPosSMALL1      (:,ii) = NumPosAllSMALL1;
-        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1    (:,ii) = OutOfNumAllSMALL1;
-        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL1(:,ii) = reactionTimeAllSMALL1;
-        dataExperiment.performance.(noiseLevelName).NumPosLARGE1      (:,ii) = NumPosAllLARGE1;
-        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1    (:,ii) = OutOfNumAllLARGE1;
-        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE1(:,ii) = reactionTimeAllLARGE1;
-        dataExperiment.performance.(noiseLevelName).NumPosZERO2       (:,ii) = NumPosAllZERO2;
-        dataExperiment.performance.(noiseLevelName).OutOfNumZERO2     (:,ii) = OutOfNumAllZERO2;
-        dataExperiment.performance.(noiseLevelName).reactionTimeZERO2 (:,ii) = reactionTimeAllZERO2;
-        dataExperiment.performance.(noiseLevelName).NumPosSMALL2      (:,ii) = NumPosAllSMALL2;
-        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2    (:,ii) = OutOfNumAllSMALL2;
-        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL2(:,ii) = reactionTimeAllSMALL2;
-        dataExperiment.performance.(noiseLevelName).NumPosLARGE2      (:,ii) = NumPosAllLARGE2;
-        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2    (:,ii) = OutOfNumAllLARGE2;
-        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE2(:,ii) = reactionTimeAllLARGE2;
+        dataExperiment.performance.(noiseLevelName).NumPos            (:,row) = NumPosAll;
+        dataExperiment.performance.(noiseLevelName).OutOfNum          (:,row) = OutOfNumAll;
+        dataExperiment.performance.(noiseLevelName).reactionTime      (:,row) = reactionTimeAll;
+        dataExperiment.performance.(noiseLevelName).NumPosZERO1       (:,row) = NumPosAllZERO1;
+        dataExperiment.performance.(noiseLevelName).OutOfNumZERO1     (:,row) = OutOfNumAllZERO1;
+        dataExperiment.performance.(noiseLevelName).reactionTimeZERO1 (:,row) = reactionTimeAllZERO1;
+        dataExperiment.performance.(noiseLevelName).NumPosSMALL1      (:,row) = NumPosAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1    (:,row) = OutOfNumAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL1(:,row) = reactionTimeAllSMALL1;
+        dataExperiment.performance.(noiseLevelName).NumPosLARGE1      (:,row) = NumPosAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1    (:,row) = OutOfNumAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE1(:,row) = reactionTimeAllLARGE1;
+        dataExperiment.performance.(noiseLevelName).NumPosZERO2       (:,row) = NumPosAllZERO2;
+        dataExperiment.performance.(noiseLevelName).OutOfNumZERO2     (:,row) = OutOfNumAllZERO2;
+        dataExperiment.performance.(noiseLevelName).reactionTimeZERO2 (:,row) = reactionTimeAllZERO2;
+        dataExperiment.performance.(noiseLevelName).NumPosSMALL2      (:,row) = NumPosAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2    (:,row) = OutOfNumAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).reactionTimeSMALL2(:,row) = reactionTimeAllSMALL2;
+        dataExperiment.performance.(noiseLevelName).NumPosLARGE2      (:,row) = NumPosAllLARGE2;
+        dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2    (:,row) = OutOfNumAllLARGE2;
+        dataExperiment.performance.(noiseLevelName).reactionTimeLARGE2(:,row) = reactionTimeAllLARGE2;
     end
+    row = row+1;
 end
 
 %% Convert comparison amounts from mm to degrees of visual angle for plotting
