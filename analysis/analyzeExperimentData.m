@@ -19,6 +19,22 @@ function data = analyzeExperimentData(varargin)
 % History:
 %   07/02/21  amn  Wrote it.
 
+% Examples:
+%{
+    clear; close all;
+    analyzeExperimentData('subjectName','CNSN_0001');
+    analyzeExperimentData('subjectName','CNSN_0002');
+    analyzeExperimentData('subjectName','CNSN_0005');
+    analyzeExperimentData('subjectName','CNSN_0008');
+    analyzeExperimentData('subjectName','CNSN_0009');
+    analyzeExperimentData('subjectName','CNSN_0010');
+    analyzeExperimentData('subjectName','CNSN_0013');
+    analyzeExperimentData('subjectName','CNSN_0014');
+    analyzeExperimentData('subjectName','CNSN_0016');
+    analyzeExperimentData('subjectName','CNSN_0018');
+    analyzeExperimentData('subjectName','CNSN_0019');
+%}
+
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment100', @ischar);
@@ -40,12 +56,13 @@ projectName = 'NaturalImageThresholds';
 % Set path to data folder.
 subjectFolder = sprintf('%s%s','subject',subjectName);
 pathToFolder  = fullfile(getpref(projectName,'BaseDirAnalysis'),experimentName, ...
-                        'PsychophysicalDataAnalysis',subjectFolder);
+    'PsychophysicalDataAnalysis',subjectFolder);
 
 % Set path to the file to save.
 fileName = sprintf('%s%s.mat','experimentAnalysis',subjectName);
 pathToOutputFile = fullfile(pathToFolder,fileName);
-    
+pathToBasicFig = fullfile(pathToFolder,sprintf('%s%s.tiff','psychometricFig',subjectName));
+
 %% Get names of all data files in the data folder
 %
 % List .mat files in the folder.
@@ -76,7 +93,7 @@ nComparisons = numel(comparisons);
 %% Save performance data from each session
 row = 1;
 for ii = 1:length(fileInfo)
-    
+
     % Exclude session for specified participant (see CM session notes for
     % details).
     if strcmp(subjectName,'CNSN_0009')
@@ -84,13 +101,13 @@ for ii = 1:length(fileInfo)
             continue
         end
     end
-    
+
     % Specify the .mat file for a session.
     fileToLoad = fullfile(pathToFolder,fileInfo(ii).name);
-    
+
     % Load the data variable contained in this .mat file.
     temp = load(fileToLoad,'data'); data = temp.data; clear temp;
-    
+
     % Save the performance data from this session.
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
@@ -139,7 +156,7 @@ for ii = 1:length(fileInfo)
             OutOfNumLARGE2    (:,jj) = data.performance.(noiseLevelName).(conditionName).OutOfNumLARGE2;
             reactionTimeLARGE2(:,jj) = data.performance.(noiseLevelName).(conditionName).reactionTimeLARGE2;
         end
-        
+
         % For this session, calculate across the conditions of this noise level.
         NumPosAll       = sum(NumPos,  2);
         OutOfNumAll     = sum(OutOfNum,2);
@@ -162,7 +179,7 @@ for ii = 1:length(fileInfo)
         NumPosAllLARGE2       = sum(NumPosLARGE2,  2);
         OutOfNumAllLARGE2     = sum(OutOfNumLARGE2,2);
         reactionTimeAllLARGE2 = nanmean(reactionTimeLARGE2,2);
-        
+
         % Store data.
         dataExperiment.performance.(noiseLevelName).NumPos            (:,row) = NumPosAll;
         dataExperiment.performance.(noiseLevelName).OutOfNum          (:,row) = OutOfNumAll;
@@ -203,20 +220,20 @@ colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 threshold = nan(nNoiseLevels,1);
 pse       = nan(nNoiseLevels,1);
 if plotFigures
-    figure; hold on;
+    basicFig = figure; hold on;
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        
+
         % Average performance across all sessions.
         performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
         performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
         NumPos   = sum(performanceAllNumPos,  2);
-        OutOfNum = sum(performanceAllOutOfNum,2); 
+        OutOfNum = sum(performanceAllOutOfNum,2);
         performanceAll = NumPos./OutOfNum;
-        
+
         % Plot data.
         plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        
+
         % Plot psychometric function fit.
         [xx,FittedCurve,thresholdthis,psethis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
         plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
@@ -241,347 +258,355 @@ end
 %% Plot performance for each noise level as above, but separated by NoiseAmounts1 combination level (smaller, larger)
 %
 % Plot colors for each noise level.
-colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+plotSeparatedNoise = false;
+if (plotSeparatedNoise)
+    colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
-% Plot all noise levels.
-threshold = nan(nNoiseLevels+nNoiseLevels-1,1);
-row = 1;
-if plotFigures
-    figure; hold on;
-    
-    % Average performance across all sessions, for the first noise level (NoiseLevel0).
-    noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(1));
-    performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
-    performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
-    NumPos   = sum(performanceAllNumPos,  2);
-    OutOfNum = sum(performanceAllOutOfNum,2);
-    performanceAll = NumPos./OutOfNum;
-    
-    % Plot data.
-    plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{1},'MarkerEdge',colors{1});
-    
-    % Plot psychometric function fit.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{1});
-    threshold(row) = thresholdthis;
-    row = row+1;
-    
-    % Plot average performance across all sessions for the other noise levels, per noise amount combination level.   
-    for nn = 2:nNoiseLevels
-        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        
+    % Plot all noise levels.
+    threshold = nan(nNoiseLevels+nNoiseLevels-1,1);
+    row = 1;
+    if plotFigures
+        figure; hold on;
+
+        % Average performance across all sessions, for the first noise level (NoiseLevel0).
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(1));
+        performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
+        performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
+        NumPos   = sum(performanceAllNumPos,  2);
+        OutOfNum = sum(performanceAllOutOfNum,2);
+        performanceAll = NumPos./OutOfNum;
+
+        % Plot data.
+        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{1},'MarkerEdge',colors{1});
+
+        % Plot psychometric function fit.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{1});
+        threshold(row) = thresholdthis;
+        row = row+1;
+
+        % Plot average performance across all sessions for the other noise levels, per noise amount combination level.
+        for nn = 2:nNoiseLevels
+            noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+
+            % Average performance across all sessions.
+            performanceAllNumPosSMALL1   = dataExperiment.performance.(noiseLevelName).NumPosSMALL1;
+            performanceAllOutOfNumSMALL1 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1;
+            performanceAllNumPosLARGE1   = dataExperiment.performance.(noiseLevelName).NumPosLARGE1;
+            performanceAllOutOfNumLARGE1 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1;
+            NumPosSMALL   = sum(performanceAllNumPosSMALL1,  2);
+            OutOfNumSMALL = sum(performanceAllOutOfNumSMALL1,2);
+            performanceAllSMALL = NumPosSMALL./OutOfNumSMALL;
+            NumPosLARGE   = sum(performanceAllNumPosLARGE1,  2);
+            OutOfNumLARGE = sum(performanceAllOutOfNumLARGE1,2);
+            performanceAllLARGE = NumPosLARGE./OutOfNumLARGE;
+
+            % Plot data: SMALL noise amount combination level.
+            plot(comparisonsDeg,performanceAllSMALL,'o','MarkerFace','w','MarkerEdge',colors{nn});
+            % Plot psychometric function fit: SMALL noise amount combination level.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosSMALL,OutOfNumSMALL);
+            plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+
+            % Plot data: LARGE noise amount combination level.
+            plot(comparisonsDeg,performanceAllLARGE,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+            % Plot psychometric function fit: LARGE noise amount combination level.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosLARGE,OutOfNumLARGE);
+            plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+        end
+        % Plot parameters.
+        title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+            ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
+            ' threshold2=(',threshold(4),',',threshold(5),')'),''},'Interpreter','none');
+        legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit', ...
+            'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
+        xlabel(sprintf('Comparison offset rightward (deg)'));
+        ylabel('Proportion chose comparison as rightward');
+        axis([-Inf Inf 0 1]);
+        set(gca,'tickdir','out');
+        set(gca,'XTick',comparisonsDeg);
+        set(gca,'XTickLabel',comparisonsDeg);
+        xtickformat('%.1f');
+        box off; hold off;
+    end
+
+    %% Plot performance for each noise level as above, but separated by NoiseAmounts2 combination level (smaller, larger)
+    %
+    % Plot colors for each noise level.
+    colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+
+    % Plot all noise levels.
+    threshold = nan(nNoiseLevels+nNoiseLevels-2,1);
+    row = 1;
+    if plotFigures
+        figure; hold on;
+
+        % Average performance across all sessions, for NoiseLevel0 and NoiseLevel1.
+        for nn = 1:2
+            noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+            performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
+            performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
+            NumPos   = sum(performanceAllNumPos,  2);
+            OutOfNum = sum(performanceAllOutOfNum,2);
+            performanceAll = NumPos./OutOfNum;
+
+            % Plot data.
+            plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+
+            % Plot psychometric function fit.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+            plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+        end
+
+        % Plot average performance across all sessions for NoiseLevel2, per noise amount combination level.
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(3));
+
         % Average performance across all sessions.
-        performanceAllNumPosSMALL1   = dataExperiment.performance.(noiseLevelName).NumPosSMALL1;
-        performanceAllOutOfNumSMALL1 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL1;
-        performanceAllNumPosLARGE1   = dataExperiment.performance.(noiseLevelName).NumPosLARGE1;
-        performanceAllOutOfNumLARGE1 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE1;
-        NumPosSMALL   = sum(performanceAllNumPosSMALL1,  2);
-        OutOfNumSMALL = sum(performanceAllOutOfNumSMALL1,2); 
+        performanceAllNumPosSMALL2   = dataExperiment.performance.(noiseLevelName).NumPosSMALL2;
+        performanceAllOutOfNumSMALL2 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2;
+        performanceAllNumPosLARGE2   = dataExperiment.performance.(noiseLevelName).NumPosLARGE2;
+        performanceAllOutOfNumLARGE2 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2;
+        NumPosSMALL   = sum(performanceAllNumPosSMALL2,  2);
+        OutOfNumSMALL = sum(performanceAllOutOfNumSMALL2,2);
         performanceAllSMALL = NumPosSMALL./OutOfNumSMALL;
-        NumPosLARGE   = sum(performanceAllNumPosLARGE1,  2);
-        OutOfNumLARGE = sum(performanceAllOutOfNumLARGE1,2); 
+        NumPosLARGE   = sum(performanceAllNumPosLARGE2,  2);
+        OutOfNumLARGE = sum(performanceAllOutOfNumLARGE2,2);
         performanceAllLARGE = NumPosLARGE./OutOfNumLARGE;
-        
+
         % Plot data: SMALL noise amount combination level.
-        plot(comparisonsDeg,performanceAllSMALL,'o','MarkerFace','w','MarkerEdge',colors{nn});
+        plot(comparisonsDeg,performanceAllSMALL,'o','MarkerFace','w','MarkerEdge',colors{3});
         % Plot psychometric function fit: SMALL noise amount combination level.
         [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosSMALL,OutOfNumSMALL);
-        plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{nn});
+        plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{3});
         threshold(row) = thresholdthis;
         row = row+1;
-        
+
         % Plot data: LARGE noise amount combination level.
-        plot(comparisonsDeg,performanceAllLARGE,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+        plot(comparisonsDeg,performanceAllLARGE,'o','MarkerFace',colors{3},'MarkerEdge',colors{3});
         % Plot psychometric function fit: LARGE noise amount combination level.
         [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosLARGE,OutOfNumLARGE);
-        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
         threshold(row) = thresholdthis;
-        row = row+1;  
+
+        % Plot parameters.
+        title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+            ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
+            ' threshold2=(',threshold(3),',',threshold(4),')'),''},'Interpreter','none');
+        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
+            'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
+        xlabel(sprintf('Comparison offset rightward (deg)'));
+        ylabel('Proportion chose comparison as rightward');
+        axis([-Inf Inf 0 1]);
+        set(gca,'tickdir','out');
+        set(gca,'XTick',comparisonsDeg);
+        set(gca,'XTickLabel',comparisonsDeg);
+        xtickformat('%.1f');
+        box off; hold off;
     end
-    % Plot parameters.
-    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-        ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
-        ' threshold2=(',threshold(4),',',threshold(5),')'),''},'Interpreter','none');
-    legend('Noise0 data','Noise0 fit','Noise1 SMALLER data','Noise1 SMALLER fit','Noise1 LARGER data','Noise1 LARGER fit', ...
-        'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
-    xlabel(sprintf('Comparison offset rightward (deg)'));
-    ylabel('Proportion chose comparison as rightward');
-    axis([-Inf Inf 0 1]);
-    set(gca,'tickdir','out');
-    set(gca,'XTick',comparisonsDeg);
-    set(gca,'XTickLabel',comparisonsDeg);
-    xtickformat('%.1f');
-    box off; hold off;
-end
 
-%% Plot performance for each noise level as above, but separated by NoiseAmounts2 combination level (smaller, larger)
-%
-% Plot colors for each noise level.
-colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+    %% Plot performance for each noise level as above, but separated by NoiseAmounts1 combination level (0, all)
+    %
+    % Plot colors for each noise level.
+    colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
-% Plot all noise levels.
-threshold = nan(nNoiseLevels+nNoiseLevels-2,1);
-row = 1;
-if plotFigures
-    figure; hold on;
-    
-    % Average performance across all sessions, for NoiseLevel0 and NoiseLevel1.
-    for nn = 1:2
-        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+    % Plot all noise levels.
+    threshold = nan(nNoiseLevels+nNoiseLevels-1,1);
+    row = 1;
+    if plotFigures
+        figure; hold on;
+
+        % Average performance across all sessions, for the first noise level (NoiseLevel0).
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(1));
         performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
         performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
         NumPos   = sum(performanceAllNumPos,  2);
         OutOfNum = sum(performanceAllOutOfNum,2);
         performanceAll = NumPos./OutOfNum;
-        
+
         % Plot data.
-        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        
+        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{1},'MarkerEdge',colors{1});
+
         % Plot psychometric function fit.
         [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{1});
         threshold(row) = thresholdthis;
         row = row+1;
+
+        % Plot average performance across all sessions for the other noise levels, per noise amount combination level.
+        for nn = 2:nNoiseLevels
+            noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+
+            % Average performance across all sessions.
+            performanceAllNumPosZERO1   = dataExperiment.performance.(noiseLevelName).NumPosZERO1;
+            performanceAllOutOfNumZERO1 = dataExperiment.performance.(noiseLevelName).OutOfNumZERO1;
+            performanceAllNumPos        = dataExperiment.performance.(noiseLevelName).NumPos;
+            performanceAllOutOfNum      = dataExperiment.performance.(noiseLevelName).OutOfNum;
+            NumPosZERO   = sum(performanceAllNumPosZERO1,  2);
+            OutOfNumZERO = sum(performanceAllOutOfNumZERO1,2);
+            performanceAllZERO = NumPosZERO./OutOfNumZERO;
+            NumPos   = sum(performanceAllNumPos,  2);
+            OutOfNum = sum(performanceAllOutOfNum,2);
+            performanceAll = NumPos./OutOfNum;
+
+            % Plot data: ZERO noise amount combination level.
+            plot(comparisonsDeg,performanceAllZERO,'o','MarkerFace','w','MarkerEdge',colors{nn});
+            % Plot psychometric function fit: ZERO noise amount combination level.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosZERO,OutOfNumZERO);
+            plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+
+            % Plot data: ALL noise amount combination level.
+            plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+            % Plot psychometric function fit: ALL noise amount combination level.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+            plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+        end
+        % Plot parameters.
+        title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+            ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
+            ' threshold2=(',threshold(4),',',threshold(5),')'),''},'Interpreter','none');
+        legend('Noise0 data','Noise0 fit','Noise1 ZERO NOISE data','Noise1 ZERO NOISE fit','Noise1 ALL data','Noise1 ALL fit', ...
+            'Noise2 ZERO NOISE data','Noise2 ZERO NOISE fit','Noise2 ALL data','Noise2 ALL fit','Location','northwest')
+        xlabel(sprintf('Comparison offset rightward (deg)'));
+        ylabel('Proportion chose comparison as rightward');
+        axis([-Inf Inf 0 1]);
+        set(gca,'tickdir','out');
+        set(gca,'XTick',comparisonsDeg);
+        set(gca,'XTickLabel',comparisonsDeg);
+        xtickformat('%.1f');
+        box off; hold off;
     end
-    
-    % Plot average performance across all sessions for NoiseLevel2, per noise amount combination level.   
-    noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(3));
-    
-    % Average performance across all sessions.
-    performanceAllNumPosSMALL2   = dataExperiment.performance.(noiseLevelName).NumPosSMALL2;
-    performanceAllOutOfNumSMALL2 = dataExperiment.performance.(noiseLevelName).OutOfNumSMALL2;
-    performanceAllNumPosLARGE2   = dataExperiment.performance.(noiseLevelName).NumPosLARGE2;
-    performanceAllOutOfNumLARGE2 = dataExperiment.performance.(noiseLevelName).OutOfNumLARGE2;
-    NumPosSMALL   = sum(performanceAllNumPosSMALL2,  2);
-    OutOfNumSMALL = sum(performanceAllOutOfNumSMALL2,2);
-    performanceAllSMALL = NumPosSMALL./OutOfNumSMALL;
-    NumPosLARGE   = sum(performanceAllNumPosLARGE2,  2);
-    OutOfNumLARGE = sum(performanceAllOutOfNumLARGE2,2);
-    performanceAllLARGE = NumPosLARGE./OutOfNumLARGE;
-    
-    % Plot data: SMALL noise amount combination level.
-    plot(comparisonsDeg,performanceAllSMALL,'o','MarkerFace','w','MarkerEdge',colors{3});
-    % Plot psychometric function fit: SMALL noise amount combination level.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosSMALL,OutOfNumSMALL);
-    plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{3});
-    threshold(row) = thresholdthis;
-    row = row+1;
-    
-    % Plot data: LARGE noise amount combination level.
-    plot(comparisonsDeg,performanceAllLARGE,'o','MarkerFace',colors{3},'MarkerEdge',colors{3});
-    % Plot psychometric function fit: LARGE noise amount combination level.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosLARGE,OutOfNumLARGE);
-    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
-    threshold(row) = thresholdthis;
 
-    % Plot parameters.
-    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-        ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
-        ' threshold2=(',threshold(3),',',threshold(4),')'),''},'Interpreter','none');
-    legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
-        'Noise2 SMALLER data','Noise2 SMALLER fit','Noise2 LARGER data','Noise2 LARGER fit','Location','northwest')
-    xlabel(sprintf('Comparison offset rightward (deg)'));
-    ylabel('Proportion chose comparison as rightward');
-    axis([-Inf Inf 0 1]);
-    set(gca,'tickdir','out');
-    set(gca,'XTick',comparisonsDeg);
-    set(gca,'XTickLabel',comparisonsDeg);
-    xtickformat('%.1f');
-    box off; hold off;
-end
+    %% Plot performance for each noise level as above, but separated by NoiseAmounts2 combination level (0, all)
+    %
+    % Plot colors for each noise level.
+    colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
-%% Plot performance for each noise level as above, but separated by NoiseAmounts1 combination level (0, all)
-%
-% Plot colors for each noise level.
-colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+    % Plot all noise levels.
+    threshold = nan(nNoiseLevels+nNoiseLevels-2,1);
+    row = 1;
+    if plotFigures
+        figure; hold on;
 
-% Plot all noise levels.
-threshold = nan(nNoiseLevels+nNoiseLevels-1,1);
-row = 1;
-if plotFigures
-    figure; hold on;
-    
-    % Average performance across all sessions, for the first noise level (NoiseLevel0).
-    noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(1));
-    performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
-    performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
-    NumPos   = sum(performanceAllNumPos,  2);
-    OutOfNum = sum(performanceAllOutOfNum,2);
-    performanceAll = NumPos./OutOfNum;
-    
-    % Plot data.
-    plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{1},'MarkerEdge',colors{1});
-    
-    % Plot psychometric function fit.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{1});
-    threshold(row) = thresholdthis;
-    row = row+1;
-    
-    % Plot average performance across all sessions for the other noise levels, per noise amount combination level.   
-    for nn = 2:nNoiseLevels
-        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        
+        % Average performance across all sessions, for NoiseLevel0 and NoiseLevel1.
+        for nn = 1:2
+            noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+            performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
+            performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
+            NumPos   = sum(performanceAllNumPos,  2);
+            OutOfNum = sum(performanceAllOutOfNum,2);
+            performanceAll = NumPos./OutOfNum;
+
+            % Plot data.
+            plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
+
+            % Plot psychometric function fit.
+            [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+            plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+            threshold(row) = thresholdthis;
+            row = row+1;
+        end
+
+        % Plot average performance across all sessions for NoiseLevel2, per noise amount combination level.
+        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(3));
+
         % Average performance across all sessions.
-        performanceAllNumPosZERO1   = dataExperiment.performance.(noiseLevelName).NumPosZERO1;
-        performanceAllOutOfNumZERO1 = dataExperiment.performance.(noiseLevelName).OutOfNumZERO1;
+        performanceAllNumPosZERO2   = dataExperiment.performance.(noiseLevelName).NumPosZERO2;
+        performanceAllOutOfNumZERO2 = dataExperiment.performance.(noiseLevelName).OutOfNumZERO2;
         performanceAllNumPos        = dataExperiment.performance.(noiseLevelName).NumPos;
         performanceAllOutOfNum      = dataExperiment.performance.(noiseLevelName).OutOfNum;
-        NumPosZERO   = sum(performanceAllNumPosZERO1,  2);
-        OutOfNumZERO = sum(performanceAllOutOfNumZERO1,2); 
+        NumPosZERO   = sum(performanceAllNumPosZERO2,  2);
+        OutOfNumZERO = sum(performanceAllOutOfNumZERO2,2);
         performanceAllZERO = NumPosZERO./OutOfNumZERO;
-        NumPos   = sum(performanceAllNumPos,  2);
-        OutOfNum = sum(performanceAllOutOfNum,2); 
-        performanceAll = NumPos./OutOfNum;
-        
-        % Plot data: ZERO noise amount combination level.
-        plot(comparisonsDeg,performanceAllZERO,'o','MarkerFace','w','MarkerEdge',colors{nn});
-        % Plot psychometric function fit: ZERO noise amount combination level.
-        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosZERO,OutOfNumZERO);
-        plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{nn});
-        threshold(row) = thresholdthis;
-        row = row+1;
-        
-        % Plot data: ALL noise amount combination level.
-        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        % Plot psychometric function fit: ALL noise amount combination level.
-        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
-        threshold(row) = thresholdthis;
-        row = row+1;  
-    end
-    % Plot parameters.
-    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-        ': threshold0=',threshold(1),' threshold1=(',threshold(2),',',threshold(3),')', ...
-        ' threshold2=(',threshold(4),',',threshold(5),')'),''},'Interpreter','none');
-    legend('Noise0 data','Noise0 fit','Noise1 ZERO NOISE data','Noise1 ZERO NOISE fit','Noise1 ALL data','Noise1 ALL fit', ...
-        'Noise2 ZERO NOISE data','Noise2 ZERO NOISE fit','Noise2 ALL data','Noise2 ALL fit','Location','northwest')
-    xlabel(sprintf('Comparison offset rightward (deg)'));
-    ylabel('Proportion chose comparison as rightward');
-    axis([-Inf Inf 0 1]);
-    set(gca,'tickdir','out');
-    set(gca,'XTick',comparisonsDeg);
-    set(gca,'XTickLabel',comparisonsDeg);
-    xtickformat('%.1f');
-    box off; hold off;
-end
-
-%% Plot performance for each noise level as above, but separated by NoiseAmounts2 combination level (0, all)
-%
-% Plot colors for each noise level.
-colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
-
-% Plot all noise levels.
-threshold = nan(nNoiseLevels+nNoiseLevels-2,1);
-row = 1;
-if plotFigures
-    figure; hold on;
-    
-    % Average performance across all sessions, for NoiseLevel0 and NoiseLevel1.
-    for nn = 1:2
-        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        performanceAllNumPos   = dataExperiment.performance.(noiseLevelName).NumPos;
-        performanceAllOutOfNum = dataExperiment.performance.(noiseLevelName).OutOfNum;
         NumPos   = sum(performanceAllNumPos,  2);
         OutOfNum = sum(performanceAllOutOfNum,2);
         performanceAll = NumPos./OutOfNum;
-        
-        % Plot data.
-        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
-        
-        % Plot psychometric function fit.
-        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+
+        % Plot data: ZERO noise amount combination level.
+        plot(comparisonsDeg,performanceAllZERO,'o','MarkerFace','w','MarkerEdge',colors{3});
+        % Plot psychometric function fit: ZERO noise amount combination level.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosZERO,OutOfNumZERO);
+        plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{3});
         threshold(row) = thresholdthis;
         row = row+1;
-    end
-    
-    % Plot average performance across all sessions for NoiseLevel2, per noise amount combination level.   
-    noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(3));
-    
-    % Average performance across all sessions.
-    performanceAllNumPosZERO2   = dataExperiment.performance.(noiseLevelName).NumPosZERO2;
-    performanceAllOutOfNumZERO2 = dataExperiment.performance.(noiseLevelName).OutOfNumZERO2;
-    performanceAllNumPos        = dataExperiment.performance.(noiseLevelName).NumPos;
-    performanceAllOutOfNum      = dataExperiment.performance.(noiseLevelName).OutOfNum;
-    NumPosZERO   = sum(performanceAllNumPosZERO2,  2);
-    OutOfNumZERO = sum(performanceAllOutOfNumZERO2,2);
-    performanceAllZERO = NumPosZERO./OutOfNumZERO;
-    NumPos   = sum(performanceAllNumPos,  2);
-    OutOfNum = sum(performanceAllOutOfNum,2);
-    performanceAll = NumPos./OutOfNum;
-    
-    % Plot data: ZERO noise amount combination level.
-    plot(comparisonsDeg,performanceAllZERO,'o','MarkerFace','w','MarkerEdge',colors{3});
-    % Plot psychometric function fit: ZERO noise amount combination level.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPosZERO,OutOfNumZERO);
-    plot(xx,FittedCurve,'--','LineWidth',1,'Color',colors{3});
-    threshold(row) = thresholdthis;
-    row = row+1;
-    
-    % Plot data: ALL noise amount combination level.
-    plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{3},'MarkerEdge',colors{3});
-    % Plot psychometric function fit: ALL noise amount combination level.
-    [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
-    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
-    threshold(row) = thresholdthis;
 
-    % Plot parameters.
-    title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
-        ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
-        ' threshold2=(',threshold(3),',',threshold(4),')'),''},'Interpreter','none');
-    legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
-        'Noise2 ZERO NOISE data','Noise2 ZERO NOISE fit','Noise2 ALL data','Noise2 ALL fit','Location','northwest')
-    xlabel(sprintf('Comparison offset rightward (deg)'));
-    ylabel('Proportion chose comparison as rightward');
-    axis([-Inf Inf 0 1]);
-    set(gca,'tickdir','out');
-    set(gca,'XTick',comparisonsDeg);
-    set(gca,'XTickLabel',comparisonsDeg);
-    xtickformat('%.1f');
-    box off; hold off;
+        % Plot data: ALL noise amount combination level.
+        plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{3},'MarkerEdge',colors{3});
+        % Plot psychometric function fit: ALL noise amount combination level.
+        [xx,FittedCurve,thresholdthis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{3});
+        threshold(row) = thresholdthis;
+
+        % Plot parameters.
+        title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f%s%0.2f%s',experimentName,subjectName, ...
+            ': threshold0=',threshold(1),' threshold1=',threshold(2), ...
+            ' threshold2=(',threshold(3),',',threshold(4),')'),''},'Interpreter','none');
+        legend('Noise0 data','Noise0 fit','Noise1 data','Noise1 fit', ...
+            'Noise2 ZERO NOISE data','Noise2 ZERO NOISE fit','Noise2 ALL data','Noise2 ALL fit','Location','northwest')
+        xlabel(sprintf('Comparison offset rightward (deg)'));
+        ylabel('Proportion chose comparison as rightward');
+        axis([-Inf Inf 0 1]);
+        set(gca,'tickdir','out');
+        set(gca,'XTick',comparisonsDeg);
+        set(gca,'XTickLabel',comparisonsDeg);
+        xtickformat('%.1f');
+        box off; hold off;
+    end
 end
 
 %% Plot reaction times for all sessions combined, for each noise level
 %
 % Plot colors for each noise level.
-colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
+plotReactionTime = false;
+if (plotReactionTime)
+    colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
-% Plot all noise levels.
-meanRT = nan(nNoiseLevels,1);
-if plotFigures
-    figure; hold on;
-    for nn = 1:nNoiseLevels
-        noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
-        
-        % Average reaction time across all sessions.
-        reactionTime    = dataExperiment.performance.(noiseLevelName).reactionTime;
-        reactionTimeAll = nanmean(reactionTime,2);
-        
-        % Plot data.
-        plot(comparisonsDeg,reactionTimeAll,'Color',colors{nn});
-        meanRT(nn) = round(nanmean(reactionTimeAll));
+    % Plot all noise levels.
+    meanRT = nan(nNoiseLevels,1);
+    if plotFigures
+        figure; hold on;
+        for nn = 1:nNoiseLevels
+            noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
+
+            % Average reaction time across all sessions.
+            reactionTime    = dataExperiment.performance.(noiseLevelName).reactionTime;
+            reactionTimeAll = nanmean(reactionTime,2);
+
+            % Plot data.
+            plot(comparisonsDeg,reactionTimeAll,'Color',colors{nn});
+            meanRT(nn) = round(nanmean(reactionTimeAll));
+        end
+        % Plot parameters.
+        title({sprintf('%s_%s%s%d%s%d%s%d',experimentName,subjectName, ...
+            ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''},'Interpreter','none');
+        legend('Noise0 data','Noise1 data','Noise2 data','Location','southwest')
+        xlabel(sprintf('Comparison offset rightward (deg)'));
+        ylabel('Reaction time (ms)');
+        axis([-Inf Inf 0 Inf]);
+        set(gca,'tickdir','out');
+        set(gca,'XTick',comparisonsDeg);
+        set(gca,'XTickLabel',comparisonsDeg);
+        xtickformat('%.1f');
+        box off; hold off;
     end
-    % Plot parameters.
-    title({sprintf('%s_%s%s%d%s%d%s%d',experimentName,subjectName, ...
-        ': mean0=',meanRT(1),' mean1=',meanRT(2),' mean2=',meanRT(3)),''},'Interpreter','none');
-    legend('Noise0 data','Noise1 data','Noise2 data','Location','southwest')
-    xlabel(sprintf('Comparison offset rightward (deg)'));
-    ylabel('Reaction time (ms)');
-    axis([-Inf Inf 0 Inf]);
-    set(gca,'tickdir','out');
-    set(gca,'XTick',comparisonsDeg);
-    set(gca,'XTickLabel',comparisonsDeg);
-    xtickformat('%.1f');
-    box off; hold off;
 end
 
 %% Save data analysis results
 
-if saveData 
+if saveData
     % Save data struct.
     save(pathToOutputFile,'dataExperiment');
     fprintf('\nData was saved in:\n%s\n', pathToOutputFile);
+
+    saveas(basicFig,pathToBasicFig,'tif');
 end
 end
 %% End
