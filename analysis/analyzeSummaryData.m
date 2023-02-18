@@ -46,6 +46,9 @@ idx = contains(list,'subject');
 list = list(idx);
 participants = cellfun(@(x){x(1:16)}, list);
 
+% Exclude non-naive 001
+participants = {participants{2:end}};
+
 %% Get experiment analysis results for each participant above
 %
 % Save each participant's results in the struct below.
