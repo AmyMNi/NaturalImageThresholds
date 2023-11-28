@@ -14,11 +14,13 @@ function data = analyzeSummaryData(varargin)
 % History:
 %   05/11/22  amn  Wrote it.
 
+%% Clear out
+close all;
+
 %% Parse the inputs
 parser = inputParser();
 parser.addParameter('experimentName', 'Experiment100', @ischar);
 parser.parse(varargin{:});
-
 experimentName = parser.Results.experimentName;
 
 %% Set path to data folder
@@ -41,7 +43,12 @@ tmp = textscan(fileID,'%s','Delimiter','\n');
 list = tmp{1};
 fclose(fileID);
 
-% Get participant list.
+% Get participant list.  This is the list of the 11 subjects
+% who completed the experiment, including one where we tossed
+% two sessions that looked like pure noise but where the rest
+% were OK (Subject 0009, sessions 3 and 5 were bad).  The
+% exclusion happens in analyzeExperimentData, which writes out
+% the .mat files for each subject that we load back in here.
 idx = contains(list,'subject');
 list = list(idx);
 participants = cellfun(@(x){x(1:16)}, list);
@@ -55,14 +62,21 @@ participants = {participants{2:end}};
 data = struct;
 
 % Get each participant's results.
+subjectRowLabels = {};
 for ii = 1:numel(participants)
     participant = participants{ii};
     resultsFile = fullfile(pathToFolder,participant,sprintf('experimentAnalysis%s.mat',participant(8:end)));
+    csvParticipantOutputFile{ii} = fullfile(pathToFolder,participant,sprintf('experimentSummary%s.csv',participant(8:end)));
+    csvParticipantFitFile{ii} = fullfile(pathToFolder,participant,sprintf('experimentSummaryFit%s.csv',participant(8:end)));
+    csvParticipantPlotFile{ii} = fullfile(pathToFolder,participant,sprintf('experimentSummary%s',participant(8:end)));
+
     temp = load(resultsFile,'dataExperiment'); dataExperiment = temp.dataExperiment; clear temp;
     fn = fieldnames(dataExperiment);
     for jj=1:numel(fn)
         data(ii).(fn{jj}) = dataExperiment.(fn{jj});
     end
+
+    subjectRowLabels{ii} = participant(8:end);
 end
 
 %% Plot performance for each participant and save analysis results
@@ -71,6 +85,8 @@ end
 colors{1}='k'; colors{2}=[255 165 0]/255; colors{3}='r';
 
 % For each participant, plot performance across all sessions, per noise level.
+subjectThresholds = zeros(numel(data),3);
+subjectPses = zeros(numel(data),3);
 for ii = 1:numel(data)
     
     % Get experiment parameters to plot.
@@ -106,11 +122,15 @@ for ii = 1:numel(data)
         plot(comparisonsDeg,performanceAll,'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
         
         % Plot psychometric function fit.
-        [xx,FittedCurve,thresholdthis,psethis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
+        [xx,FittedCurve{ii,nn},thresholdthis,psethis] = fitPsychometric(comparisonsDeg,NumPos,OutOfNum);
         
-        plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+        plot(xx,FittedCurve{ii,nn},'-','LineWidth',1,'Color',colors{nn});
         threshold(nn) = thresholdthis;
         pse(nn) = psethis;
+
+        % Summary for table
+        subjectThresholds(ii,nn) = thresholdthis;
+        subjectPses(ii,nn) = psethis;
         
         % Save performance analysis results for this participant.
         data(ii).results.(noiseLevelName).NumPos      = NumPos;
@@ -119,6 +139,7 @@ for ii = 1:numel(data)
         data(ii).results.(noiseLevelName).threshold   = thresholdthis;
         data(ii).results.(noiseLevelName).pse         = psethis; 
     end
+
     % Plot parameters.
     title({sprintf('%s_%s%s%0.2f%s%0.2f%s%0.2f',experimentName,data(ii).subjectName, ...
         ': threshold0=',threshold(1),' threshold1=',threshold(2),' threshold2=',threshold(3)), ...
@@ -132,7 +153,58 @@ for ii = 1:numel(data)
     set(gca,'XTickLabel',comparisonsDeg);
     xtickformat('%.1f');
     box off; hold off;
+
+    % Save plot.  Can change format here
+    saveas(gcf,csvParticipantPlotFile{ii},'tiff');
+    saveas(gcf,csvParticipantPlotFile{ii},'pdf');
+
+    % Compile and write csv file for this participant
+    variableNames = {'Comparison Degs', ...
+        'Noise 0 Fraction Correct', 'Noise 0 Number Correct', 'Noise 0 Number Trials', 'Noise 0 Threshold Deg', 'Noise 0 PSE Deg', ...
+        'Noise 1 Fraction Correct', 'Noise 1 Number Correct', 'Noise 1 Number Trials', 'Noise 1 Threshold Deg', 'Noise 1 PSE Deg', ...
+        'Noise 2 Fraction Correct', 'Noise 2 Number Correct', 'Noise 2 Number Trials', 'Noise 2 Threshold Deg', 'Noise 2 PSE Deb' ...
+        };
+    participantTable = table( ...
+        comparisonsDeg, ...
+        data(ii).results.noiseLevel0.performance, data(ii).results.noiseLevel0.NumPos, data(ii).results.noiseLevel0.OutOfNum, ...
+        data(ii).results.noiseLevel0.threshold*ones(size(comparisonsDeg)), data(ii).results.noiseLevel0.pse*ones(size(comparisonsDeg)), ...
+        data(ii).results.noiseLevel1.performance, data(ii).results.noiseLevel1.NumPos, data(ii).results.noiseLevel1.OutOfNum, ...
+        data(ii).results.noiseLevel1.threshold*ones(size(comparisonsDeg)), data(ii).results.noiseLevel1.pse*ones(size(comparisonsDeg)), ...
+        data(ii).results.noiseLevel2.performance, data(ii).results.noiseLevel2.NumPos, data(ii).results.noiseLevel2.OutOfNum, ...
+        data(ii).results.noiseLevel2.threshold*ones(size(comparisonsDeg)), data(ii).results.noiseLevel2.pse*ones(size(comparisonsDeg)), ...
+        'VariableNames',variableNames);
+    writetable(participantTable,csvParticipantOutputFile{ii},'WriteVariableNames',true);
+
+    % Compile and write csv file for psycyometric function fit
+    variableNames = {'Comparison Degs', ...
+        'Noise 0 Fraction Correct', 'Noise 1 Fraction Correct', 'Noise 2 Fraction Correct' ...
+        };
+    participantTable = table( ...
+        xx', ...
+        FittedCurve{ii,1}', FittedCurve{ii,2}', FittedCurve{ii,3}', ...
+        'VariableNames',variableNames);
+    writetable(participantTable,csvParticipantFitFile{ii},'WriteVariableNames',true);
 end
+
+meanSubjectThresholds = mean(subjectThresholds,1);
+sterrSubjectThresholds = std(subjectThresholds,[],1)/sqrt(size(subjectThresholds,1));
+meanSubjectPses = mean(subjectPses,1);
+sterrSubjectPses = std(subjectPses,[],1)/sqrt(size(subjectPses,1));
+subjectRowLabels{end+1} = 'Mean';
+subjectRowLabels{end+1} = 'Std Err';
+subjectThresholds = [subjectThresholds ; meanSubjectThresholds ; sterrSubjectThresholds];
+subjectPses = [subjectPses ; meanSubjectPses ; sterrSubjectPses];
+
+%% Make table of thresholds/pse by subject
+csvThresholdOutputFile = fullfile(pathToFolder,sprintf('experimentSummaryThresholds.csv'));
+variableNames = { ...
+    'Noise 0 Threshold Deg', 'Noise 1 Threshold Deg', 'Noise 2 Threshold Deg', ...
+    'Noise 0 PSE Deg', 'Noise 1 PSE Deg', 'Noise 2 PSE Deg' ...
+    };
+thresholdTable = table(subjectThresholds(:,1),subjectThresholds(:,2),subjectThresholds(:,3), ...
+    subjectPses(:,1),subjectPses(:,2),subjectPses(:,3), ...
+    'RowNames',subjectRowLabels,'VariableNames',variableNames);
+writetable(thresholdTable,csvThresholdOutputFile ,'WriteVariableNames',true,'WriteRowNames',true);
 
 %% Plot summary plot of above for all participants: psychometric function
 %
@@ -146,6 +218,7 @@ comparisonsDeg = data(1).results.comparisonsDeg;
 performanceAll = nan(numel(data),numel(comparisonsDeg),nNoiseLevels);
 numPosAll      = nan(numel(data),numel(comparisonsDeg),nNoiseLevels);
 outOfNumAll    = nan(numel(data),numel(comparisonsDeg),nNoiseLevels);
+
 for ii = 1:numel(data)
     for nn = 1:nNoiseLevels
         noiseLevelName = sprintf('%s%d','noiseLevel',noiseLevels(nn));
@@ -168,8 +241,8 @@ for nn = 1:nNoiseLevels
     plot(comparisonsDeg,performanceAvg(1,:,nn),'o','MarkerFace',colors{nn},'MarkerEdge',colors{nn});
 
     % Plot psychometric function fit.
-    [xx,FittedCurve,thresholdthis,psethis] = fitPsychometric(comparisonsDeg,numPosSum(1,:,nn)',outOfNumSum(1,:,nn)');
-    plot(xx,FittedCurve,'-','LineWidth',1,'Color',colors{nn});
+    [xx,FittedCurveAvg{nn},thresholdthis,psethis] = fitPsychometric(comparisonsDeg,numPosSum(1,:,nn)',outOfNumSum(1,:,nn)');
+    plot(xx,FittedCurveAvg{nn},'-','LineWidth',1,'Color',colors{nn});
     threshold(nn) = thresholdthis;
     pse(nn) = psethis;
 end
@@ -187,6 +260,50 @@ set(gca,'XTick',comparisonsDeg);
 set(gca,'XTickLabel',comparisonsDeg);
 xtickformat('%.1f');
 box off; hold off;
+
+% Save plot
+csvAveragePlotFile = fullfile(pathToFolder,sprintf('experimentSummaryAverage'));
+saveas(gcf,csvAveragePlotFile,'tiff');
+saveas(gcf,csvAveragePlotFile,'pdf');
+
+% Save fits
+csvAverageFitFile = fullfile(pathToFolder,sprintf('experimentSummaryAverageFit.csv'));
+variableNames = {'Comparison Degs', ...
+    'Noise 0 Fraction Correct', 'Noise 1 Fraction Correct', 'Noise 2 Fraction Correct' ...
+    };
+participantTable = table( ...
+    xx', ...
+    FittedCurveAvg{1}', FittedCurveAvg{2}', FittedCurveAvg{3}', ...
+    'VariableNames',variableNames);
+writetable(participantTable,csvAverageFitFile,'WriteVariableNames',true);
+
+% Write average data as csv
+csvAverageOutputFile = fullfile(pathToFolder,sprintf('experimentSummaryAverage.csv'));
+variableNames = {'Comparison Degs', ...
+        'Noise 0 Fraction Correct', 'Noise 0 Number Correct', 'Noise 0 Number Trials', 'Noise 0 Threshold Deg', 'Noise 0 PSE Deg', ...
+        'Noise 1 Fraction Correct', 'Noise 1 Number Correct', 'Noise 1 Number Trials', 'Noise 1 Threshold Deg', 'Noise 1 PSE Deg', ...
+        'Noise 2 Fraction Correct', 'Noise 2 Number Correct', 'Noise 2 Number Trials', 'Noise 2 Threshold Deg', 'Noise 2 PSE Deb' ...
+        };
+performanceAvg = nanmean(performanceAll,1);
+numPosSum      = nansum(numPosAll,1);
+outOfNumSum    = nansum(outOfNumAll,1);
+summaryTable = table( ...
+        comparisonsDeg, ...
+        performanceAvg(1,:,1)', numPosSum(1,:,1)', outOfNumSum(1,:,1)', ...
+        threshold(1)*ones(size(comparisonsDeg)), pse(1)*ones(size(comparisonsDeg)), ...
+        performanceAvg(1,:,2)', numPosSum(1,:,2)', outOfNumSum(1,:,2)', ...
+        threshold(2)*ones(size(comparisonsDeg)), pse(2)*ones(size(comparisonsDeg)), ...
+        performanceAvg(1,:,3)', numPosSum(1,:,3)', outOfNumSum(1,:,3)', ...
+        threshold(3)*ones(size(comparisonsDeg)), pse(3)*ones(size(comparisonsDeg)), ...
+        'VariableNames',variableNames);
+writetable(summaryTable,csvAverageOutputFile,'WriteVariableNames',true);
+
+%% Return here for simplicity.
+%
+% The analyses below try to parse the data more finely, but we aren't
+% pursuing that for the paper - nothing jumped out at us from these further
+% looks, and they are a bit post hoc anyway.
+return;
 
 %% Plot summary plots of above for all participants: x-y scatterplots of thresholds
 %
